@@ -41,8 +41,27 @@ jobs:
             -scheme HealthMonitor \
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
             -resultBundlePath build/TestResults.xcresult \
+            -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             | tee build/xcodebuild.log
+
+      - name: Package simulator app
+        if: always()
+        continue-on-error: true
+        run: |
+          APP=build/DerivedData/Build/Products/Debug-iphonesimulator/HealthMonitor.app
+          if [ -d "$APP" ]; then
+            mkdir -p build/app
+            ditto -c -k --sequesterRsrc --keepParent "$APP" build/app/HealthMonitor-simulator.zip
+          fi
+
+      - name: Upload simulator app (for Appetize)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-app
+          path: build/app/HealthMonitor-simulator.zip
+          if-no-files-found: warn
 
       - name: Export screenshots
         if: always()
