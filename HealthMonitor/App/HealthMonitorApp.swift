@@ -2,29 +2,23 @@ import SwiftUI
 
 @main
 struct HealthMonitorApp: App {
+    @State private var home: HomeViewModel
+    @State private var pressure: PressureViewModel
+    private let config: LaunchConfig
+
+    init() {
+        let config = LaunchConfig.current
+        let store = HealthStore(repository: MockHealthRepository(scenario: config.scenario))
+        let pressure = PressureViewModel(store: store)
+        pressure.opensSheetOnAppear = config.opensSheet
+        self.config = config
+        _home = State(initialValue: HomeViewModel(store: store))
+        _pressure = State(initialValue: pressure)
+    }
+
     var body: some Scene {
         WindowGroup {
-            PlaceholderView()
+            RootView(home: home, pressure: pressure, initialPath: config.initialPath)
         }
     }
-}
-
-/// Временный экран, пока нет главного. Будет заменён на HomeView.
-private struct PlaceholderView: View {
-    var body: some View {
-        VStack(spacing: Spacing.m) {
-            Text("Health Monitor")
-                .textStyle(.title)
-                .foregroundStyle(AppColor.textPrimary)
-            Text("Каркас проекта")
-                .textStyle(.label)
-                .foregroundStyle(AppColor.textSecondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColor.background)
-    }
-}
-
-#Preview {
-    PlaceholderView()
 }

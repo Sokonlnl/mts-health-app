@@ -1,0 +1,54 @@
+import Foundation
+
+/// Форматирование значений и дат для UI (русская локаль).
+enum AppFormat {
+    static let dash = "–"
+
+    static func longDate(_ date: Date) -> String {
+        format(date, pattern: "d MMMM")
+    }
+
+    static func time(_ date: Date) -> String {
+        format(date, pattern: "HH:mm")
+    }
+
+    static func historyDate(_ date: Date, now: Date) -> String {
+        let calendar = AppCalendar.calendar
+        if calendar.isDate(date, inSameDayAs: now) {
+            return "Сегодня, \(time(date))"
+        }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
+            return "Вчера, \(time(date))"
+        }
+        return format(date, pattern: "d MMM, HH:mm")
+    }
+
+    static func pressureValue(_ systolic: Int, _ diastolic: Int) -> String {
+        "\(systolic)/\(diastolic)"
+    }
+
+    static func range(_ range: ClosedRange<Int>?) -> String {
+        guard let range else { return dash }
+        if range.lowerBound == range.upperBound { return "\(range.lowerBound)" }
+        return "\(range.lowerBound)–\(range.upperBound)"
+    }
+
+    /// Число с одним знаком и запятой: 72,4.
+    static func decimal(_ value: Double) -> String {
+        String(format: "%.1f", value).replacingOccurrences(of: ".", with: ",")
+    }
+
+    /// Число со знаком и типографским минусом: −0,8.
+    static func signedDecimal(_ value: Double) -> String {
+        let text = String(format: "%+.1f", value)
+        return text.replacingOccurrences(of: ".", with: ",").replacingOccurrences(of: "-", with: "−")
+    }
+
+    private static func format(_ date: Date, pattern: String) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.calendar = AppCalendar.calendar
+        formatter.dateFormat = pattern
+        return formatter.string(from: date)
+    }
+}
