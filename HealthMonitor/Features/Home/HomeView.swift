@@ -14,7 +14,7 @@ struct HomeView: View {
             }
             .padding(.horizontal, Spacing.screenMargin)
             .padding(.top, Spacing.s)
-            .padding(.bottom, Spacing.l)
+            .padding(.bottom, Spacing.tabBarClearance)
         }
         .safeAreaInset(edge: .bottom) { bottomBar }
         .background(AppColor.background)
@@ -28,36 +28,17 @@ struct HomeView: View {
     private var stateContent: some View {
         switch viewModel.screenState {
         case .loading:
-            loadingView
+            SkeletonList()
         case .error(let message):
-            StateMessageView(
-                icon: "exclamationmark.triangle",
-                title: "Не удалось загрузить данные",
-                message: message,
-                identifier: "error-state",
-                actionTitle: "Повторить",
-                action: { Task { await viewModel.reload() } }
-            )
+            ErrorStateView(message: message, retry: { Task { await viewModel.reload() } })
         case .empty:
-            StateMessageView(
-                icon: "heart.text.square",
-                title: "Пока нет измерений",
+            EmptyStateView(
                 message: "Добавьте первое измерение давления, и здесь появится сводка за неделю.",
-                identifier: "empty-state",
-                actionTitle: "Добавить измерение",
                 action: onOpenPressure
             )
             content
         case .content:
             content
-        }
-    }
-
-    private var loadingView: some View {
-        VStack(spacing: Spacing.l) {
-            SkeletonCard(identifier: "loading-state")
-            SkeletonCard()
-            SkeletonCard()
         }
     }
 
@@ -68,10 +49,7 @@ struct HomeView: View {
         }
         overviewCard
         WeekStrip(days: viewModel.weekDays)
-        Text("Показатели")
-            .textStyle(.headline)
-            .foregroundStyle(AppColor.textPrimary)
-            .accessibilityAddTraits(.isHeader)
+        SectionHeader(title: "Показатели")
         ForEach(viewModel.cards) { card in
             metricCard(card)
         }
@@ -86,7 +64,7 @@ struct HomeView: View {
                     .textStyle(.title)
                     .foregroundStyle(AppColor.textPrimary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .minimumScaleFactor(TextScale.title)
                     .accessibilityIdentifier("home-title")
                     .accessibilityAddTraits(.isHeader)
                 Image(systemName: "chevron.down")
@@ -109,10 +87,7 @@ struct HomeView: View {
             HStack(alignment: .center, spacing: 0) {
                 ForEach(Array(viewModel.rings.enumerated()), id: \.element.id) { index, ring in
                     if index > 0 {
-                        Rectangle()
-                            .fill(AppColor.border)
-                            .frame(width: Size.hairline, height: Size.ring)
-                            .accessibilityHidden(true)
+                        Hairline(verticalLength: Size.ring)
                     }
                     RingGauge(
                         progress: ring.progress,
@@ -125,14 +100,9 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
-            Rectangle()
-                .fill(AppColor.border)
-                .frame(height: Size.hairline)
-                .accessibilityHidden(true)
+            Hairline()
             insightBlock
         }
-        .padding(Spacing.l)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle(radius: Radius.hero)
     }
 
@@ -153,7 +123,7 @@ struct HomeView: View {
                     .accessibilityIdentifier("insight-details")
             }
             Button {
-                withAnimation(.easeInOut(duration: 0.25)) {
+                withAnimation(Motion.standard) {
                     viewModel.toggleInsight()
                 }
             } label: {

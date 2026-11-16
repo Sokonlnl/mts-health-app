@@ -84,6 +84,13 @@ final class PressureAggregationTests: XCTestCase {
         XCTAssertEqual(items.map(\.id), ["old", "new"])
     }
 
+    func testAxisFormatPerPeriod() {
+        XCTAssertEqual(PressurePeriod.day.axisFormat, .dateTime.hour())
+        XCTAssertEqual(PressurePeriod.week.axisFormat, .dateTime.weekday(.abbreviated))
+        XCTAssertEqual(PressurePeriod.month.axisFormat, .dateTime.day().month(.abbreviated))
+        XCTAssertEqual(PressurePeriod.sixMonths.axisFormat, .dateTime.month(.abbreviated))
+    }
+
     func testPeriodTitles() {
         XCTAssertEqual(PressurePeriod.allCases.map(\.title), ["День", "Неделя", "Месяц", "6 мес"])
     }

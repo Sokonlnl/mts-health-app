@@ -12,6 +12,9 @@ enum Spacing {
     static let screenMargin: CGFloat = 16
     /// Минимальная цель нажатия (HIG).
     static let minTapTarget: CGFloat = 44
+    /// Нижний запас прокрутки главного экрана под плавающей навигацией (таблетка 60 + кнопка «+» 56 + тень):
+    /// последняя карточка прокручивается выше таблетки.
+    static let tabBarClearance: CGFloat = 80
 }
 
 #Preview("Spacing") {

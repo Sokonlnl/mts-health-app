@@ -13,7 +13,6 @@ opt_in_rules:
   - last_where
   - joined_default_parameter
   - modifier_order
-  - multiline_parameters
   - operator_usage_whitespace
   - redundant_nil_coalescing
   - sorted_first_last

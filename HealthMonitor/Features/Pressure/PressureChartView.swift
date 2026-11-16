@@ -50,7 +50,7 @@ struct PressureChartView: View {
         .chartLegend(.hidden)
         .chartXAxis {
             AxisMarks(values: .automatic(desiredCount: 4)) { _ in
-                AxisValueLabel(format: axisFormat)
+                AxisValueLabel(format: period.axisFormat)
             }
         }
         .chartPlotStyle { plot in
@@ -62,15 +62,6 @@ struct PressureChartView: View {
         .accessibilityLabel("График давления: верхнее и нижнее")
         .accessibilityValue(accessibilityValue)
         .accessibilityIdentifier("pressure-chart")
-    }
-
-    private var axisFormat: Date.FormatStyle {
-        switch period {
-        case .day: return .dateTime.hour()
-        case .week: return .dateTime.weekday(.abbreviated)
-        case .month: return .dateTime.day().month(.abbreviated)
-        case .sixMonths: return .dateTime.month(.abbreviated)
-        }
     }
 }
 

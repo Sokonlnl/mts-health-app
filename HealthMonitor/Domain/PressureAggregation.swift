@@ -26,6 +26,16 @@ enum PressurePeriod: CaseIterable {
         }
     }
 
+    /// Формат подписей оси времени на графике.
+    var axisFormat: Date.FormatStyle {
+        switch self {
+        case .day: return .dateTime.hour()
+        case .week: return .dateTime.weekday(.abbreviated)
+        case .month: return .dateTime.day().month(.abbreviated)
+        case .sixMonths: return .dateTime.month(.abbreviated)
+        }
+    }
+
     func startDate(now: Date) -> Date {
         now.addingTimeInterval(-Double(days) * 86_400)
     }

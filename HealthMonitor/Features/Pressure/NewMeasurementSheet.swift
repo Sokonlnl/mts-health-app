@@ -46,7 +46,7 @@ struct NewMeasurementSheet: View {
                 .font(AppTextStyle.bodyStrong.font)
                 .foregroundStyle(AppColor.textSecondary)
                 .accessibilityHidden(true)
-            Text(AppFormat.historyDate(viewModel.draft.date, now: viewModel.draft.date))
+            Text(viewModel.draftDateText)
                 .textStyle(.body)
                 .foregroundStyle(AppColor.textSecondary)
         }
@@ -55,9 +55,9 @@ struct NewMeasurementSheet: View {
 
     private var fields: some View {
         HStack(spacing: Spacing.m) {
-            fieldTile(.systolic, title: "Верхнее", unit: "мм рт. ст.", identifier: "field-systolic")
-            fieldTile(.diastolic, title: "Нижнее", unit: "мм рт. ст.", identifier: "field-diastolic")
-            fieldTile(.pulse, title: "Пульс", unit: "уд/мин", identifier: "field-pulse")
+            fieldTile(.systolic, title: "Верхнее", unit: AppUnit.pressure, identifier: "field-systolic")
+            fieldTile(.diastolic, title: "Нижнее", unit: AppUnit.pressure, identifier: "field-diastolic")
+            fieldTile(.pulse, title: "Пульс", unit: AppUnit.pulse, identifier: "field-pulse")
         }
     }
 
@@ -95,7 +95,7 @@ struct NewMeasurementSheet: View {
                 } else {
                     Text("Введите значения")
                         .textStyle(.caption)
-                        .foregroundStyle(AppColor.textTertiary)
+                        .foregroundStyle(AppColor.textSecondary)
                 }
             }
             if let hint = viewModel.draft.hint {

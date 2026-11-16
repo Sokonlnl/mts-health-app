@@ -20,14 +20,14 @@ struct SegmentedPicker<Option: Hashable>: View {
     private func segment(_ option: Option) -> some View {
         let isSelected = option == selection
         return Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(Motion.fast) {
                 selection = option
             }
         } label: {
             Text(title(option))
                 .textStyle(.bodyStrong)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(TextScale.compact)
                 .foregroundStyle(isSelected ? AppColor.textPrimary : AppColor.textSecondary)
                 .frame(maxWidth: .infinity, minHeight: Spacing.minTapTarget)
                 .background {

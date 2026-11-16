@@ -30,9 +30,7 @@ struct StateMessageView: View {
                     .accessibilityIdentifier("\(identifier)-action")
             }
         }
-        .padding(Spacing.xl)
-        .frame(maxWidth: .infinity)
-        .cardStyle()
+        .cardStyle(insets: CardInsets.message)
     }
 }
 

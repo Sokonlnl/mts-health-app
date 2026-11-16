@@ -19,10 +19,9 @@ struct SkeletonCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
             SkeletonBlock(width: Size.sparklineWidth)
-            SkeletonBlock(height: Size.metricIcon)
-            SkeletonBlock(width: Size.sparklineWidth * 1.5)
+            SkeletonBlock(height: Size.skeletonValue)
+            SkeletonBlock(width: Size.skeletonLineWide)
         }
-        .padding(Spacing.l)
         .frame(maxWidth: .infinity, minHeight: Size.skeletonCard, alignment: .leading)
         .cardStyle()
         .accessibilityElement(children: .ignore)
@@ -31,11 +30,29 @@ struct SkeletonCard: View {
     }
 }
 
-#Preview("Skeleton") {
-    VStack(spacing: Spacing.l) {
-        SkeletonCard()
-        SkeletonCard()
+/// Список скелетонов карточек (loading-состояние экрана). Первая карточка получает идентификатор
+/// `loading-state`, остальные `skeleton-card`.
+struct SkeletonList: View {
+    var count = 3
+    var firstIdentifier = "loading-state"
+
+    var body: some View {
+        VStack(spacing: Spacing.l) {
+            ForEach(0..<count, id: \.self) { index in
+                SkeletonCard(identifier: index == 0 ? firstIdentifier : "skeleton-card")
+            }
+        }
     }
-    .padding(Spacing.screenMargin)
-    .background(AppColor.background)
+}
+
+#Preview("SkeletonCard") {
+    SkeletonCard()
+        .padding(Spacing.screenMargin)
+        .background(AppColor.background)
+}
+
+#Preview("SkeletonList") {
+    SkeletonList()
+        .padding(Spacing.screenMargin)
+        .background(AppColor.background)
 }

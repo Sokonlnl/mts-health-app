@@ -16,9 +16,10 @@ struct ValueFieldTile: View {
                     .foregroundStyle(AppColor.textSecondary)
                 Text(text.isEmpty ? AppFormat.dash : text)
                     .textStyle(.metricCard)
+                    // Прочерк декоративный: название и единица остаются textSecondary (DESIGN.md, «Контраст»).
                     .foregroundStyle(text.isEmpty ? AppColor.textTertiary : AppColor.textPrimary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.6)
+                    .minimumScaleFactor(TextScale.metric)
                 Text(unit)
                     .textStyle(.caption)
                     .foregroundStyle(AppColor.textSecondary)
@@ -28,7 +29,7 @@ struct ValueFieldTile: View {
             .background(AppColor.fill, in: RoundedRectangle(cornerRadius: Radius.controlLarge, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: Radius.controlLarge, style: .continuous)
-                    .stroke(isFocused ? AppColor.accent : Color.clear, lineWidth: Size.sparklineLine)
+                    .stroke(isFocused ? AppColor.accent : Color.clear, lineWidth: Size.focusRing)
             }
         }
         .buttonStyle(.plain)
@@ -41,9 +42,9 @@ struct ValueFieldTile: View {
 
 #Preview("ValueFieldTile") {
     HStack {
-        ValueFieldTile(title: "Верхнее", text: "122", unit: "мм рт. ст.", isFocused: true, action: {})
-        ValueFieldTile(title: "Нижнее", text: "", unit: "мм рт. ст.", isFocused: false, action: {})
-        ValueFieldTile(title: "Пульс", text: "68", unit: "уд/мин", isFocused: false, action: {})
+        ValueFieldTile(title: "Верхнее", text: "122", unit: AppUnit.pressure, isFocused: true, action: {})
+        ValueFieldTile(title: "Нижнее", text: "", unit: AppUnit.pressure, isFocused: false, action: {})
+        ValueFieldTile(title: "Пульс", text: "68", unit: AppUnit.pulse, isFocused: false, action: {})
     }
     .padding(Spacing.screenMargin)
     .background(AppColor.surface)

@@ -16,7 +16,7 @@ final class HealthStore {
     private(set) var lastSync: Date?
 
     @ObservationIgnored private let repository: HealthRepository
-    @ObservationIgnored private var isLoading = false
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
 
     init(repository: HealthRepository) {
         self.repository = repository
@@ -30,27 +30,23 @@ final class HealthStore {
         }
     }
 
-    /// Первая загрузка. Повторные вызовы ничего не делают.
+    /// Первая загрузка. Если загрузка уже идёт, ждёт её. Если данные загружены, ничего не делает.
     func loadIfNeeded() async {
+        if let loadTask {
+            await loadTask.value
+            return
+        }
         guard state == .loading else { return }
-        await load()
+        await startLoading()
     }
 
-    /// Загрузка или повтор после ошибки.
+    /// Загрузка или повтор после ошибки. Если загрузка уже идёт, ждёт её, а не запускает вторую.
     func load() async {
-        guard !isLoading else { return }
-        isLoading = true
-        defer { isLoading = false }
-        state = .loading
-        do {
-            data = try await repository.load()
-            lastSync = Date()
-            state = .loaded
-        } catch is CancellationError {
+        if let loadTask {
+            await loadTask.value
             return
-        } catch {
-            state = .failed(error.localizedDescription)
         }
+        await startLoading()
     }
 
     /// Добавляет измерение в начало истории.
@@ -59,5 +55,37 @@ final class HealthStore {
         updated.append(measurement)
         updated.sort { $0.date > $1.date }
         data.pressure = updated
+    }
+
+    // MARK: - Загрузка
+
+    /// Загрузка идёт в неструктурированной `Task`: отмена `.task` вызывающего экрана её не отменяет,
+    /// поэтому `state` не может остаться `.loading` без загрузчика (QA-001).
+    private func startLoading() async {
+        state = .loading
+        let repository = repository
+        let task = Task { [weak self] in
+            let result: Result<HealthData, any Error>
+            do {
+                result = .success(try await repository.load())
+            } catch {
+                result = .failure(error)
+            }
+            self?.finishLoading(result)
+        }
+        loadTask = task
+        await task.value
+    }
+
+    private func finishLoading(_ result: Result<HealthData, any Error>) {
+        loadTask = nil
+        switch result {
+        case .success(let loaded):
+            data = loaded
+            lastSync = Date()
+            state = .loaded
+        case .failure(let error):
+            state = .failed(error.localizedDescription)
+        }
     }
 }

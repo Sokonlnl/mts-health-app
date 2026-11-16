@@ -1,10 +1,20 @@
 import Foundation
 import Observation
 
+/// Строка истории измерений, уже отформатированная для показа.
+struct PressureHistoryRow: Identifiable, Equatable {
+    let id: String
+    let title: String
+    let subtitle: String
+    let zone: PressureZone
+}
+
 @MainActor
 @Observable
 final class PressureViewModel {
     private static let historyLimit = 20
+    /// Пауза перед автоматическим открытием шторки (для UI-тестов), чтобы закончилась анимация перехода.
+    static let sheetOpenDelayNanoseconds: UInt64 = 600_000_000
 
     private let store: HealthStore
     @ObservationIgnored private let now: () -> Date
@@ -41,6 +51,25 @@ final class PressureViewModel {
         Array(periodMeasurements.reversed().prefix(Self.historyLimit))
     }
 
+    /// Строки истории: значение · пульс, дата и контекст, зона.
+    var historyRows: [PressureHistoryRow] {
+        let current = now()
+        return history.map { item in
+            PressureHistoryRow(
+                id: item.id,
+                title: AppFormat.measurementTitle(item),
+                subtitle: AppFormat.measurementSubtitle(item, now: current),
+                zone: item.zone
+            )
+        }
+    }
+
+    /// Текст крупного значения последнего измерения.
+    var latestValueText: String {
+        guard let latest else { return AppFormat.emptyPressureValue }
+        return AppFormat.pressureValue(latest.systolic, latest.diastolic)
+    }
+
     var rangeText: String {
         guard let top = summary.systolicRange, let bottom = summary.diastolicRange else { return AppFormat.dash }
         return "\(AppFormat.range(top)) / \(AppFormat.range(bottom))"
@@ -52,17 +81,17 @@ final class PressureViewModel {
     }
 
     var pulseText: String {
-        guard let pulse = latest?.pulse else { return AppFormat.dash }
-        return "\(pulse) уд/мин"
+        AppFormat.pulseValue(latest?.pulse)
     }
 
     var latestDateText: String {
-        guard let latest else { return "Нет измерений" }
+        guard let latest else { return AppFormat.noMeasurements }
         return AppFormat.historyDate(latest.date, now: now())
     }
 
-    func dateText(for measurement: PressureMeasurement) -> String {
-        AppFormat.historyDate(measurement.date, now: now())
+    /// Дата в шторке: текущий момент относительно «сейчас», а не относительно самой даты черновика.
+    var draftDateText: String {
+        AppFormat.historyDate(draft.date, now: now())
     }
 
     // MARK: - График
@@ -81,7 +110,7 @@ final class PressureViewModel {
 
     var chartAccessibilityValue: String {
         let count = summary.count
-        guard count > 0 else { return "Нет измерений за период" }
+        guard count > 0 else { return "\(AppFormat.noMeasurements) за период" }
         return "Измерений: \(count). Диапазон: \(rangeText). Среднее: \(averageText)"
     }
 
@@ -93,6 +122,14 @@ final class PressureViewModel {
 
     func reload() async {
         await store.load()
+    }
+
+    /// Открывает шторку после появления экрана, если это запрошено (UI-тесты).
+    func presentSheetIfRequested() async {
+        guard opensSheetOnAppear else { return }
+        opensSheetOnAppear = false
+        try? await Task.sleep(nanoseconds: Self.sheetOpenDelayNanoseconds)
+        openSheet()
     }
 
     // MARK: - Шторка

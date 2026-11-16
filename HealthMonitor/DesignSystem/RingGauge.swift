@@ -26,6 +26,7 @@ struct RingGauge: View {
                 }
                 Text(centerText)
                     .textStyle(.headline)
+                    // Прочерк декоративный: смысл дублируют подпись и accessibilityValue (DESIGN.md, «Контраст»).
                     .foregroundStyle(isEmpty ? AppColor.textTertiary : AppColor.textPrimary)
             }
             .frame(width: Size.ring, height: Size.ring)

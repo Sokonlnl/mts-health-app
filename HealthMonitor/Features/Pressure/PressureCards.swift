@@ -1,8 +1,10 @@
 import SwiftUI
 
 /// Карточка последнего измерения: значение, статус, пульс, диапазон и среднее за период.
+/// Текст значения готовит ViewModel; `zone == nil` означает пустое состояние.
 struct PressureLatestCard: View {
-    let latest: PressureMeasurement?
+    let zone: PressureZone?
+    let valueText: String
     let dateText: String
     let pulseText: String
     let rangeText: String
@@ -15,24 +17,21 @@ struct PressureLatestCard: View {
                     .textStyle(.label)
                     .foregroundStyle(AppColor.textSecondary)
                 Spacer(minLength: Spacing.s)
-                if let latest {
-                    StatusPill(text: latest.zone.title, tone: latest.zone.tone)
+                if let zone {
+                    StatusPill(text: zone.title, tone: zone.tone)
                         .accessibilityIdentifier("pressure-latest-status")
                 } else {
-                    StatusPill(text: "Нет данных", tone: .neutral)
+                    StatusPill(text: AppFormat.noData, tone: .neutral)
                 }
             }
-            HStack(alignment: .firstTextBaseline, spacing: Spacing.s) {
-                Text(valueText)
-                    .textStyle(.metricHero)
-                    .foregroundStyle(latest == nil ? AppColor.textTertiary : AppColor.textPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                    .accessibilityIdentifier("pressure-latest-value")
-                Text("мм рт. ст.")
-                    .textStyle(.label)
-                    .foregroundStyle(AppColor.textSecondary)
-            }
+            MetricValueText(
+                value: valueText,
+                unit: AppUnit.pressure,
+                style: .metricHero,
+                isPlaceholder: zone == nil,
+                spacing: Spacing.s,
+                valueIdentifier: "pressure-latest-value"
+            )
             HStack {
                 Text("Пульс \(pulseText)")
                     .textStyle(.body)
@@ -42,23 +41,13 @@ struct PressureLatestCard: View {
                     .textStyle(.caption)
                     .foregroundStyle(AppColor.textSecondary)
             }
-            Rectangle()
-                .fill(AppColor.border)
-                .frame(height: Size.hairline)
-                .accessibilityHidden(true)
+            Hairline()
             HStack(alignment: .top, spacing: Spacing.l) {
                 LabeledValue(title: "Диапазон за период", value: rangeText)
                 LabeledValue(title: "Среднее за период", value: averageText)
             }
         }
-        .padding(Spacing.l)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle(radius: Radius.hero)
-    }
-
-    private var valueText: String {
-        guard let latest else { return "\(AppFormat.dash)/\(AppFormat.dash)" }
-        return AppFormat.pressureValue(latest.systolic, latest.diastolic)
     }
 }
 
@@ -68,9 +57,7 @@ struct PressureWhyCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
-            Text("Почему такой статус")
-                .textStyle(.headline)
-                .foregroundStyle(AppColor.textPrimary)
+            SectionHeader(title: "Почему такой статус")
             Text(zone?.explanation ?? "Добавьте измерение, чтобы увидеть пояснение по зоне.")
                 .textStyle(.body)
                 .foregroundStyle(AppColor.textSecondary)
@@ -79,92 +66,99 @@ struct PressureWhyCard: View {
                 .textStyle(.caption)
                 .foregroundStyle(AppColor.textSecondary)
         }
-        .padding(Spacing.l)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle()
         .accessibilityElement(children: .combine)
     }
 }
 
-/// История измерений: «значение · пульс», время и контекст, статус.
+/// История измерений: «значение · пульс», время и контекст, статус. Строки готовит ViewModel.
 struct PressureHistoryList: View {
-    let items: [PressureMeasurement]
-    let dateText: (PressureMeasurement) -> String
+    let rows: [PressureHistoryRow]
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
-            Text("История")
-                .textStyle(.headline)
-                .foregroundStyle(AppColor.textPrimary)
-                .accessibilityAddTraits(.isHeader)
-            if items.isEmpty {
+            SectionHeader(title: "История")
+            if rows.isEmpty {
                 Text("За выбранный период измерений нет.")
                     .textStyle(.body)
                     .foregroundStyle(AppColor.textSecondary)
-                    .padding(Spacing.l)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .cardStyle()
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                    ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                         if index > 0 {
-                            Rectangle()
-                                .fill(AppColor.border)
-                                .frame(height: Size.hairline)
-                                .accessibilityHidden(true)
+                            Hairline()
                         }
-                        row(item)
+                        rowView(row)
                     }
                 }
-                .padding(.horizontal, Spacing.l)
-                .cardStyle()
+                .cardStyle(insets: CardInsets.list)
                 .accessibilityIdentifier("pressure-history")
             }
         }
     }
 
-    private func row(_ item: PressureMeasurement) -> some View {
+    private func rowView(_ row: PressureHistoryRow) -> some View {
         HStack(spacing: Spacing.m) {
             VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(title(item))
+                Text(row.title)
                     .textStyle(.bodyStrong)
                     .foregroundStyle(AppColor.textPrimary)
-                Text(subtitle(item))
+                Text(row.subtitle)
                     .textStyle(.caption)
                     .foregroundStyle(AppColor.textSecondary)
             }
             Spacer(minLength: Spacing.s)
-            StatusPill(text: item.zone.title, tone: item.zone.tone)
+            StatusPill(text: row.zone.title, tone: row.zone.tone)
         }
         .padding(.vertical, Spacing.m)
         .frame(minHeight: Spacing.minTapTarget)
         .accessibilityElement(children: .combine)
     }
+}
 
-    private func title(_ item: PressureMeasurement) -> String {
-        let value = AppFormat.pressureValue(item.systolic, item.diastolic)
-        guard let pulse = item.pulse else { return value }
-        return "\(value) · \(pulse)"
-    }
+private enum PreviewSamples {
+    static let rows = [
+        PressureHistoryRow(id: "a", title: "132/86 · 70", subtitle: "Сегодня, 08:10 · Утро", zone: .elevated),
+        PressureHistoryRow(id: "b", title: "118/76 · 66", subtitle: "Вчера, 21:30", zone: .normal)
+    ]
+}
 
-    private func subtitle(_ item: PressureMeasurement) -> String {
-        guard let context = item.context else { return dateText(item) }
-        return "\(dateText(item)) · \(context.title)"
-    }
+private func latestCard(zone: PressureZone, value: String) -> some View {
+    PressureLatestCard(
+        zone: zone, valueText: value, dateText: "Сегодня, 08:10", pulseText: "70 \(AppUnit.pulse)",
+        rangeText: "118–136 / 74–88", averageText: "125/80"
+    )
+    .padding(Spacing.screenMargin)
+    .background(AppColor.background)
+}
+
+#Preview("PressureLatestCard: норма") {
+    latestCard(zone: .normal, value: "118/76")
+}
+
+#Preview("PressureLatestCard: повышенное") {
+    latestCard(zone: .elevated, value: "134/86")
+}
+
+#Preview("PressureLatestCard: высокое") {
+    latestCard(zone: .high, value: "148/94")
+}
+
+#Preview("PressureLatestCard: пусто") {
+    PressureLatestCard(
+        zone: nil, valueText: AppFormat.emptyPressureValue, dateText: AppFormat.noMeasurements,
+        pulseText: AppFormat.dash, rangeText: AppFormat.dash, averageText: AppFormat.dash
+    )
+    .padding(Spacing.screenMargin)
+    .background(AppColor.background)
 }
 
 #Preview("Pressure cards: данные") {
-    let sample = PressureMeasurement(
-        id: "preview", date: Date(), systolic: 132, diastolic: 86, pulse: 70, context: .morning
-    )
-    return ScrollView {
+    ScrollView {
         VStack(spacing: Spacing.l) {
-            PressureLatestCard(
-                latest: sample, dateText: "Сегодня, 08:10", pulseText: "70 уд/мин",
-                rangeText: "118–136 / 74–88", averageText: "125/80"
-            )
-            PressureWhyCard(zone: sample.zone)
-            PressureHistoryList(items: [sample, sample], dateText: { _ in "Сегодня, 08:10" })
+            PressureWhyCard(zone: .elevated)
+            PressureHistoryList(rows: PreviewSamples.rows)
         }
         .padding(Spacing.screenMargin)
     }
@@ -173,12 +167,8 @@ struct PressureHistoryList: View {
 
 #Preview("Pressure cards: пусто") {
     VStack(spacing: Spacing.l) {
-        PressureLatestCard(
-            latest: nil, dateText: "Нет измерений", pulseText: AppFormat.dash,
-            rangeText: AppFormat.dash, averageText: AppFormat.dash
-        )
         PressureWhyCard(zone: nil)
-        PressureHistoryList(items: [], dateText: { _ in "" })
+        PressureHistoryList(rows: [])
     }
     .padding(Spacing.screenMargin)
     .background(AppColor.background)

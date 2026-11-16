@@ -27,7 +27,7 @@ struct MetricCardModel: Identifiable, Equatable {
     var id: String { kind.id }
 
     static func empty(_ kind: MetricKind, unit: String) -> MetricCardModel {
-        MetricCardModel(kind: kind, valueText: nil, unit: unit, statusText: "Нет данных", tone: .neutral, series: [])
+        MetricCardModel(kind: kind, valueText: nil, unit: unit, statusText: AppFormat.noData, tone: .neutral, series: [])
     }
 }
 
@@ -102,12 +102,12 @@ final class HomeViewModel {
     }
 
     private func pressureCard(_ measurements: [PressureMeasurement]) -> MetricCardModel {
-        guard let latest = measurements.first else { return .empty(.pressure, unit: "мм рт. ст.") }
+        guard let latest = measurements.first else { return .empty(.pressure, unit: AppUnit.pressure) }
         let series = measurements.prefix(14).reversed().map { Double($0.systolic) }
         return MetricCardModel(
             kind: .pressure,
             valueText: AppFormat.pressureValue(latest.systolic, latest.diastolic),
-            unit: "мм рт. ст.",
+            unit: AppUnit.pressure,
             statusText: latest.zone.title,
             tone: latest.zone.tone,
             series: series
@@ -115,11 +115,11 @@ final class HomeViewModel {
     }
 
     private func pulseCard(_ reading: MetricReading) -> MetricCardModel {
-        guard let latest = reading.latest else { return .empty(.pulse, unit: "уд/мин") }
+        guard let latest = reading.latest else { return .empty(.pulse, unit: AppUnit.pulse) }
         return MetricCardModel(
             kind: .pulse,
             valueText: "\(Int(latest.rounded()))",
-            unit: "уд/мин",
+            unit: AppUnit.pulse,
             statusText: "В покое",
             tone: .neutral,
             series: reading.series
@@ -127,7 +127,7 @@ final class HomeViewModel {
     }
 
     private func weightCard(_ reading: MetricReading) -> MetricCardModel {
-        guard let latest = reading.latest else { return .empty(.weight, unit: "кг") }
+        guard let latest = reading.latest else { return .empty(.weight, unit: AppUnit.weight) }
         var status = "Без изменений"
         if let first = reading.series.first, let last = reading.series.last {
             status = "\(AppFormat.signedDecimal(last - first)) кг за 2 недели"
@@ -135,7 +135,7 @@ final class HomeViewModel {
         return MetricCardModel(
             kind: .weight,
             valueText: AppFormat.decimal(latest),
-            unit: "кг",
+            unit: AppUnit.weight,
             statusText: status,
             tone: .neutral,
             series: reading.series
@@ -143,11 +143,11 @@ final class HomeViewModel {
     }
 
     private func glucoseCard(_ reading: MetricReading) -> MetricCardModel {
-        guard let latest = reading.latest else { return .empty(.glucose, unit: "ммоль/л") }
+        guard let latest = reading.latest else { return .empty(.glucose, unit: AppUnit.glucose) }
         return MetricCardModel(
             kind: .glucose,
             valueText: AppFormat.decimal(latest),
-            unit: "ммоль/л",
+            unit: AppUnit.glucose,
             statusText: "Последнее значение",
             tone: .neutral,
             series: reading.series

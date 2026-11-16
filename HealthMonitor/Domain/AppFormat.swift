@@ -3,6 +3,12 @@ import Foundation
 /// Форматирование значений и дат для UI (русская локаль).
 enum AppFormat {
     static let dash = "–"
+    /// Подпись пустого состояния показателя.
+    static let noData = "Нет данных"
+    /// Подпись пустого состояния последнего измерения.
+    static let noMeasurements = "Нет измерений"
+    /// Пустое значение давления: «–/–».
+    static let emptyPressureValue = "\(dash)/\(dash)"
 
     static func longDate(_ date: Date) -> String {
         format(date, pattern: "d MMMM")
@@ -25,6 +31,26 @@ enum AppFormat {
 
     static func pressureValue(_ systolic: Int, _ diastolic: Int) -> String {
         "\(systolic)/\(diastolic)"
+    }
+
+    /// Значение давления с пульсом для строки истории: «132/86 · 70».
+    static func measurementTitle(_ measurement: PressureMeasurement) -> String {
+        let value = pressureValue(measurement.systolic, measurement.diastolic)
+        guard let pulse = measurement.pulse else { return value }
+        return "\(value) · \(pulse)"
+    }
+
+    /// Дата и контекст для строки истории: «Сегодня, 08:10 · Утро».
+    static func measurementSubtitle(_ measurement: PressureMeasurement, now: Date) -> String {
+        let date = historyDate(measurement.date, now: now)
+        guard let context = measurement.context else { return date }
+        return "\(date) · \(context.title)"
+    }
+
+    /// Пульс с единицей: «70 уд/мин», без значения прочерк.
+    static func pulseValue(_ pulse: Int?) -> String {
+        guard let pulse else { return dash }
+        return "\(pulse) \(AppUnit.pulse)"
     }
 
     static func range(_ range: ClosedRange<Int>?) -> String {

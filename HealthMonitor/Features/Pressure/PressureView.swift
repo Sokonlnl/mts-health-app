@@ -25,11 +25,7 @@ struct PressureView: View {
         }
         .task {
             await viewModel.load()
-            if viewModel.opensSheetOnAppear {
-                viewModel.opensSheetOnAppear = false
-                try? await Task.sleep(nanoseconds: 600_000_000)
-                viewModel.openSheet()
-            }
+            await viewModel.presentSheetIfRequested()
         }
     }
 
@@ -55,26 +51,13 @@ struct PressureView: View {
     private var stateContent: some View {
         switch viewModel.screenState {
         case .loading:
-            SkeletonCard(identifier: "loading-state")
-            SkeletonCard()
-            SkeletonCard()
+            SkeletonList()
         case .error(let message):
-            StateMessageView(
-                icon: "exclamationmark.triangle",
-                title: "Не удалось загрузить данные",
-                message: message,
-                identifier: "error-state",
-                actionTitle: "Повторить",
-                action: { Task { await viewModel.reload() } }
-            )
+            ErrorStateView(message: message, retry: { Task { await viewModel.reload() } })
         case .empty:
             latestCard
-            StateMessageView(
-                icon: "heart.text.square",
-                title: "Пока нет измерений",
+            EmptyStateView(
                 message: "Добавьте первое измерение, и здесь появятся график и история.",
-                identifier: "empty-state",
-                actionTitle: "Добавить измерение",
                 action: { viewModel.openSheet() }
             )
         case .content:
@@ -93,12 +76,13 @@ struct PressureView: View {
         latestCard
         chartCard
         PressureWhyCard(zone: viewModel.latest?.zone)
-        PressureHistoryList(items: viewModel.history, dateText: { viewModel.dateText(for: $0) })
+        PressureHistoryList(rows: viewModel.historyRows)
     }
 
     private var latestCard: some View {
         PressureLatestCard(
-            latest: viewModel.latest,
+            zone: viewModel.latest?.zone,
+            valueText: viewModel.latestValueText,
             dateText: viewModel.latestDateText,
             pulseText: viewModel.pulseText,
             rangeText: viewModel.rangeText,
@@ -108,15 +92,12 @@ struct PressureView: View {
 
     private var chartCard: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
-            Text("Динамика")
-                .textStyle(.headline)
-                .foregroundStyle(AppColor.textPrimary)
-                .accessibilityAddTraits(.isHeader)
+            SectionHeader(title: "Динамика")
             if viewModel.periodMeasurements.isEmpty {
                 Text("За выбранный период измерений нет.")
                     .textStyle(.body)
                     .foregroundStyle(AppColor.textSecondary)
-                    .frame(maxWidth: .infinity, minHeight: Size.chartHeight / 2)
+                    .frame(maxWidth: .infinity, minHeight: Size.chartEmpty)
             } else {
                 PressureChartView(
                     measurements: viewModel.periodMeasurements,
@@ -128,8 +109,6 @@ struct PressureView: View {
             }
             PressureChartLegend()
         }
-        .padding(Spacing.l)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle()
     }
 }

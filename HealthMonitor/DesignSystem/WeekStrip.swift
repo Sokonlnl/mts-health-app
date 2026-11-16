@@ -10,9 +10,7 @@ struct WeekStrip: View {
                 column(day)
             }
         }
-        .padding(.vertical, Spacing.m)
-        .padding(.horizontal, Spacing.s)
-        .cardStyle()
+        .cardStyle(insets: CardInsets.compact)
     }
 
     private func column(_ day: WeekDay) -> some View {
