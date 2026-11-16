@@ -1,0 +1,67 @@
+included:
+  - HealthMonitor
+  - HealthMonitorTests
+  - HealthMonitorUITests
+
+opt_in_rules:
+  - closure_spacing
+  - contains_over_first_not_nil
+  - empty_count
+  - empty_string
+  - explicit_init
+  - first_where
+  - last_where
+  - joined_default_parameter
+  - modifier_order
+  - multiline_parameters
+  - operator_usage_whitespace
+  - redundant_nil_coalescing
+  - sorted_first_last
+  - toggle_bool
+  - vertical_whitespace_closing_braces
+  - force_unwrapping
+
+line_length:
+  warning: 140
+  error: 200
+
+identifier_name:
+  min_length: 1
+  max_length: 50
+
+type_name:
+  max_length: 50
+
+# Хардкод запрещён везде, кроме HealthMonitor/DesignSystem/ и тестов.
+custom_rules:
+  no_hardcoded_colors:
+    name: "Хардкод цвета"
+    message: "Цвета берутся из DesignSystem (AppColor), не литералами."
+    regex: '(Color\(\s*red:|Color\(\s*hex|UIColor\(\s*red|UIColor\(\s*hex|#colorLiteral|Color\(\s*white:|Color\(\s*uiColor:\s*UIColor\(\s*(red|white))'
+    included: 'HealthMonitor/.*\.swift'
+    excluded: 'HealthMonitor/DesignSystem/|HealthMonitorTests/|HealthMonitorUITests/'
+    severity: error
+
+  no_hardcoded_fonts:
+    name: "Хардкод шрифта"
+    message: "Шрифты берутся из DesignSystem (AppTypography), не .font(.system(size:))."
+    regex: '\.font\(\s*\.system\(\s*size:'
+    included: 'HealthMonitor/.*\.swift'
+    excluded: 'HealthMonitor/DesignSystem/|HealthMonitorTests/|HealthMonitorUITests/'
+    severity: error
+
+  no_hardcoded_spacing:
+    name: "Хардкод отступа"
+    message: "Отступы берутся из DesignSystem (Spacing), не числом."
+    regex: '(\.padding\(\s*(\.\w+\s*,\s*)?[0-9]|spacing:\s*[1-9])'
+    included: 'HealthMonitor/.*\.swift'
+    excluded: 'HealthMonitor/DesignSystem/|HealthMonitorTests/|HealthMonitorUITests/'
+    severity: error
+
+  no_hardcoded_radius:
+    name: "Хардкод радиуса"
+    message: "Радиусы берутся из DesignSystem (Radius), не числом."
+    regex: '(\.cornerRadius\(\s*[0-9]|cornerRadius:\s*[0-9])'
+    included: 'HealthMonitor/.*\.swift'
+    excluded: 'HealthMonitor/DesignSystem/|HealthMonitorTests/|HealthMonitorUITests/'
+    severity: error

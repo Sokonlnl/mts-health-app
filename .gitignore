@@ -1,2 +1,21 @@
 # Third-party reference screenshots (Mobbin): internal use only, never publish
 docs/design/references/
+
+# Xcode / Swift
+DerivedData/
+build/
+.build/
+*.xcodeproj
+*.xcworkspace
+*.xcresult
+xcuserdata/
+*.xcuserstate
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+.swiftpm/
+Packages/
+.DS_Store
+screenshots/
