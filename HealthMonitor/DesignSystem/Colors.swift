@@ -43,13 +43,18 @@ enum AppColor {
 
     // Главный экран (эталон Figma 47:2127)
     static let homeBackground = Color(hex: 0x000000)
-    /// Стеклянная плитка: заливка, внутреннее свечение (-17,-17, blur 40) и тонкие кромки.
-    static let tileFill = Color.white.opacity(0.01)
+    /// Стеклянная плитка: заливка 3%, свечение в правом нижнем углу и градиентная кромка 1 pt
+    /// (ярко сверху-слева, слабо в середине, заметно снизу-справа).
+    static let tileFill = Color.white.opacity(0.03)
     static let tileInnerGlow = Color.white.opacity(0.14)
-    static let tileRim = Color.white.opacity(0.25)
-    /// Кнопка профиля: заливка и кромка.
+    static let tileRimTop = Color.white.opacity(0.32)
+    static let tileRimMid = Color.white.opacity(0.05)
+    static let tileRimBottom = Color.white.opacity(0.22)
+    /// Кнопка профиля: заливка и кромка (ярче плитки).
     static let profileFill = Color.white.opacity(0.03)
-    static let profileRim = Color.white.opacity(0.55)
+    static let profileRimTop = Color.white.opacity(0.7)
+    static let profileRimMid = Color.white.opacity(0.15)
+    static let profileRimBottom = Color.white.opacity(0.5)
     /// Кнопка с зелёным свечением (GlowButton).
     static let glowButtonFill = Color(hex: 0x0F0034, opacity: 0.23)
     static let glowButtonEdge = Color(hex: 0x13D694)

@@ -32,7 +32,11 @@ struct DomeGlow: View {
             Ellipse()
                 .fill(
                     RadialGradient(
-                        colors: [palette.c4.opacity(Size.domeOpacity), palette.c0.opacity(0)],
+                        stops: [
+                            .init(color: Color.white.opacity(Size.domeCenterWhite), location: 0),
+                            .init(color: palette.c4.opacity(Size.domeOpacity), location: 0.4),
+                            .init(color: palette.c0.opacity(0), location: 1)
+                        ],
                         center: .center,
                         startRadius: 0,
                         endRadius: Size.domeCoreWidth / 2

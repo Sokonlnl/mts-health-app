@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// Бенто главного экрана: слева большая плитка, справа колонка из двух одинаковых плиток.
-/// Высота `Size.bentoHeight`, зазор `Spacing.tileGap`; плитки (`glassTile()`) заполняют отданное место.
+/// Высота не меньше `Size.bentoHeight` и растёт вместе с текстом при крупном шрифте; зазор `Spacing.tileGap`.
+/// Плитки (`glassTile()`) заполняют отданное место.
 /// Контейнер раскладки, а не плитка: плитки остаются `MetricCard(layout: .tile)` и `SkeletonTile`.
 struct BentoGrid<Main: View, Side: View>: View {
     @ViewBuilder let main: () -> Main
@@ -11,11 +12,13 @@ struct BentoGrid<Main: View, Side: View>: View {
     var body: some View {
         HStack(spacing: Spacing.tileGap) {
             main()
+                .frame(minHeight: Size.bentoHeight, maxHeight: .infinity)
             VStack(spacing: Spacing.tileGap) {
                 side()
             }
+            .frame(minHeight: Size.bentoHeight, maxHeight: .infinity)
         }
-        .frame(height: Size.bentoHeight)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 

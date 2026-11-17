@@ -13,7 +13,7 @@ enum Spacing {
     /// Минимальная цель нажатия (HIG).
     static let minTapTarget: CGFloat = 44
     /// Нижний запас прокрутки: последняя карточка поднимается выше плавающей навигации и затухающего низа.
-    static let tabBarClearance: CGFloat = 200
+    static let tabBarClearance: CGFloat = 240
     /// Зазор между плитками показателей главного экрана.
     static let tileGap: CGFloat = 9
     /// Зазор между блоками колонки главного экрана (кнопка, «Показатели», бенто, карточки).

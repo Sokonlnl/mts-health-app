@@ -8,7 +8,7 @@ struct AppTextStyle {
     let design: Font.Design
     let tracking: CGFloat
     let textStyle: UIFont.TextStyle
-    /// Верхний предел роста размера при Dynamic Type (во сколько раз).
+    /// Верхний предел роста размера при Dynamic Type (во сколько раз). Ограничены только крупные числа.
     let maxScale: CGFloat
 
     init(
@@ -17,7 +17,7 @@ struct AppTextStyle {
         design: Font.Design = .default,
         tracking: CGFloat = 0,
         textStyle: UIFont.TextStyle,
-        maxScale: CGFloat = 2
+        maxScale: CGFloat = .greatestFiniteMagnitude
     ) {
         self.size = size
         self.weight = weight
@@ -53,13 +53,13 @@ enum AppTypography {
     static let bodyStrong = AppTextStyle(size: 15, weight: .semibold, textStyle: .body)
     static let body = AppTextStyle(size: 15, weight: .regular, textStyle: .body)
     static let label = AppTextStyle(size: 14, weight: .medium, textStyle: .subheadline)
-    static let tileLabel = AppTextStyle(size: 14, weight: .regular, tracking: -0.28, textStyle: .subheadline, maxScale: 1.3)
+    static let tileLabel = AppTextStyle(size: 14, weight: .regular, tracking: -0.28, textStyle: .subheadline)
     static let tileValue = AppTextStyle(size: 38, weight: .light, tracking: -1.8, textStyle: .largeTitle, maxScale: 1.3)
-    static let insightTitle = AppTextStyle(size: 22, weight: .regular, tracking: -0.3, textStyle: .title2, maxScale: 1.3)
-    static let insightSummary = AppTextStyle(size: 14, weight: .regular, textStyle: .subheadline, maxScale: 1.3)
-    static let tileUnit = AppTextStyle(size: 13, weight: .regular, textStyle: .caption1, maxScale: 1.3)
+    static let insightTitle = AppTextStyle(size: 22, weight: .regular, tracking: -0.3, textStyle: .title2)
+    static let insightSummary = AppTextStyle(size: 14, weight: .regular, textStyle: .subheadline)
+    static let tileUnit = AppTextStyle(size: 13, weight: .regular, textStyle: .caption1)
     static let cardValue = AppTextStyle(size: 38, weight: .regular, tracking: -1.2, textStyle: .largeTitle, maxScale: 1.3)
-    static let glowButtonTitle = AppTextStyle(size: 16, weight: .medium, textStyle: .body, maxScale: 1.3)
+    static let glowButtonTitle = AppTextStyle(size: 16, weight: .medium, textStyle: .body)
     static let caption = AppTextStyle(size: 12, weight: .regular, textStyle: .caption1)
     static let captionStrong = AppTextStyle(size: 13, weight: .semibold, textStyle: .caption1)
 }

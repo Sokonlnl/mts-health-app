@@ -33,7 +33,8 @@ struct FloatingTabBar: View {
             }
         }
         .padding(.horizontal, Spacing.xs)
-        .frame(width: Size.tabBarWidth, height: Size.navBar)
+        .frame(width: Size.tabBarWidth)
+        .frame(minHeight: Size.navBar)
         .glassBackground(in: Capsule())
     }
 

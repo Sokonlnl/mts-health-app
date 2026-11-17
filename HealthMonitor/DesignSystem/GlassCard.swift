@@ -20,9 +20,9 @@ enum CardInsets {
 enum GlassStyle {
     /// «Жидкое стекло»: `ultraThinMaterial`, градиент заливки, контур, верхняя кромка, тень (карточки, навигация).
     case material
-    /// Плитка Figma: белый 1%, внутреннее свечение `-17 -17` blur 40, кромки `±1` белый 25%. Без материала.
+    /// Плитка Figma: белый 3%, свечение в правом нижнем углу, градиентная кромка 1 pt. Без материала.
     case tile
-    /// Кнопка профиля Figma: как плитка, но заливка белый 3% и кромка белый 55%.
+    /// Кнопка профиля Figma: как плитка, но кромка ярче (до белого 70%).
     case profile
 }
 
@@ -37,9 +37,17 @@ struct GlassSurface<S: InsettableShape>: View {
             case .material:
                 material
             case .tile:
-                tile(fill: AppColor.tileFill, rim: AppColor.tileRim)
+                tile(
+                    fill: AppColor.tileFill,
+                    rim: [AppColor.tileRimTop, AppColor.tileRimMid, AppColor.tileRimBottom],
+                    glowRadius: Size.tileGlowRadius
+                )
             case .profile:
-                tile(fill: AppColor.profileFill, rim: AppColor.profileRim)
+                tile(
+                    fill: AppColor.profileFill,
+                    rim: [AppColor.profileRimTop, AppColor.profileRimMid, AppColor.profileRimBottom],
+                    glowRadius: Size.profileGlowRadius
+                )
             }
         }
         .accessibilityHidden(true)
@@ -64,18 +72,24 @@ struct GlassSurface<S: InsettableShape>: View {
         .shadow(color: AppColor.shadow, radius: Size.glassShadow)
     }
 
-    private func tile(fill: Color, rim: Color) -> some View {
-        shape.fill(
-            fill
-                .shadow(.inner(
-                    color: AppColor.tileInnerGlow,
-                    radius: Size.tileInnerRadius,
-                    x: -Size.tileInnerOffset,
-                    y: -Size.tileInnerOffset
-                ))
-                .shadow(.inner(color: rim, radius: 0, x: Size.rimOffset, y: Size.rimOffset))
-                .shadow(.inner(color: rim, radius: 0, x: -Size.rimOffset, y: -Size.rimOffset))
-        )
+    /// Плитка Figma: заливка, мягкое свечение в правом нижнем углу и градиентная кромка 1 pt.
+    /// Радиальное свечение и обводка (а не `.shadow(.inner)`) видны и на чёрном фоне.
+    private func tile(fill: Color, rim: [Color], glowRadius: CGFloat) -> some View {
+        ZStack {
+            shape.fill(fill)
+            shape.fill(
+                RadialGradient(
+                    colors: [AppColor.tileInnerGlow, Color.clear],
+                    center: .bottomTrailing,
+                    startRadius: 0,
+                    endRadius: glowRadius
+                )
+            )
+            shape.strokeBorder(
+                LinearGradient(colors: rim, startPoint: .topLeading, endPoint: .bottomTrailing),
+                lineWidth: Size.hairline
+            )
+        }
     }
 }
 

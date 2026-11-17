@@ -23,8 +23,8 @@ struct HomeView: View {
                     DomeGlow(palette: viewModel.glowState.palette, isAnimated: !viewModel.isLoading)
                 }
             }
+            .ignoresSafeArea(edges: .top)
         }
-        .ignoresSafeArea(edges: .top)
         .background(AppColor.homeBackground.ignoresSafeArea())
         .auraBottomBar(fadeColor: AppColor.homeBackground, fadeHeight: Size.homeBottomFadeHeight) { bottomBar }
         .toolbar(.hidden, for: .navigationBar)

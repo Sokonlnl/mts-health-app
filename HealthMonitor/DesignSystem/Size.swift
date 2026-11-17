@@ -48,35 +48,37 @@ enum Size {
     static let homeInsightTop: CGFloat = 238
     /// Высота бенто (большая плитка слева и две плитки справа).
     static let bentoHeight: CGFloat = 270
-    /// Высота свечения-купола: слой в макете сдвинут вверх (top −251 вместо −168), к ~350 свечение гаснет.
-    static let domeHeight: CGFloat = 350
+    /// Высота свечения-купола: слой в макете сдвинут вверх (top −251 вместо −168), к ~300 свечение гаснет.
+    static let domeHeight: CGFloat = 300
     static let domeOuterWidth: CGFloat = 560
-    static let domeOuterHeight: CGFloat = 400
-    static let domeOuterCenter: CGFloat = 7
+    static let domeOuterHeight: CGFloat = 340
+    static let domeOuterCenter: CGFloat = 10
     static let domeCoreWidth: CGFloat = 440
     static let domeCoreHeight: CGFloat = 170
-    static let domeCoreCenter: CGFloat = 47
+    static let domeCoreCenter: CGFloat = 50
     static let domeOuterBlur: CGFloat = 60
     static let domeCoreBlur: CGFloat = 36
     /// Доли высоты блока (с учётом выноса вверх): до `domeFadeStart` свечение полное, к `domeFadeEnd` его нет.
-    /// Ярко до ~y 75 от верха экрана, к ~y 320 почти погасло (блок выше экрана на `glowBleed`).
-    static let domeFadeStart: Double = 0.5
-    static let domeFadeEnd: Double = 0.95
-    /// Предел непрозрачности свечения: белый текст на нём сохраняет читаемый контраст.
-    static let domeOpacity: Double = 0.6
+    /// Ярко до ~y 100 от верха экрана, к ~y 290 почти погасло (блок выше экрана на `glowBleed`).
+    static let domeFadeStart: Double = 0.6
+    static let domeFadeEnd: Double = 0.97
+    /// Непрозрачность свечения (текст вывода лежит ниже купола, на чёрном).
+    static let domeOpacity: Double = 0.85
+    /// Белая подмесь в центре ядра купола (почти белый центр, как в макете).
+    static let domeCenterWhite: Double = 0.4
     static let tileHeight: CGFloat = 126
     static let glowButtonHeight: CGFloat = 64
     static let glowButtonIcon: CGFloat = 20
     static let cardIcon: CGFloat = 20
-    /// Внутреннее свечение плитки: blur 40 в Figma соответствует радиусу 20 в SwiftUI.
-    static let tileInnerRadius: CGFloat = 20
-    static let tileInnerOffset: CGFloat = 17
+    /// Радиус свечения в правом нижнем углу плитки бенто и кнопки профиля.
+    static let tileGlowRadius: CGFloat = 170
+    static let profileGlowRadius: CGFloat = 40
     static let rimOffset: CGFloat = 1
     static let glowEdgeRadius: CGFloat = 2.2
     static let glowDeepRadius: CGFloat = 25
     static let glowDeepOffset: CGFloat = 4
     static let tabBarWidth: CGFloat = 292
-    static let homeBottomFadeHeight: CGFloat = 150
+    static let homeBottomFadeHeight: CGFloat = 96
     /// Радиус тени текста на свечении.
     static let textShadowRadius: CGFloat = 12
     static let pressedOpacity: Double = 0.8
