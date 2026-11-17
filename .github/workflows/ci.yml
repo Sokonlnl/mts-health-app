@@ -9,6 +9,32 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Изменение не может менять свои проверки: коммит, который трогает защищённые файлы проверок
+      # (линтер, хуки, агенты, CI, эталоны snapshot, исключения аудита), не должен трогать код приложения.
+      - name: Guard checks
+        run: |
+          BEFORE="${{ github.event.before }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BEFORE" 2>/dev/null; then
+            RANGE="HEAD~1..HEAD"
+          else
+            RANGE="$BEFORE..HEAD"
+          fi
+          GUARDED='^(\.swiftlint\.yml|\.claude/settings\.json|\.claude/hooks/|\.claude/agents/|\.claude/skills/verify/|\.github/workflows/|scripts/|HealthMonitorTests/__Snapshots__/|HealthMonitorUITests/AccessibilityWaivers\.swift)'
+          FAIL=0
+          for C in $(git rev-list "$RANGE"); do
+            FILES=$(git diff-tree --no-commit-id --name-only -r "$C")
+            G=$(echo "$FILES" | grep -E "$GUARDED" || true)
+            A=$(echo "$FILES" | grep -E '^HealthMonitor(Tests|UITests)?/.*\.swift$' | grep -vE "$GUARDED" || true)
+            if [ -n "$G" ] && [ -n "$A" ]; then
+              echo "::error::Коммит $(git log -1 --format='%h %s' "$C") меняет и проверки, и код приложения."
+              echo "Проверки:"; echo "$G"; echo "Код:"; echo "$A"
+              FAIL=1
+            fi
+          done
+          exit $FAIL
 
       - name: Install tools
         run: brew install xcodegen swiftlint

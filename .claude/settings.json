@@ -1,5 +1,45 @@
 {
+  "env": {
+    "COMMIT_GATE_MODE": "enforce"
+  },
+  "permissions": {
+    "ask": [
+      "Edit(.swiftlint.yml)",
+      "Edit(.claude/settings.json)",
+      "Edit(.claude/hooks/**)",
+      "Edit(.claude/agents/**)",
+      "Edit(.claude/skills/verify/**)",
+      "Edit(.github/workflows/**)",
+      "Edit(scripts/**)",
+      "Edit(HealthMonitorTests/__Snapshots__/**)",
+      "Edit(HealthMonitorUITests/AccessibilityWaivers.swift)"
+    ]
+  },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit|Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-checks.mjs\"",
+            "timeout": 10,
+            "statusMessage": "Защита файлов проверок"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/commit-gate.mjs\"",
+            "timeout": 30,
+            "statusMessage": "Ворота коммита: токены, keeper, трейлер"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
@@ -9,19 +49,6 @@
             "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/swift-tokens-lint.mjs\"",
             "timeout": 20,
             "statusMessage": "Проверка токенов дизайн-системы"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash|PowerShell",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/commit-gate.mjs\"",
-            "timeout": 30,
-            "statusMessage": "Ворота коммита: токены и design-system-keeper"
           }
         ]
       }

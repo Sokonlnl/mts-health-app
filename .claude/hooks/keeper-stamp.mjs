@@ -1,18 +1,16 @@
-// SubagentStop (matcher design-system-keeper): записывает время завершения проверки.
-// commit-gate.mjs сравнивает его с временем последней правки Swift-файлов.
+// SubagentStop (matcher design-system-keeper): записывает хеш содержимого Swift-файлов,
+// которое проверил keeper. commit-gate.mjs сравнивает его с текущим хешем.
 import { mkdirSync, writeFileSync, appendFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { readStdinJson, stampPath } from './lib.mjs';
+import { join } from 'node:path';
+import { readStdinJson, stampPath, stateDir, swiftContentHash } from './lib.mjs';
 
 const input = await readStdinJson();
-const agent = input.agent_type || input.subagent_type || input.agent_name || '';
-mkdirSync(dirname(stampPath), { recursive: true });
-appendFileSync(join(dirname(stampPath), 'subagent-stop.log'),
-  `${new Date().toISOString()} agent=${agent || '?'} keys=${Object.keys(input).join(',')}\n`);
+const agent = input.agent_type || '';
+mkdirSync(stateDir, { recursive: true });
+appendFileSync(join(stateDir, 'subagent-stop.log'), `${new Date().toISOString()} agent=${agent || '?'}\n`);
 
-// Если тип агента известен и это не keeper, отметку не ставим.
-if (agent && agent !== 'design-system-keeper') process.exit(0);
-if (!agent) process.exit(0); // без типа агента отметку не ставим: лучше лишний запуск keeper, чем ложный пропуск
+// Отметку ставит только keeper. Без типа агента отметки нет: лучше лишний запуск, чем ложный пропуск.
+if (agent !== 'design-system-keeper') process.exit(0);
 
-const report = String(input.last_assistant_message || '').slice(0, 2000);
-writeFileSync(stampPath, JSON.stringify({ time: Date.now(), agent, report }, null, 2));
+const hash = await swiftContentHash();
+writeFileSync(stampPath, JSON.stringify({ time: Date.now(), hash, agent }, null, 2));

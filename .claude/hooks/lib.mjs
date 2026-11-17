@@ -70,3 +70,25 @@ export function formatViolations(v) {
 }
 
 export const stampPath = join(projectDir, '.claude', 'state', 'keeper-last-run.json');
+export const stateDir = join(projectDir, '.claude', 'state');
+
+/**
+ * Хеш содержимого всех Swift-файлов рабочей копии (отслеживаемых и новых).
+ * Отметка keeper привязана к содержимому, а не ко времени: любое изменение Swift после проверки
+ * даёт другой хеш, а откат правки возвращает прежний.
+ */
+export async function swiftContentHash() {
+  const { createHash } = await import('node:crypto');
+  const { execFileSync } = await import('node:child_process');
+  const files = execFileSync('git', ['ls-files', '-co', '--exclude-standard', '--', '*.swift'],
+    { cwd: projectDir, encoding: 'utf8' }).split('\n').map(s => s.trim()).filter(Boolean).sort();
+  const h = createHash('sha256');
+  for (const f of files) {
+    const p = join(projectDir, f);
+    if (!existsSync(p)) continue;
+    h.update(f + '\0');
+    h.update(readFileSync(p, 'utf8').replace(/\r\n/g, '\n'));
+    h.update('\0');
+  }
+  return h.digest('hex').slice(0, 16);
+}

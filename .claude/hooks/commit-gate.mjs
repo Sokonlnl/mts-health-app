@@ -1,52 +1,84 @@
 // PreToolUse (Bash|PowerShell): ворота перед `git commit`.
-// 1. Хардкод в изменённых Swift-файлах блокирует коммит.
-// 2. Если Swift-файлы менялись после последнего запуска design-system-keeper, коммит блокируется
-//    (правило 4 из CLAUDE.md: «коммит Swift-кода без проверки keeper запрещён»).
-// Отметку о запуске keeper ставит keeper-stamp.mjs (SubagentStop).
+// Режим: переменная COMMIT_GATE_MODE в .claude/settings.json → off | observe | enforce (по умолчанию enforce).
+//   observe: ничего не блокирует, только пишет в .claude/state/gate.log, что было бы заблокировано
+//            (так ловят ложные срабатывания перед включением enforce).
+// Проверки, если в рабочей копии есть изменённые Swift-файлы:
+//   1. Хардкод вне DesignSystem/ (правила из .swiftlint.yml).
+//   2. design-system-keeper проверял ровно текущее содержимое Swift-файлов (хеш, не время).
+//   3. В сообщении коммита есть трейлер `Verified-by:`, так видно, как проверен каждый коммит.
+// Выход из тупика: после двух блокировок в сессии коммит с трейлером `Gate-override: <причина>` проходит,
+// причина пишется в журнал. Так агент не застревает, а обход виден в истории Git.
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { readStdinJson, loadRules, lintFile, formatViolations, projectDir, stampPath } from './lib.mjs';
+import { readStdinJson, loadRules, lintFile, formatViolations, projectDir, stampPath, stateDir, swiftContentHash } from './lib.mjs';
+
+const mode = (process.env.COMMIT_GATE_MODE || 'enforce').toLowerCase();
+if (mode === 'off') process.exit(0);
 
 const input = await readStdinJson();
 const command = String(input?.tool_input?.command || '');
-if (!/\bgit\b[^\n]*\bcommit\b/.test(command)) process.exit(0);
+// Только настоящий вызов `git commit` (в начале команды или после ; && || |), а не упоминание в строке.
+if (!/(?:^|[;&|\n]\s*|\(\s*)git(?:\s+-[^\s]+(?:\s+[^\s-][^\s]*)?)*\s+commit\b/.test(command)) process.exit(0);
 
 const git = (...args) =>
   execFileSync('git', args, { cwd: projectDir, encoding: 'utf8' }).split('\n').map(s => s.trim()).filter(Boolean);
 
-// Staged + изменённые + новые: команда может сама делать `git add` перед `git commit`.
 const files = [...new Set([
   ...git('diff', '--cached', '--name-only', '--diff-filter=ACMR'),
   ...git('diff', '--name-only', '--diff-filter=ACMR'),
   ...git('ls-files', '--others', '--exclude-standard'),
 ])].filter(f => f.endsWith('.swift'));
 
-if (!files.length) process.exit(0);
+mkdirSync(stateDir, { recursive: true });
+const log = msg => appendFileSync(join(stateDir, 'gate.log'), `${new Date().toISOString()} [${mode}] ${msg}\n`);
+
+if (!files.length) { log('pass: нет изменённых Swift-файлов'); process.exit(0); }
 
 const problems = [];
 
 const violations = files.flatMap(f => lintFile(f, loadRules()));
-if (violations.length) {
-  problems.push(`Хардкод вне DesignSystem/:\n${formatViolations(violations)}`);
-}
+if (violations.length) problems.push(`Хардкод вне DesignSystem/:\n${formatViolations(violations)}`);
 
-const newest = Math.max(...files.map(f => {
-  const p = join(projectDir, f);
-  return existsSync(p) ? statSync(p).mtimeMs : 0;
-}));
+const hash = await swiftContentHash();
 let stamp = null;
 try { stamp = JSON.parse(readFileSync(stampPath, 'utf8')); } catch { /* нет отметки */ }
-if (!stamp || stamp.time < newest) {
+if (!stamp || stamp.hash !== hash) {
   problems.push(
-    'design-system-keeper не запускался после последних правок Swift-файлов ' +
-    `(${files.length} файлов, последняя правка ${new Date(newest).toISOString()}` +
-    (stamp ? `, последний запуск keeper ${new Date(stamp.time).toISOString()}` : ', запусков keeper не было') +
-    '). Запусти агента design-system-keeper, исправь найденное и повтори коммит.'
+    `design-system-keeper не проверял текущее содержимое Swift-файлов (хеш ${hash}, ` +
+    (stamp ? `проверен ${stamp.hash || 'без хеша'})` : 'проверок не было)') +
+    '. Запусти design-system-keeper, исправь must-fix и повтори коммит.'
   );
 }
 
-if (problems.length) {
-  process.stderr.write(`Коммит остановлен (.claude/hooks/commit-gate.mjs):\n\n${problems.join('\n\n')}\n`);
-  process.exit(2);
+if (!/Verified-by:/i.test(command)) {
+  problems.push('Нет трейлера `Verified-by:` в сообщении коммита. Пример: `Verified-by: keeper, checklist C01 C05; CI pending`.');
 }
+
+if (!problems.length) { log(`pass: ${files.length} Swift, хеш ${hash}`); process.exit(0); }
+
+// Счётчик блокировок в сессии.
+const countsPath = join(stateDir, 'gate-blocks.json');
+let counts = {};
+try { counts = JSON.parse(readFileSync(countsPath, 'utf8')); } catch { /* пусто */ }
+const session = input.session_id || 'unknown';
+const blocks = counts[session] || 0;
+const override = command.match(/Gate-override:\s*([^\n"']+)/i);
+
+if (mode === 'observe') {
+  log(`would-block: ${problems.map(p => p.split('\n')[0]).join(' | ')}`);
+  process.exit(0);
+}
+if (blocks >= 2 && override) {
+  log(`override after ${blocks} blocks: ${override[1].trim()} | ${problems.map(p => p.split('\n')[0]).join(' | ')}`);
+  process.exit(0);
+}
+
+counts[session] = blocks + 1;
+writeFileSync(countsPath, JSON.stringify(counts, null, 2));
+log(`block #${blocks + 1}: ${problems.map(p => p.split('\n')[0]).join(' | ')}`);
+process.stderr.write(
+  `Коммит остановлен (.claude/hooks/commit-gate.mjs, блокировка ${blocks + 1} в сессии):\n\n${problems.join('\n\n')}\n` +
+  (blocks + 1 >= 2 ? '\nЕсли причина неустранима, добавь трейлер `Gate-override: <причина>`: следующий коммит пройдёт, обход попадёт в журнал.\n' : '')
+);
+process.exit(2);
