@@ -85,10 +85,11 @@ final class PressureAggregationTests: XCTestCase {
     }
 
     func testAxisFormatPerPeriod() {
-        XCTAssertEqual(PressurePeriod.day.axisFormat, .dateTime.hour())
-        XCTAssertEqual(PressurePeriod.week.axisFormat, .dateTime.weekday(.abbreviated))
-        XCTAssertEqual(PressurePeriod.month.axisFormat, .dateTime.day().month(.abbreviated))
-        XCTAssertEqual(PressurePeriod.sixMonths.axisFormat, .dateTime.month(.abbreviated))
+        let locale = AppFormat.locale
+        XCTAssertEqual(PressurePeriod.day.axisFormat, .dateTime.hour().locale(locale))
+        XCTAssertEqual(PressurePeriod.week.axisFormat, .dateTime.weekday(.abbreviated).locale(locale))
+        XCTAssertEqual(PressurePeriod.month.axisFormat, .dateTime.day().month(.abbreviated).locale(locale))
+        XCTAssertEqual(PressurePeriod.sixMonths.axisFormat, .dateTime.month(.abbreviated).locale(locale))
     }
 
     func testPeriodTitles() {
