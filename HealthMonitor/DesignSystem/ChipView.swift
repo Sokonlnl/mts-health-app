@@ -11,10 +11,13 @@ struct ChipView: View {
             Text(title)
                 .textStyle(.bodyStrong)
                 .lineLimit(1)
-                .foregroundStyle(isSelected ? AppColor.accent : AppColor.textSecondary)
+                .minimumScaleFactor(TextScale.compact)
+                .foregroundStyle(isSelected ? AppColor.textPrimary : AppColor.textSecondary)
                 .padding(.horizontal, Spacing.l)
                 .frame(minHeight: Spacing.minTapTarget)
-                .background(isSelected ? AppColor.accentSoft : AppColor.fill, in: Capsule())
+                .background(isSelected ? AppColor.segmentActive : AppColor.fill, in: Capsule())
+                .overlay { Capsule().strokeBorder(isSelected ? AppColor.glassHighlight : AppColor.glassStroke, lineWidth: Size.hairline) }
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
@@ -29,4 +32,5 @@ struct ChipView: View {
         ChipView(title: "После нагрузки", isSelected: false, action: {})
     }
     .padding(Spacing.screenMargin)
+    .background(AppColor.background)
 }

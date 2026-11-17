@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Состояние ошибки: сообщение и кнопка «Повторить».
+/// Состояние ошибки: сообщение в стеклянной карточке и кнопка «Повторить».
 struct ErrorStateView: View {
     let message: String
     var identifier = "error-state"

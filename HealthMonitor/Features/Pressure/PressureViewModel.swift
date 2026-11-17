@@ -98,7 +98,9 @@ final class PressureViewModel {
 
     var chartXDomain: ClosedRange<Date> {
         let end = max(now(), periodMeasurements.last?.date ?? now())
-        return period.startDate(now: end)...end
+        // Небольшой запас справа, чтобы маркер последней точки не обрезался краем графика.
+        let padding = Double(period.days) * 86_400 * 0.03
+        return period.startDate(now: end)...end.addingTimeInterval(padding)
     }
 
     var chartYDomain: ClosedRange<Int> {
@@ -112,6 +114,67 @@ final class PressureViewModel {
         let count = summary.count
         guard count > 0 else { return "\(AppFormat.noMeasurements) за период" }
         return "Измерений: \(count). Диапазон: \(rangeText). Среднее: \(averageText)"
+    }
+
+    // MARK: - Форма и карточки
+
+    /// Состояние последнего измерения: определяет палитру формы.
+    var latestState: HealthState {
+        latest.map { HealthState(zone: $0.zone) } ?? .noData
+    }
+
+    var latestStatusText: String {
+        latest?.zone.title ?? AppFormat.noData
+    }
+
+    /// Строка под значением в форме: «мм рт. ст. · пульс 68».
+    var orbUnitText: String {
+        guard let pulse = latest?.pulse else { return AppUnit.pressure }
+        return "\(AppUnit.pressure) · пульс \(pulse)"
+    }
+
+    /// Дата и контекст под формой: «Сегодня, 08:10 · Утро».
+    var latestSubtitleText: String {
+        guard let latest else { return AppFormat.noMeasurements }
+        return AppFormat.measurementSubtitle(latest, now: now())
+    }
+
+    var latestAccessibilityText: String {
+        guard let latest else { return "Последнее измерение: \(AppFormat.noMeasurements)" }
+        return "Последнее измерение \(latest.systolic) на \(latest.diastolic), \(latest.zone.title.lowercased())"
+    }
+
+    /// Пояснение к зоне последнего измерения для карточки «Почему такой статус».
+    var explanationText: String {
+        latest?.zone.explanation ?? "Добавьте измерение, чтобы увидеть пояснение по зоне."
+    }
+
+    /// Строка результата в шторке: «Будет: Норма» или подсказка ввести значения.
+    var draftResultText: String {
+        guard let zone = draft.zone else { return "Введите значения" }
+        return "Будет: \(zone.title)"
+    }
+
+    /// Зона среднего за период.
+    var averageZone: PressureZone? {
+        guard let top = summary.averageSystolic, let bottom = summary.averageDiastolic else { return nil }
+        return PressureZone.classify(systolic: top, diastolic: bottom)
+    }
+
+    var averageStatusText: String {
+        averageZone?.title ?? AppFormat.noData
+    }
+
+    var systolicRangeText: String {
+        AppFormat.range(summary.systolicRange)
+    }
+
+    /// «В норме N из M»: сколько измерений периода попали в зону нормы.
+    var inNormText: String {
+        let total = periodMeasurements.count
+        guard total > 0 else { return AppFormat.noMeasurements }
+        let normal = periodMeasurements.filter { $0.zone == .normal }.count
+        return "В норме \(normal) из \(total)"
     }
 
     // MARK: - Загрузка
@@ -152,6 +215,31 @@ final class PressureViewModel {
 
     func deleteDigit() {
         draft.deleteLast(from: focusedField)
+    }
+
+    /// Кнопки − и +: меняют значение в выбранном поле на `delta` в пределах правил валидации.
+    /// Пустое поле получает типичное значение.
+    func stepFocused(by delta: Int) {
+        let limits: ClosedRange<Int>
+        let fallback: Int
+        switch focusedField {
+        case .systolic:
+            limits = MeasurementDraft.systolicLimits
+            fallback = 120
+        case .diastolic:
+            limits = MeasurementDraft.diastolicLimits
+            fallback = 80
+        case .pulse:
+            limits = MeasurementDraft.pulseLimits
+            fallback = 70
+        }
+        let current = draft.text(for: focusedField)
+        let next = Int(current).map { min(max($0 + delta, limits.lowerBound), limits.upperBound) } ?? fallback
+        switch focusedField {
+        case .systolic: draft.systolicText = String(next)
+        case .diastolic: draft.diastolicText = String(next)
+        case .pulse: draft.pulseText = String(next)
+        }
     }
 
     func toggleContext(_ context: MeasurementContext) {

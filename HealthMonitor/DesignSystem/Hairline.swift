@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// Тонкий разделитель цвета border. Скрыт от VoiceOver.
+/// Тонкий разделитель цвета hairline (белый 8%). Скрыт от VoiceOver.
 struct Hairline: View {
     /// Для вертикального разделителя задаётся длина.
     var verticalLength: CGFloat?
 
     var body: some View {
         Rectangle()
-            .fill(AppColor.border)
+            .fill(AppColor.hairline)
             .frame(
                 width: verticalLength == nil ? nil : Size.hairline,
                 height: verticalLength ?? Size.hairline
@@ -20,11 +20,11 @@ struct Hairline: View {
     VStack(spacing: Spacing.l) {
         Hairline()
         HStack {
-            Text("Слева").textStyle(.body)
-            Hairline(verticalLength: Size.dayCircle)
-            Text("Справа").textStyle(.body)
+            Text("Слева").textStyle(.body).foregroundStyle(AppColor.textPrimary)
+            Hairline(verticalLength: Size.navItem)
+            Text("Справа").textStyle(.body).foregroundStyle(AppColor.textPrimary)
         }
     }
     .padding(Spacing.screenMargin)
-    .background(AppColor.surface)
+    .background(AppColor.background)
 }

@@ -7,6 +7,10 @@ struct NumericKeypad: View {
 
     private let rows = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
+    private var keyShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
+    }
+
     var body: some View {
         VStack(spacing: Spacing.s) {
             ForEach(rows, id: \.self) { row in
@@ -34,7 +38,8 @@ struct NumericKeypad: View {
                 .textStyle(.headline)
                 .foregroundStyle(AppColor.textPrimary)
                 .frame(maxWidth: .infinity, minHeight: Size.keypadKey)
-                .background(AppColor.fill, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                .background(AppColor.fill, in: keyShape)
+                .contentShape(keyShape)
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("key-\(digit)")
@@ -46,7 +51,8 @@ struct NumericKeypad: View {
                 .font(AppTextStyle.headline.font)
                 .foregroundStyle(AppColor.textPrimary)
                 .frame(maxWidth: .infinity, minHeight: Size.keypadKey)
-                .background(AppColor.fill, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                .background(AppColor.fill, in: keyShape)
+                .contentShape(keyShape)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Удалить цифру")
@@ -57,5 +63,5 @@ struct NumericKeypad: View {
 #Preview("NumericKeypad") {
     NumericKeypad(onDigit: { _ in }, onDelete: {})
         .padding(Spacing.screenMargin)
-        .background(AppColor.surface)
+        .background(AppColor.background)
 }

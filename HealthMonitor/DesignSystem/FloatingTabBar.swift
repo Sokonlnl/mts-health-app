@@ -22,7 +22,7 @@ enum AppTab: String, CaseIterable {
     }
 }
 
-/// Плавающая нижняя навигация-таблетка.
+/// Плавающая нижняя навигация: стеклянная таблетка 64 pt, активный пункт подсвечен белым 14%.
 struct FloatingTabBar: View {
     @Binding var selection: AppTab
 
@@ -32,9 +32,9 @@ struct FloatingTabBar: View {
                 item(tab)
             }
         }
-        .padding(Spacing.xs)
-        .background(AppColor.surface, in: Capsule())
-        .cardShadow()
+        .padding(.horizontal, Spacing.xs)
+        .frame(height: Size.navBar)
+        .glassBackground(in: Capsule())
     }
 
     private func item(_ tab: AppTab) -> some View {
@@ -49,10 +49,12 @@ struct FloatingTabBar: View {
                 Text(tab.title)
                     .textStyle(.caption)
                     .lineLimit(1)
+                    .minimumScaleFactor(TextScale.compact)
             }
-            .foregroundStyle(isSelected ? AppColor.accent : AppColor.textSecondary)
-            .frame(maxWidth: .infinity, minHeight: Size.tabBarItem)
-            .background(isSelected ? AppColor.accentSoft : Color.clear, in: Capsule())
+            .foregroundStyle(isSelected ? AppColor.textPrimary : AppColor.textSecondary)
+            .frame(maxWidth: .infinity, minHeight: Size.navItem)
+            .background(isSelected ? AppColor.fillSelected : Color.clear, in: Capsule())
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
@@ -64,9 +66,12 @@ private struct FloatingTabBarDemo: View {
     @State private var selection = AppTab.home
 
     var body: some View {
-        FloatingTabBar(selection: $selection)
-            .padding(Spacing.screenMargin)
-            .background(AppColor.background)
+        HStack(spacing: Spacing.m) {
+            FloatingTabBar(selection: $selection)
+            IconButton(systemName: "plus", label: "Добавить измерение", diameter: Size.navAdd, action: {})
+        }
+        .padding(Spacing.screenMargin)
+        .background(AppColor.background)
     }
 }
 

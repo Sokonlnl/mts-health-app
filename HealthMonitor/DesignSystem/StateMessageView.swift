@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Сообщение для empty и error состояний, с необязательной кнопкой.
+/// Сообщение для empty и error состояний в стеклянной карточке, с необязательной кнопкой.
 struct StateMessageView: View {
     let icon: String
     let title: String
@@ -13,7 +13,7 @@ struct StateMessageView: View {
         VStack(spacing: Spacing.m) {
             Image(systemName: icon)
                 .font(AppTextStyle.metricCard.font)
-                .foregroundStyle(AppColor.textTertiary)
+                .foregroundStyle(AppColor.textSecondary)
                 .frame(width: Size.stateIcon, height: Size.stateIcon)
                 .accessibilityHidden(true)
             Text(title)
@@ -30,7 +30,7 @@ struct StateMessageView: View {
                     .accessibilityIdentifier("\(identifier)-action")
             }
         }
-        .cardStyle(insets: CardInsets.message)
+        .glassCard(insets: CardInsets.message)
     }
 }
 

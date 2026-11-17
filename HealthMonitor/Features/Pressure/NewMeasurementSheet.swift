@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Шторка «Новое измерение».
+/// Содержимое шторки «Новое измерение» (контейнер и стекло: `glassSheet` в DesignSystem).
 struct NewMeasurementSheet: View {
     @Bindable var viewModel: PressureViewModel
 
@@ -10,19 +10,22 @@ struct NewMeasurementSheet: View {
                 header
                 dateRow
                 fields
+                stepperRow
+                if let hint = viewModel.draft.hint {
+                    Text(hint)
+                        .textStyle(.caption)
+                        .foregroundStyle(AppColor.danger.text)
+                        .accessibilityIdentifier("sheet-hint")
+                }
                 contextChips
-                resultRow
                 NumericKeypad(onDigit: viewModel.inputDigit, onDelete: viewModel.deleteDigit)
                 PrimaryButton(title: "Сохранить", isEnabled: viewModel.draft.isValid, action: viewModel.save)
                     .accessibilityIdentifier("save-button")
             }
-            .padding(Spacing.screenMargin)
+            .padding(.horizontal, Spacing.screenMargin)
+            .padding(.bottom, Spacing.screenMargin)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(AppColor.surface)
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
-        .presentationCornerRadius(Radius.sheet)
     }
 
     private var header: some View {
@@ -72,6 +75,37 @@ struct NewMeasurementSheet: View {
         .accessibilityIdentifier(identifier)
     }
 
+    /// Кнопки − и +, между ними строка «Будет: <статус>» цветом статуса.
+    private var stepperRow: some View {
+        HStack(spacing: Spacing.m) {
+            IconButton(systemName: "minus", label: "Уменьшить значение", diameter: Size.stepperButton) {
+                viewModel.stepFocused(by: -1)
+            }
+            .accessibilityIdentifier("stepper-minus")
+            Spacer(minLength: Spacing.s)
+            result
+            Spacer(minLength: Spacing.s)
+            IconButton(systemName: "plus", label: "Увеличить значение", diameter: Size.stepperButton) {
+                viewModel.stepFocused(by: 1)
+            }
+            .accessibilityIdentifier("stepper-plus")
+        }
+    }
+
+    @ViewBuilder
+    private var result: some View {
+        if let zone = viewModel.draft.zone {
+            Text(viewModel.draftResultText)
+                .textStyle(.bodyStrong)
+                .foregroundStyle(zone.tone.colors.text)
+                .accessibilityIdentifier("sheet-result")
+        } else {
+            Text(viewModel.draftResultText)
+                .textStyle(.caption)
+                .foregroundStyle(AppColor.textSecondary)
+        }
+    }
+
     private var contextChips: some View {
         HStack(spacing: Spacing.s) {
             ForEach(MeasurementContext.allCases) { context in
@@ -81,53 +115,32 @@ struct NewMeasurementSheet: View {
             }
         }
     }
+}
 
-    private var resultRow: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            HStack {
-                Text("Результат")
-                    .textStyle(.label)
-                    .foregroundStyle(AppColor.textSecondary)
-                Spacer(minLength: Spacing.s)
-                if let zone = viewModel.draft.zone {
-                    StatusPill(text: zone.title, tone: zone.tone)
-                        .accessibilityIdentifier("sheet-result")
-                } else {
-                    Text("Введите значения")
-                        .textStyle(.caption)
-                        .foregroundStyle(AppColor.textSecondary)
-                }
-            }
-            if let hint = viewModel.draft.hint {
-                Text(hint)
-                    .textStyle(.caption)
-                    .foregroundStyle(AppColor.danger.text)
-                    .accessibilityIdentifier("sheet-hint")
-            }
-        }
-        .frame(minHeight: Spacing.minTapTarget, alignment: .top)
-    }
+private func sheetPreview(_ configure: (PressureViewModel) -> Void) -> some View {
+    let store = HealthStore(repository: MockHealthRepository(delayNanoseconds: 0))
+    let viewModel = PressureViewModel(store: store)
+    configure(viewModel)
+    return NewMeasurementSheet(viewModel: viewModel)
+        .background(AppColor.background)
 }
 
 #Preview("Шторка: пустая") {
-    let store = HealthStore(repository: MockHealthRepository(delayNanoseconds: 0))
-    return NewMeasurementSheet(viewModel: PressureViewModel(store: store))
+    sheetPreview { _ in }
 }
 
 #Preview("Шторка: заполнена") {
-    let store = HealthStore(repository: MockHealthRepository(delayNanoseconds: 0))
-    let viewModel = PressureViewModel(store: store)
-    viewModel.draft.systolicText = "132"
-    viewModel.draft.diastolicText = "86"
-    viewModel.draft.pulseText = "70"
-    viewModel.draft.context = .morning
-    return NewMeasurementSheet(viewModel: viewModel)
+    sheetPreview { viewModel in
+        viewModel.draft.systolicText = "132"
+        viewModel.draft.diastolicText = "86"
+        viewModel.draft.pulseText = "70"
+        viewModel.draft.context = .morning
+    }
 }
 
 #Preview("Шторка: ошибка ввода") {
-    let store = HealthStore(repository: MockHealthRepository(delayNanoseconds: 0))
-    let viewModel = PressureViewModel(store: store)
-    viewModel.draft.systolicText = "80"
-    viewModel.draft.diastolicText = "90"
-    return NewMeasurementSheet(viewModel: viewModel)
+    sheetPreview { viewModel in
+        viewModel.draft.systolicText = "80"
+        viewModel.draft.diastolicText = "90"
+    }
 }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Главный экран.
+/// Главный экран: заголовок, пилюли, форма Aura, вывод, карточки показателей, плавающая навигация.
 struct HomeView: View {
     @Bindable var viewModel: HomeViewModel
     let onOpenPressure: () -> Void
@@ -15,9 +15,10 @@ struct HomeView: View {
             .padding(.horizontal, Spacing.screenMargin)
             .padding(.top, Spacing.s)
             .padding(.bottom, Spacing.tabBarClearance)
+            .auraScreenBackdrop(palette: viewModel.state.palette, glowHeight: Size.glowHomeHeight)
         }
-        .safeAreaInset(edge: .bottom) { bottomBar }
         .background(AppColor.background)
+        .auraBottomBar { bottomBar }
         .toolbar(.hidden, for: .navigationBar)
         .task { await viewModel.load() }
     }
@@ -28,30 +29,26 @@ struct HomeView: View {
     private var stateContent: some View {
         switch viewModel.screenState {
         case .loading:
-            SkeletonList()
+            SkeletonOrb(diameter: Size.orbHome)
+            SkeletonList(count: 2)
         case .error(let message):
             ErrorStateView(message: message, retry: { Task { await viewModel.reload() } })
         case .empty:
+            pills
+            HomeHeroOrb(hero: viewModel.hero)
             EmptyStateView(
                 message: "Добавьте первое измерение давления, и здесь появится сводка за неделю.",
                 action: onOpenPressure
             )
-            content
         case .content:
-            content
-        }
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        if let syncText = viewModel.syncText {
-            StatusPill(text: syncText, tone: .positive, systemImage: "checkmark.circle.fill")
-        }
-        overviewCard
-        WeekStrip(days: viewModel.weekDays)
-        SectionHeader(title: "Показатели")
-        ForEach(viewModel.cards) { card in
-            metricCard(card)
+            pills
+            HomeHeroOrb(hero: viewModel.hero)
+            HomeHeadline(
+                headline: viewModel.headline,
+                isExpanded: viewModel.isInsightExpanded,
+                onToggle: { withAnimation(Motion.standard) { viewModel.toggleInsight() } }
+            )
+            metrics
         }
     }
 
@@ -59,143 +56,98 @@ struct HomeView: View {
 
     private var header: some View {
         HStack(spacing: Spacing.m) {
-            HStack(spacing: Spacing.s) {
-                Text(viewModel.dateTitle)
-                    .textStyle(.title)
-                    .foregroundStyle(AppColor.textPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(TextScale.title)
-                    .accessibilityIdentifier("home-title")
-                    .accessibilityAddTraits(.isHeader)
-                Image(systemName: "chevron.down")
-                    .font(AppTextStyle.bodyStrong.font)
-                    .foregroundStyle(AppColor.textSecondary)
-                    .accessibilityHidden(true)
-            }
-            Spacer(minLength: 0)
-            Image(systemName: "person.fill")
-                .font(AppTextStyle.bodyStrong.font)
-                .foregroundStyle(AppColor.accent)
-                .frame(width: Size.avatar, height: Size.avatar)
-                .background(AppColor.accentSoft, in: Circle())
-                .accessibilityLabel("Профиль")
-        }
-    }
-
-    private var overviewCard: some View {
-        VStack(alignment: .leading, spacing: Spacing.l) {
-            HStack(alignment: .center, spacing: 0) {
-                ForEach(Array(viewModel.rings.enumerated()), id: \.element.id) { index, ring in
-                    if index > 0 {
-                        Hairline(verticalLength: Size.ring)
-                    }
-                    RingGauge(
-                        progress: ring.progress,
-                        color: ring.kind.color,
-                        centerText: ring.centerText,
-                        caption: ring.kind.title,
-                        isEmpty: ring.isEmpty,
-                        accessibilityText: ring.accessibilityText
-                    )
-                    .frame(maxWidth: .infinity)
-                }
-            }
-            Hairline()
-            insightBlock
-        }
-        .cardStyle(radius: Radius.hero)
-    }
-
-    private var insightBlock: some View {
-        let insight = viewModel.insight
-        return VStack(alignment: .leading, spacing: Spacing.s) {
-            Text(insight.title)
-                .textStyle(.headline)
+            Text(viewModel.dateTitle)
+                .textStyle(.title)
                 .foregroundStyle(AppColor.textPrimary)
-            Text(insight.summary)
-                .textStyle(.body)
-                .foregroundStyle(AppColor.textSecondary)
-            if viewModel.isInsightExpanded {
-                Text(insight.details)
-                    .textStyle(.body)
-                    .foregroundStyle(AppColor.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityIdentifier("insight-details")
-            }
-            Button {
-                withAnimation(Motion.standard) {
-                    viewModel.toggleInsight()
-                }
-            } label: {
-                HStack(spacing: Spacing.xs) {
-                    Text(viewModel.isInsightExpanded ? "Свернуть" : "Подробнее")
-                        .textStyle(.bodyStrong)
-                    Image(systemName: viewModel.isInsightExpanded ? "chevron.up" : "chevron.down")
-                        .font(AppTextStyle.captionStrong.font)
-                        .accessibilityHidden(true)
-                }
-                .foregroundStyle(AppColor.accent)
-                .frame(minHeight: Spacing.minTapTarget)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("insight-toggle")
+                .lineLimit(1)
+                .minimumScaleFactor(TextScale.title)
+                .accessibilityIdentifier("home-title")
+                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: 0)
+            IconButton(systemName: "person.fill", label: "Профиль") { tab = .profile }
+                .accessibilityIdentifier("profile-button")
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    @ViewBuilder
-    private func metricCard(_ card: MetricCardModel) -> some View {
-        let view = MetricCard(
-            kind: card.kind,
-            valueText: card.valueText,
-            unit: card.unit,
-            statusText: card.statusText,
-            tone: card.tone,
-            series: card.series
-        )
-        if card.kind == .pressure {
-            Button(action: onOpenPressure) { view }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("pressure-card")
-        } else {
-            view
+    private var pills: some View {
+        HStack(spacing: 0) {
+            ForEach(viewModel.pills) { pill in
+                MetricPill(
+                    kind: pill.kind,
+                    valueText: pill.valueText,
+                    state: pill.state,
+                    isSelected: pill.isSelected,
+                    accessibilityText: pill.accessibilityText
+                ) {
+                    withAnimation(Motion.palette) { viewModel.select(pill.kind) }
+                }
+                .frame(maxWidth: .infinity)
+            }
         }
+    }
+
+    private var metrics: some View {
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            SectionHeader(title: "Показатели")
+            card(.pressure, layout: .wide)
+                .accessibilityIdentifier("pressure-card")
+            HStack(alignment: .top, spacing: Spacing.m) {
+                card(.pulse)
+                card(.weight)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            card(.glucose)
+        }
+    }
+
+    private func card(_ kind: MetricKind, layout: MetricCard.Layout = .compact) -> some View {
+        let model = viewModel.card(kind)
+        let isPressure = kind == .pressure
+        let noAction: () -> Void = {}
+        return MetricCard(
+            kind: kind,
+            valueText: model.valueText,
+            unit: model.unit,
+            statusText: model.statusText,
+            tone: model.tone,
+            series: model.series,
+            layout: layout,
+            weekBars: isPressure ? viewModel.weekBars : [],
+            // Экранов ввода пульса, веса и глюкозы пока нет: у этих карточек кнопка без действия.
+            onAdd: isPressure ? onOpenPressure : noAction,
+            onOpen: isPressure ? onOpenPressure : nil
+        )
     }
 
     private var bottomBar: some View {
         HStack(spacing: Spacing.m) {
             FloatingTabBar(selection: $tab)
-            IconButton(
-                systemName: "plus",
-                label: "Добавить измерение",
-                style: .accent,
-                diameter: Size.addButton,
-                action: onOpenPressure
-            )
-            .accessibilityIdentifier("add-button")
+            IconButton(systemName: "plus", label: "Добавить измерение", diameter: Size.navAdd, action: onOpenPressure)
+                .accessibilityIdentifier("add-button")
         }
-        .padding(.horizontal, Spacing.screenMargin)
-        .padding(.bottom, Spacing.s)
     }
 }
 
 #Preview("Home: данные") {
     let store = HealthStore(repository: MockHealthRepository(delayNanoseconds: 0))
     return HomeView(viewModel: HomeViewModel(store: store), onOpenPressure: {})
+        .preferredColorScheme(.dark)
 }
 
 #Preview("Home: loading") {
     let store = HealthStore(repository: MockHealthRepository(scenario: .neverLoads))
     return HomeView(viewModel: HomeViewModel(store: store), onOpenPressure: {})
+        .preferredColorScheme(.dark)
 }
 
 #Preview("Home: empty") {
     let store = HealthStore(repository: MockHealthRepository(scenario: .empty, delayNanoseconds: 0))
     return HomeView(viewModel: HomeViewModel(store: store), onOpenPressure: {})
+        .preferredColorScheme(.dark)
 }
 
 #Preview("Home: error") {
     let store = HealthStore(repository: MockHealthRepository(scenario: .failure, delayNanoseconds: 0))
     return HomeView(viewModel: HomeViewModel(store: store), onOpenPressure: {})
+        .preferredColorScheme(.dark)
 }

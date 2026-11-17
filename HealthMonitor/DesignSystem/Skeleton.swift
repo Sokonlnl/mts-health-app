@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// Серый блок-скелетон. Без анимации, чтобы не мешать UI-тестам.
+/// Стеклянный блок-скелетон. Без анимации, чтобы не мешать UI-тестам.
 struct SkeletonBlock: View {
     var width: CGFloat?
     var height: CGFloat = Size.skeletonLine
 
     var body: some View {
         RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
-            .fill(AppColor.fill)
+            .fill(AppColor.fillSelected)
             .frame(width: width, height: height)
     }
 }
@@ -18,12 +18,12 @@ struct SkeletonCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
-            SkeletonBlock(width: Size.sparklineWidth)
+            SkeletonBlock(width: Size.metricIcon * 3)
             SkeletonBlock(height: Size.skeletonValue)
             SkeletonBlock(width: Size.skeletonLineWide)
         }
         .frame(maxWidth: .infinity, minHeight: Size.skeletonCard, alignment: .leading)
-        .cardStyle()
+        .glassCard()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Загрузка")
         .accessibilityIdentifier(identifier)
@@ -45,14 +45,34 @@ struct SkeletonList: View {
     }
 }
 
+/// Тёмная нейтральная форма без вращения для loading-состояния экрана.
+struct SkeletonOrb: View {
+    let diameter: CGFloat
+
+    var body: some View {
+        AuraOrb(palette: .noData, diameter: diameter, isAnimated: false) {
+            VStack(spacing: Spacing.s) {
+                SkeletonBlock(width: Size.skeletonLineWide, height: Size.skeletonValue)
+                SkeletonBlock(width: Size.skeletonLineWide / 2)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Загрузка")
+    }
+}
+
 #Preview("SkeletonCard") {
     SkeletonCard()
         .padding(Spacing.screenMargin)
         .background(AppColor.background)
 }
 
-#Preview("SkeletonList") {
-    SkeletonList()
-        .padding(Spacing.screenMargin)
-        .background(AppColor.background)
+#Preview("SkeletonList + форма") {
+    VStack(spacing: Spacing.l) {
+        SkeletonOrb(diameter: Size.orbPressure)
+        SkeletonList(count: 2)
+    }
+    .padding(Spacing.screenMargin)
+    .background(AppColor.background)
 }

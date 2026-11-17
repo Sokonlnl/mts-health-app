@@ -1,59 +1,88 @@
 import SwiftUI
 
 /// Мини-график. Без данных рисует пунктир.
+/// `marker`: линия с маркером на последней точке (пульс). `forecast`: линия до точки и пунктир вперёд (вес).
 struct Sparkline: View {
+    enum Style {
+        case line
+        case marker
+        case forecast
+    }
+
     let values: [Double]
     let color: Color
+    var style: Style = .line
+
+    /// Доля ширины, которую занимает линия до точки при прогнозе.
+    private let forecastSplit: CGFloat = 0.75
 
     var body: some View {
         GeometryReader { proxy in
             if values.count < 2 {
-                dashedLine(in: proxy.size)
+                dashedLine(from: 0, to: proxy.size.width, y: proxy.size.height / 2, color: AppColor.textTertiary)
             } else {
-                linePath(in: proxy.size)
-                    .stroke(color, style: StrokeStyle(lineWidth: Size.sparklineLine, lineCap: .round, lineJoin: .round))
+                chart(in: proxy.size)
             }
         }
-        .frame(width: Size.sparklineWidth, height: Size.sparklineHeight)
+        .frame(height: Size.sparklineHeight)
         .accessibilityHidden(true)
     }
 
-    private func dashedLine(in size: CGSize) -> some View {
+    private func chart(in size: CGSize) -> some View {
+        let usable = style == .forecast ? size.width * forecastSplit : size.width
+        let points = makePoints(in: CGSize(width: usable, height: size.height))
+        let last = points.last ?? .zero
+        return ZStack(alignment: .topLeading) {
+            Path { path in
+                path.addLines(points)
+            }
+            .stroke(color, style: StrokeStyle(lineWidth: Size.sparklineLine, lineCap: .round, lineJoin: .round))
+            if style == .forecast {
+                dashedLine(from: last.x, to: size.width, y: last.y, color: color.opacity(0.5))
+            }
+            if style != .line {
+                AuraMarker(glow: color.opacity(0.35), glowDiameter: Size.sparklineDot * 2, dotDiameter: Size.sparklineDot)
+                    .position(last)
+            }
+        }
+    }
+
+    private func dashedLine(from start: CGFloat, to end: CGFloat, y: CGFloat, color: Color) -> some View {
         Path { path in
-            path.move(to: CGPoint(x: 0, y: size.height / 2))
-            path.addLine(to: CGPoint(x: size.width, y: size.height / 2))
+            path.move(to: CGPoint(x: start, y: y))
+            path.addLine(to: CGPoint(x: end, y: y))
         }
         .stroke(
-            AppColor.textTertiary,
+            color,
             style: StrokeStyle(lineWidth: Size.sparklineLine, lineCap: .round, dash: [Spacing.xs, Spacing.s])
         )
     }
 
-    private func linePath(in size: CGSize) -> Path {
+    private func makePoints(in size: CGSize) -> [CGPoint] {
         let low = values.min() ?? 0
         let high = values.max() ?? 1
         let span = max(high - low, 0.0001)
-        let step = size.width / CGFloat(values.count - 1)
-        var path = Path()
-        for (index, value) in values.enumerated() {
+        let inset = Size.sparklineDot
+        let step = (size.width - inset) / CGFloat(values.count - 1)
+        return values.enumerated().map { index, value in
             let ratio = CGFloat((value - low) / span)
-            let point = CGPoint(x: CGFloat(index) * step, y: size.height - ratio * size.height)
-            if index == 0 {
-                path.move(to: point)
-            } else {
-                path.addLine(to: point)
-            }
+            return CGPoint(x: CGFloat(index) * step, y: inset + (size.height - 2 * inset) * (1 - ratio))
         }
-        return path
     }
 }
 
 #Preview("Sparkline: данные") {
-    Sparkline(values: [3, 5, 4, 7, 6, 9, 8], color: AppColor.pressure)
-        .padding(Spacing.l)
+    VStack(spacing: Spacing.l) {
+        Sparkline(values: [3, 5, 4, 7, 6, 9, 8], color: AppColor.pressure)
+        Sparkline(values: [66, 68, 65, 70, 67, 69], color: AppColor.pulse, style: .marker)
+        Sparkline(values: [73.2, 73, 72.8, 72.6, 72.4], color: AppColor.weight, style: .forecast)
+    }
+    .padding(Spacing.l)
+    .background(AppColor.background)
 }
 
 #Preview("Sparkline: пусто") {
     Sparkline(values: [], color: AppColor.glucose)
         .padding(Spacing.l)
+        .background(AppColor.background)
 }

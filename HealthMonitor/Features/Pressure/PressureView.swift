@@ -1,33 +1,34 @@
 import SwiftUI
 
-/// Экран давления.
+/// Экран давления: шапка, форма, периоды, график, среднее и диапазон, пояснение, история, шторка.
 struct PressureView: View {
     @Bindable var viewModel: PressureViewModel
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-                .padding(.horizontal, Spacing.screenMargin)
-                .padding(.vertical, Spacing.s)
-            ScrollView {
-                VStack(alignment: .leading, spacing: Spacing.l) {
-                    stateContent
-                }
-                .padding(.horizontal, Spacing.screenMargin)
-                .padding(.bottom, Spacing.xxl)
+        ScrollView {
+            VStack(alignment: .leading, spacing: Spacing.l) {
+                header
+                stateContent
             }
+            .padding(.horizontal, Spacing.screenMargin)
+            .padding(.top, Spacing.s)
+            .padding(.bottom, Spacing.tabBarClearance)
+            .auraScreenBackdrop(palette: viewModel.latestState.palette, glowHeight: Size.glowPressureHeight)
         }
         .background(AppColor.background)
-        .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $viewModel.isSheetPresented) {
+        .auraBottomBar { addBar }
+        .glassSheet(isPresented: $viewModel.isSheetPresented) {
             NewMeasurementSheet(viewModel: viewModel)
         }
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             await viewModel.load()
             await viewModel.presentSheetIfRequested()
         }
     }
+
+    // MARK: - Шапка и нижняя кнопка
 
     private var header: some View {
         HStack {
@@ -35,12 +36,12 @@ struct PressureView: View {
                 .accessibilityIdentifier("back-button")
             Spacer(minLength: Spacing.s)
             Text("Давление")
-                .textStyle(.headline)
+                .textStyle(.headlineCompact)
                 .foregroundStyle(AppColor.textPrimary)
                 .accessibilityIdentifier("pressure-title")
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: Spacing.s)
-            IconButton(systemName: "plus", label: "Добавить измерение", style: .accent) {
+            IconButton(systemName: "plus", label: "Добавить измерение") {
                 viewModel.openSheet()
             }
             .accessibilityIdentifier("pressure-add-button")
@@ -48,14 +49,30 @@ struct PressureView: View {
     }
 
     @ViewBuilder
+    private var addBar: some View {
+        switch viewModel.screenState {
+        case .content, .empty:
+            PrimaryButton(title: "Добавить измерение", style: .glass) {
+                viewModel.openSheet()
+            }
+            .accessibilityIdentifier("pressure-add-bottom")
+        case .loading, .error:
+            EmptyView()
+        }
+    }
+
+    // MARK: - Состояния
+
+    @ViewBuilder
     private var stateContent: some View {
         switch viewModel.screenState {
         case .loading:
-            SkeletonList()
+            SkeletonOrb(diameter: Size.orbPressure)
+            SkeletonList(count: 2)
         case .error(let message):
             ErrorStateView(message: message, retry: { Task { await viewModel.reload() } })
         case .empty:
-            latestCard
+            hero
             EmptyStateView(
                 message: "Добавьте первое измерение, и здесь появятся график и история.",
                 action: { viewModel.openSheet() }
@@ -67,32 +84,33 @@ struct PressureView: View {
 
     @ViewBuilder
     private var content: some View {
+        hero
         SegmentedPicker(
             options: PressurePeriod.allCases,
             selection: $viewModel.period,
             title: { $0.title },
             identifierPrefix: "period"
         )
-        latestCard
         chartCard
-        PressureWhyCard(zone: viewModel.latest?.zone)
+        statCards
+        PressureWhyCard(zone: viewModel.latest?.zone, explanation: viewModel.explanationText)
         PressureHistoryList(rows: viewModel.historyRows)
     }
 
-    private var latestCard: some View {
-        PressureLatestCard(
-            zone: viewModel.latest?.zone,
+    private var hero: some View {
+        PressureHero(
+            state: viewModel.latestState,
             valueText: viewModel.latestValueText,
-            dateText: viewModel.latestDateText,
-            pulseText: viewModel.pulseText,
-            rangeText: viewModel.rangeText,
-            averageText: viewModel.averageText
+            unitText: viewModel.orbUnitText,
+            statusText: viewModel.latestStatusText,
+            subtitle: viewModel.latestSubtitleText,
+            accessibilityText: viewModel.latestAccessibilityText
         )
     }
 
     private var chartCard: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
-            SectionHeader(title: "Динамика")
+            SectionHeader(title: "Динамика", isCompact: true)
             if viewModel.periodMeasurements.isEmpty {
                 Text("За выбранный период измерений нет.")
                     .textStyle(.body)
@@ -104,31 +122,56 @@ struct PressureView: View {
                     period: viewModel.period,
                     xDomain: viewModel.chartXDomain,
                     yDomain: viewModel.chartYDomain,
+                    markerColor: viewModel.latestState.palette.markerGlow,
                     accessibilityValue: viewModel.chartAccessibilityValue
                 )
+                .contentSwap(viewModel.period)
             }
             PressureChartLegend()
         }
-        .cardStyle()
+        .glassCard()
+    }
+
+    private var statCards: some View {
+        HStack(alignment: .top, spacing: Spacing.m) {
+            StatCard(
+                title: "Среднее",
+                value: viewModel.averageText,
+                detail: viewModel.averageStatusText,
+                detailTone: viewModel.averageZone?.tone ?? .neutral
+            )
+            .accessibilityIdentifier("pressure-average")
+            StatCard(
+                title: "Диапазон верхнего",
+                value: viewModel.systolicRangeText,
+                detail: viewModel.inNormText
+            )
+            .accessibilityIdentifier("pressure-range")
+        }
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
 #Preview("Давление: данные") {
     let store = HealthStore(repository: MockHealthRepository(delayNanoseconds: 0))
     return PressureView(viewModel: PressureViewModel(store: store))
+        .preferredColorScheme(.dark)
 }
 
 #Preview("Давление: loading") {
     let store = HealthStore(repository: MockHealthRepository(scenario: .neverLoads))
     return PressureView(viewModel: PressureViewModel(store: store))
+        .preferredColorScheme(.dark)
 }
 
 #Preview("Давление: empty") {
     let store = HealthStore(repository: MockHealthRepository(scenario: .empty, delayNanoseconds: 0))
     return PressureView(viewModel: PressureViewModel(store: store))
+        .preferredColorScheme(.dark)
 }
 
 #Preview("Давление: error") {
     let store = HealthStore(repository: MockHealthRepository(scenario: .failure, delayNanoseconds: 0))
     return PressureView(viewModel: PressureViewModel(store: store))
+        .preferredColorScheme(.dark)
 }

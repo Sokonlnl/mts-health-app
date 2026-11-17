@@ -1,58 +1,35 @@
 import Charts
 import SwiftUI
 
-/// График давления: две линии, цветные зоны по верхнему давлению, точка последнего значения.
+/// График давления: цветные зоны по верхнему давлению, пунктир границ зон, две линии, точка последнего значения.
+/// Границы зон берутся из `PressureZone.systolicBand`, не литералами.
 struct PressureChartView: View {
     let measurements: [PressureMeasurement]
     let period: PressurePeriod
     let xDomain: ClosedRange<Date>
     let yDomain: ClosedRange<Int>
+    let markerColor: Color
     let accessibilityValue: String
+
+    private let dash: [CGFloat] = [Spacing.xs, Spacing.xs]
+
+    /// Границы повышенной зоны по верхнему давлению: начало и верхняя граница.
+    private var elevatedBand: ClosedRange<Int> {
+        PressureZone.elevated.systolicBand(within: yDomain)
+    }
 
     var body: some View {
         Chart {
-            ForEach(PressureZone.allCases, id: \.self) { zone in
-                RectangleMark(
-                    xStart: .value("Начало", xDomain.lowerBound),
-                    xEnd: .value("Конец", xDomain.upperBound),
-                    yStart: .value("От", zone.systolicBand(within: yDomain).lowerBound),
-                    yEnd: .value("До", zone.systolicBand(within: yDomain).upperBound)
-                )
-                .foregroundStyle(zone.chartColor)
-            }
-            ForEach(measurements) { item in
-                LineMark(
-                    x: .value("Время", item.date),
-                    y: .value("Верхнее", item.systolic),
-                    series: .value("Показатель", "Верхнее")
-                )
-                .foregroundStyle(AppColor.pressure)
-                .interpolationMethod(.monotone)
-                LineMark(
-                    x: .value("Время", item.date),
-                    y: .value("Нижнее", item.diastolic),
-                    series: .value("Показатель", "Нижнее")
-                )
-                .foregroundStyle(AppColor.textSecondary)
-                .interpolationMethod(.monotone)
-            }
-            if let last = measurements.last {
-                PointMark(x: .value("Время", last.date), y: .value("Верхнее", last.systolic))
-                    .foregroundStyle(AppColor.pressure)
-                    .symbolSize(Size.chartPoint)
-                PointMark(x: .value("Время", last.date), y: .value("Нижнее", last.diastolic))
-                    .foregroundStyle(AppColor.textSecondary)
-                    .symbolSize(Size.chartPoint)
-            }
+            zoneBands
+            zoneBorders
+            lines
+            lastPoint
         }
         .chartXScale(domain: xDomain)
         .chartYScale(domain: yDomain)
         .chartLegend(.hidden)
-        .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 4)) { _ in
-                AxisValueLabel(format: period.axisFormat)
-            }
-        }
+        .chartXAxis { xAxis }
+        .chartYAxis { yAxis }
         .chartPlotStyle { plot in
             plot.clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
         }
@@ -63,32 +40,105 @@ struct PressureChartView: View {
         .accessibilityValue(accessibilityValue)
         .accessibilityIdentifier("pressure-chart")
     }
-}
 
-/// Легенда: линии и цветные зоны.
-struct PressureChartLegend: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            HStack(spacing: Spacing.l) {
-                entry(color: AppColor.pressure, title: "Верхнее", isZone: false)
-                entry(color: AppColor.textSecondary, title: "Нижнее", isZone: false)
-            }
-            HStack(spacing: Spacing.l) {
-                ForEach(PressureZone.allCases, id: \.self) { zone in
-                    entry(color: zone.chartColor, title: zone.title, isZone: true)
+    // MARK: - Содержимое графика
+
+    @ChartContentBuilder
+    private var zoneBands: some ChartContent {
+        ForEach(PressureZone.allCases, id: \.self) { zone in
+            RectangleMark(
+                xStart: .value("Начало", xDomain.lowerBound),
+                xEnd: .value("Конец", xDomain.upperBound),
+                yStart: .value("От", zone.systolicBand(within: yDomain).lowerBound),
+                yEnd: .value("До", zone.systolicBand(within: yDomain).upperBound)
+            )
+            .foregroundStyle(zone.chartColor)
+        }
+    }
+
+    @ChartContentBuilder
+    private var zoneBorders: some ChartContent {
+        RuleMark(y: .value("Граница", elevatedBand.lowerBound))
+            .foregroundStyle(AppColor.zoneLineElevated)
+            .lineStyle(StrokeStyle(lineWidth: Size.hairline, dash: dash))
+        RuleMark(y: .value("Граница", elevatedBand.upperBound))
+            .foregroundStyle(AppColor.zoneLineHigh)
+            .lineStyle(StrokeStyle(lineWidth: Size.hairline, dash: dash))
+    }
+
+    @ChartContentBuilder
+    private var lines: some ChartContent {
+        ForEach(measurements) { item in
+            LineMark(
+                x: .value("Время", item.date),
+                y: .value("Верхнее", item.systolic),
+                series: .value("Показатель", "Верхнее")
+            )
+            .foregroundStyle(AppColor.chartUpper)
+            .lineStyle(StrokeStyle(lineWidth: Size.chartLineUpper, lineCap: .round, lineJoin: .round))
+            .interpolationMethod(.monotone)
+            LineMark(
+                x: .value("Время", item.date),
+                y: .value("Нижнее", item.diastolic),
+                series: .value("Показатель", "Нижнее")
+            )
+            .foregroundStyle(AppColor.chartLower)
+            .lineStyle(StrokeStyle(lineWidth: Size.chartLineLower, lineCap: .round, lineJoin: .round))
+            .interpolationMethod(.monotone)
+        }
+    }
+
+    @ChartContentBuilder
+    private var lastPoint: some ChartContent {
+        if let last = measurements.last {
+            PointMark(x: .value("Время", last.date), y: .value("Верхнее", last.systolic))
+                .symbol {
+                    AuraMarker(glow: markerColor, glowDiameter: Size.chartMarkerGlow, dotDiameter: Size.chartMarkerDot)
+                }
+        }
+    }
+
+    // MARK: - Оси
+
+    @AxisContentBuilder
+    private var xAxis: some AxisContent {
+        AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+            AxisValueLabel(format: period.axisFormat)
+                .foregroundStyle(AppColor.textTertiary)
+        }
+    }
+
+    /// Метки границ зон: «130» и «140+».
+    @AxisContentBuilder
+    private var yAxis: some AxisContent {
+        AxisMarks(values: [elevatedBand.lowerBound, elevatedBand.upperBound]) { value in
+            AxisValueLabel {
+                if let number = value.as(Int.self) {
+                    Text(number == elevatedBand.upperBound ? "\(number)+" : "\(number)")
+                        .textStyle(.caption)
+                        .foregroundStyle(AppColor.textSecondary)
                 }
             }
         }
+    }
+}
+
+/// Легенда: верхнее и нижнее.
+struct PressureChartLegend: View {
+    var body: some View {
+        HStack(spacing: Spacing.l) {
+            entry(color: AppColor.chartUpper, title: "Верхнее")
+            entry(color: AppColor.chartLower, title: "Нижнее")
+        }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Легенда: верхнее и нижнее давление; зоны Норма, Повышенное, Высокое")
+        .accessibilityLabel("Легенда: верхнее и нижнее давление")
     }
 
-    private func entry(color: Color, title: String, isZone: Bool) -> some View {
+    private func entry(color: Color, title: String) -> some View {
         HStack(spacing: Spacing.xs) {
-            Circle()
+            Capsule()
                 .fill(color)
-                .overlay { Circle().stroke(isZone ? AppColor.border : Color.clear, lineWidth: Size.hairline) }
-                .frame(width: Size.legendDot, height: Size.legendDot)
+                .frame(width: Size.legendLine, height: Size.chartLineLower)
             Text(title)
                 .textStyle(.caption)
                 .foregroundStyle(AppColor.textSecondary)
@@ -112,12 +162,14 @@ struct PressureChartLegend: View {
         PressureChartView(
             measurements: items,
             period: .week,
-            xDomain: now.addingTimeInterval(-7 * 86_400)...now,
+            xDomain: now.addingTimeInterval(-7 * 86_400)...now.addingTimeInterval(86_400),
             yDomain: 60...160,
+            markerColor: HealthState.normal.palette.markerGlow,
             accessibilityValue: "Предпросмотр"
         )
         PressureChartLegend()
     }
+    .glassCard()
     .padding(Spacing.l)
-    .background(AppColor.surface)
+    .background(AppColor.background)
 }

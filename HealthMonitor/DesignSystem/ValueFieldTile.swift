@@ -8,6 +8,10 @@ struct ValueFieldTile: View {
     let isFocused: Bool
     let action: () -> Void
 
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
+    }
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: Spacing.xs) {
@@ -15,7 +19,7 @@ struct ValueFieldTile: View {
                     .textStyle(.caption)
                     .foregroundStyle(AppColor.textSecondary)
                 Text(text.isEmpty ? AppFormat.dash : text)
-                    .textStyle(.metricCard)
+                    .textStyle(.metricCardSmall)
                     // Прочерк декоративный: название и единица остаются textSecondary (DESIGN.md, «Контраст»).
                     .foregroundStyle(text.isEmpty ? AppColor.textTertiary : AppColor.textPrimary)
                     .lineLimit(1)
@@ -23,13 +27,17 @@ struct ValueFieldTile: View {
                 Text(unit)
                     .textStyle(.caption)
                     .foregroundStyle(AppColor.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(TextScale.compact)
             }
             .frame(maxWidth: .infinity, minHeight: Size.fieldTile)
             .padding(.vertical, Spacing.s)
-            .background(AppColor.fill, in: RoundedRectangle(cornerRadius: Radius.controlLarge, style: .continuous))
+            .background(AppColor.fill, in: shape)
             .overlay {
-                RoundedRectangle(cornerRadius: Radius.controlLarge, style: .continuous)
-                    .stroke(isFocused ? AppColor.accent : Color.clear, lineWidth: Size.focusRing)
+                shape.strokeBorder(
+                    isFocused ? AppColor.textPrimary : AppColor.glassStroke,
+                    lineWidth: isFocused ? Size.focusRing : Size.hairline
+                )
             }
         }
         .buttonStyle(.plain)
@@ -47,5 +55,5 @@ struct ValueFieldTile: View {
         ValueFieldTile(title: "Пульс", text: "68", unit: AppUnit.pulse, isFocused: false, action: {})
     }
     .padding(Spacing.screenMargin)
-    .background(AppColor.surface)
+    .background(AppColor.background)
 }

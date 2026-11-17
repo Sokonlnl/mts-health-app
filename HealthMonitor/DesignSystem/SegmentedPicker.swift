@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Переключатель периодов (День, Неделя, Месяц, 6 мес).
+/// Переключатель периодов (День, Неделя, Месяц, 6 мес) в стеклянной капсуле. Активный сегмент белый 16%.
 struct SegmentedPicker<Option: Hashable>: View {
     let options: [Option]
     @Binding var selection: Option
@@ -14,13 +14,13 @@ struct SegmentedPicker<Option: Hashable>: View {
             }
         }
         .padding(Spacing.xs)
-        .background(AppColor.segmentTrack, in: RoundedRectangle(cornerRadius: Radius.controlLarge, style: .continuous))
+        .glassBackground(in: Capsule())
     }
 
     private func segment(_ option: Option) -> some View {
         let isSelected = option == selection
         return Button {
-            withAnimation(Motion.fast) {
+            withAnimation(Motion.segment) {
                 selection = option
             }
         } label: {
@@ -29,13 +29,13 @@ struct SegmentedPicker<Option: Hashable>: View {
                 .lineLimit(1)
                 .minimumScaleFactor(TextScale.compact)
                 .foregroundStyle(isSelected ? AppColor.textPrimary : AppColor.textSecondary)
-                .frame(maxWidth: .infinity, minHeight: Spacing.minTapTarget)
+                .frame(maxWidth: .infinity, minHeight: Size.segmentHeight)
                 .background {
                     if isSelected {
-                        RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
-                            .fill(AppColor.surface)
+                        Capsule().fill(AppColor.segmentActive)
                     }
                 }
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])

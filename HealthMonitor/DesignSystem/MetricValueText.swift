@@ -20,10 +20,13 @@ struct MetricValueText: View {
                 .lineLimit(1)
                 .minimumScaleFactor(TextScale.metric)
                 .accessibilityIdentifier(valueIdentifier)
-            Text(unit)
-                .textStyle(.label)
-                .foregroundStyle(AppColor.textSecondary)
-                .lineLimit(1)
+            if !unit.isEmpty {
+                Text(unit)
+                    .textStyle(.label)
+                    .foregroundStyle(AppColor.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(TextScale.compact)
+            }
         }
     }
 }
@@ -31,9 +34,9 @@ struct MetricValueText: View {
 #Preview("MetricValueText") {
     VStack(alignment: .leading, spacing: Spacing.l) {
         MetricValueText(value: "122/79", unit: AppUnit.pressure)
-        MetricValueText(value: "132/86", unit: AppUnit.pressure, style: .metricHero, spacing: Spacing.s)
+        MetricValueText(value: "72,4", unit: AppUnit.weight, style: .metricCardSmall)
         MetricValueText(value: AppFormat.dash, unit: AppUnit.glucose, isPlaceholder: true)
     }
     .padding(Spacing.screenMargin)
-    .background(AppColor.surface)
+    .background(AppColor.background)
 }

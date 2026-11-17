@@ -12,9 +12,12 @@ enum Spacing {
     static let screenMargin: CGFloat = 16
     /// Минимальная цель нажатия (HIG).
     static let minTapTarget: CGFloat = 44
-    /// Нижний запас прокрутки главного экрана под плавающей навигацией (таблетка 60 + кнопка «+» 56 + тень):
-    /// последняя карточка прокручивается выше таблетки.
-    static let tabBarClearance: CGFloat = 80
+    /// Нижний запас прокрутки: последняя карточка поднимается выше плавающей навигации и затухающего низа.
+    static let tabBarClearance: CGFloat = 150
+    /// Внутренний отступ стандартной карточки.
+    static let cardPadding: CGFloat = 18
+    /// Вертикальный отступ карточки-списка (у строк свои отступы).
+    static let cardListVertical: CGFloat = 6
 }
 
 #Preview("Spacing") {
@@ -27,8 +30,9 @@ enum Spacing {
             HStack {
                 Text("\(item.0) \(Int(item.1))")
                     .textStyle(.label)
+                    .foregroundStyle(AppColor.textPrimary)
                     .frame(width: 80, alignment: .leading)
-                Rectangle().fill(AppColor.accent).frame(width: item.1, height: item.1)
+                Rectangle().fill(AppColor.textSecondary).frame(width: item.1, height: item.1)
             }
         }
     }

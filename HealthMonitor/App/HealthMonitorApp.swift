@@ -19,6 +19,7 @@ struct HealthMonitorApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(home: home, pressure: pressure, initialPath: config.initialPath)
+                .preferredColorScheme(.dark)
         }
     }
 }

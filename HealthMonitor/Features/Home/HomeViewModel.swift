@@ -1,43 +1,15 @@
 import Foundation
 import Observation
 
-/// Данные кольца на главном экране.
-struct RingItem: Identifiable, Equatable {
-    let kind: MetricKind
-    let centerText: String
-    let progress: Double
-    let isEmpty: Bool
-
-    var id: String { kind.id }
-
-    var accessibilityText: String {
-        isEmpty ? "нет данных" : "в норме \(centerText) дней"
-    }
-}
-
-/// Данные карточки показателя.
-struct MetricCardModel: Identifiable, Equatable {
-    let kind: MetricKind
-    let valueText: String?
-    let unit: String
-    let statusText: String
-    let tone: StatusTone
-    let series: [Double]
-
-    var id: String { kind.id }
-
-    static func empty(_ kind: MetricKind, unit: String) -> MetricCardModel {
-        MetricCardModel(kind: kind, valueText: nil, unit: unit, statusText: AppFormat.noData, tone: .neutral, series: [])
-    }
-}
-
 @MainActor
 @Observable
 final class HomeViewModel {
-    private let store: HealthStore
-    @ObservationIgnored private let now: () -> Date
+    let store: HealthStore
+    @ObservationIgnored let now: () -> Date
 
     var isInsightExpanded = false
+    /// Главный показатель: определяет форму, палитру и заголовок-вывод.
+    private(set) var selectedKind: MetricKind = .pressure
 
     init(store: HealthStore, now: @escaping () -> Date = { Date() }) {
         self.store = store
@@ -54,6 +26,10 @@ final class HomeViewModel {
 
     var weekDays: [WeekDay] {
         WeekOverview.days(measurements: store.data.pressure, now: now())
+    }
+
+    var weekBars: [WeekBar] {
+        WeekBars.make(measurements: store.data.pressure, now: now())
     }
 
     var insight: WeekInsight {
@@ -80,6 +56,10 @@ final class HomeViewModel {
         ]
     }
 
+    func card(_ kind: MetricKind) -> MetricCardModel {
+        cards.first { $0.kind == kind } ?? .empty(kind, unit: "")
+    }
+
     func load() async {
         await store.loadIfNeeded()
     }
@@ -90,6 +70,13 @@ final class HomeViewModel {
 
     func toggleInsight() {
         isInsightExpanded.toggle()
+    }
+
+    /// Выбор главного показателя. Развёрнутый вывод сворачивается.
+    func select(_ kind: MetricKind) {
+        guard kind != selectedKind else { return }
+        selectedKind = kind
+        isInsightExpanded = false
     }
 
     private func ring(_ kind: MetricKind, days: Int, hasData: Bool) -> RingItem {
