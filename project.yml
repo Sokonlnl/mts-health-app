@@ -14,6 +14,12 @@ settings:
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
 
+packages:
+  # Визуальная регрессия по пикселям (HealthMonitorTests/SnapshotTests.swift)
+  SnapshotTesting:
+    url: https://github.com/pointfreeco/swift-snapshot-testing
+    minorVersion: 1.17.0
+
 targets:
   HealthMonitor:
     type: application
@@ -39,8 +45,11 @@ targets:
     platform: iOS
     sources:
       - path: HealthMonitorTests
+        excludes:
+          - "__Snapshots__/**"
     dependencies:
       - target: HealthMonitor
+      - package: SnapshotTesting
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.healthmonitor.tests

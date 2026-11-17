@@ -52,6 +52,7 @@ private struct OrbLayers: View {
     let isAnimated: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.isAmbientMotionEnabled) private var isAmbientMotionEnabled
     @State private var spinA = 0.0
     @State private var spinB = 0.0
     @State private var spinContour = 0.0
@@ -101,7 +102,8 @@ private struct OrbLayers: View {
     }
 
     private func startMotion() {
-        guard isAnimated, !reduceMotion else { return }
+        // Флаги читаются один раз при появлении: snapshot-тесты задают их до рендера.
+        guard isAnimated, !reduceMotion, isAmbientMotionEnabled else { return }
         withAnimation(Motion.orbSpinA) { spinA = 360 }
         withAnimation(Motion.orbSpinB) { spinB = -360 }
         withAnimation(Motion.orbSpinContour) { spinContour = 360 }

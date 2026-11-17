@@ -18,8 +18,12 @@ final class HealthStore {
     @ObservationIgnored private let repository: HealthRepository
     @ObservationIgnored private var loadTask: Task<Void, Never>?
 
-    init(repository: HealthRepository) {
+    /// Часы для отметки синхронизации. В snapshot-тестах подменяются фиксированным временем.
+    @ObservationIgnored private let clock: () -> Date
+
+    init(repository: HealthRepository, clock: @escaping () -> Date = { Date() }) {
         self.repository = repository
+        self.clock = clock
     }
 
     var screenState: ScreenState {
@@ -82,7 +86,7 @@ final class HealthStore {
         switch result {
         case .success(let loaded):
             data = loaded
-            lastSync = Date()
+            lastSync = clock()
             state = .loaded
         case .failure(let error):
             state = .failed(error.localizedDescription)

@@ -32,10 +32,18 @@ jobs:
           echo "Using simulator $UDID"
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
-      - name: Build and test
+      - name: Boot simulator
         run: |
-          set -o pipefail
-          mkdir -p build
+          xcrun simctl boot "${{ steps.sim.outputs.udid }}" || true
+          xcrun simctl bootstatus "${{ steps.sim.outputs.udid }}" -b
+
+      - name: Build and test (with simulator video)
+        run: |
+          mkdir -p build/video
+          # Видео всего прогона: UI-тесты, скриншоты, аудит доступности.
+          xcrun simctl io "${{ steps.sim.outputs.udid }}" recordVideo --codec=h264 --force build/video/ui-tests.mp4 &
+          REC_PID=$!
+          set +e
           xcodebuild test \
             -project HealthMonitor.xcodeproj \
             -scheme HealthMonitor \
@@ -44,6 +52,27 @@ jobs:
             -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             | tee build/xcodebuild.log
+          STATUS=${PIPESTATUS[0]}
+          kill -INT "$REC_PID" 2>/dev/null
+          wait "$REC_PID" 2>/dev/null
+          exit $STATUS
+
+      - name: Upload simulator video
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-video
+          path: build/video/ui-tests.mp4
+          if-no-files-found: warn
+
+      - name: Upload snapshot references
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          # Новые эталоны, записанные в этом прогоне (режим .missing), для просмотра и коммита.
+          name: snapshots
+          path: HealthMonitorTests/__Snapshots__
+          if-no-files-found: ignore
 
       - name: Package simulator app
         if: always()

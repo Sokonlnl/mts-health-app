@@ -19,3 +19,5 @@ xcuserdata/
 Packages/
 .DS_Store
 screenshots/
+.claude/state/
+.claude/settings.local.json

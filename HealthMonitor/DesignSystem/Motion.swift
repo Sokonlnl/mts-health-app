@@ -40,6 +40,19 @@ enum Motion {
         .combined(with: .scale(scale: 0.98))
 }
 
+/// Фоновое движение (вращение и «дыхание» формы Aura). Выключается в snapshot-тестах,
+/// чтобы кадр был детерминированным. Системный `accessibilityReduceMotion` проверяется отдельно.
+private struct AmbientMotionKey: EnvironmentKey {
+    static let defaultValue = true
+}
+
+extension EnvironmentValues {
+    var isAmbientMotionEnabled: Bool {
+        get { self[AmbientMotionKey.self] }
+        set { self[AmbientMotionKey.self] = newValue }
+    }
+}
+
 #Preview("Motion") {
     MotionDemo()
 }

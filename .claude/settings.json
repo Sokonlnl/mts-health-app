@@ -1,0 +1,42 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/swift-tokens-lint.mjs\"",
+            "timeout": 20,
+            "statusMessage": "Проверка токенов дизайн-системы"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/commit-gate.mjs\"",
+            "timeout": 30,
+            "statusMessage": "Ворота коммита: токены и design-system-keeper"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "design-system-keeper",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/keeper-stamp.mjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
