@@ -123,7 +123,7 @@ struct MetricCard: View {
         } else {
             HStack(spacing: Spacing.s) {
                 Image(systemName: kind.iconName)
-                    .font(AppTextStyle.captionStrong.font)
+                    .textStyle(.captionStrong)
                     .foregroundStyle(kind.color)
                     .frame(width: Size.metricIcon, height: Size.metricIcon)
                     .background(AppColor.fill, in: Circle())

@@ -27,9 +27,11 @@ struct AppTextStyle {
         self.maxScale = maxScale
     }
 
-    /// Шрифт с учётом Dynamic Type (размер масштабируется относительно textStyle).
-    var font: Font {
-        let scaled = UIFontMetrics(forTextStyle: textStyle).scaledValue(for: size)
+    /// Шрифт для заданной категории Dynamic Type (размер масштабируется относительно textStyle, не выше maxScale).
+    /// Снаружи используй только `.textStyle(_:)`: он берёт категорию из окружения и перерисовывается при её смене.
+    fileprivate func font(for category: UIContentSizeCategory) -> Font {
+        let traits = UITraitCollection(preferredContentSizeCategory: category)
+        let scaled = UIFontMetrics(forTextStyle: textStyle).scaledValue(for: size, compatibleWith: traits)
         return .system(size: min(scaled, size * maxScale), weight: weight, design: design)
     }
 }
@@ -81,10 +83,42 @@ extension AppTextStyle {
     static let captionStrong = AppTypography.captionStrong
 }
 
+/// Применяет стиль с учётом `dynamicTypeSize` из окружения: при смене размера текста
+/// в настройках (или в аудите доступности) шрифт пересчитывается. Найдено аудитом доступности (QA-010).
+private struct TextStyleModifier: ViewModifier {
+    let style: AppTextStyle
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    func body(content: Content) -> some View {
+        content
+            .font(style.font(for: Self.category(for: dynamicTypeSize)))
+            .tracking(style.tracking)
+    }
+
+    /// Явное соответствие размеров SwiftUI категориям UIKit (без опоры на конвертер SDK).
+    private static func category(for size: DynamicTypeSize) -> UIContentSizeCategory {
+        switch size {
+        case .xSmall: return .extraSmall
+        case .small: return .small
+        case .medium: return .medium
+        case .large: return .large
+        case .xLarge: return .extraLarge
+        case .xxLarge: return .extraExtraLarge
+        case .xxxLarge: return .extraExtraExtraLarge
+        case .accessibility1: return .accessibilityMedium
+        case .accessibility2: return .accessibilityLarge
+        case .accessibility3: return .accessibilityExtraLarge
+        case .accessibility4: return .accessibilityExtraExtraLarge
+        case .accessibility5: return .accessibilityExtraExtraExtraLarge
+        @unknown default: return .large
+        }
+    }
+}
+
 extension View {
     /// Применяет токен типографики: `Text("...").textStyle(.title)`.
     func textStyle(_ style: AppTextStyle) -> some View {
-        font(style.font).tracking(style.tracking)
+        modifier(TextStyleModifier(style: style))
     }
 }
 

@@ -12,7 +12,7 @@ struct IconButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(AppTextStyle.headline.font)
+                .textStyle(.headline)
                 .foregroundStyle(AppColor.textPrimary)
                 .frame(width: diameter, height: diameter)
                 .glassBackground(in: Circle(), style: surface)
