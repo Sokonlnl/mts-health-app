@@ -41,7 +41,7 @@ struct PressureView: View {
                 .accessibilityIdentifier("pressure-title")
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: Spacing.s)
-            IconButton(systemName: "plus", label: "Добавить измерение") {
+            IconButton(systemName: "plus", label: AppFormat.addMeasurement) {
                 viewModel.openSheet()
             }
             .accessibilityIdentifier("pressure-add-button")
@@ -52,7 +52,7 @@ struct PressureView: View {
     private var addBar: some View {
         switch viewModel.screenState {
         case .content, .empty:
-            PrimaryButton(title: "Добавить измерение", style: .glass) {
+            PrimaryButton(title: AppFormat.addMeasurement, style: .glass) {
                 viewModel.openSheet()
             }
             .accessibilityIdentifier("pressure-add-bottom")

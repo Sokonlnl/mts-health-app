@@ -54,7 +54,9 @@ enum AppTypography {
     static let body = AppTextStyle(size: 15, weight: .regular, textStyle: .body)
     static let label = AppTextStyle(size: 14, weight: .medium, textStyle: .subheadline)
     static let tileLabel = AppTextStyle(size: 14, weight: .regular, tracking: -0.28, textStyle: .subheadline, maxScale: 1.3)
-    static let tileValue = AppTextStyle(size: 28, weight: .light, tracking: -1.8, textStyle: .title1, maxScale: 1.3)
+    static let tileValue = AppTextStyle(size: 38, weight: .light, tracking: -1.8, textStyle: .largeTitle, maxScale: 1.3)
+    static let insightTitle = AppTextStyle(size: 22, weight: .regular, tracking: -0.3, textStyle: .title2, maxScale: 1.3)
+    static let insightSummary = AppTextStyle(size: 14, weight: .regular, textStyle: .subheadline, maxScale: 1.3)
     static let tileUnit = AppTextStyle(size: 13, weight: .regular, textStyle: .caption1, maxScale: 1.3)
     static let cardValue = AppTextStyle(size: 38, weight: .regular, tracking: -1.2, textStyle: .largeTitle, maxScale: 1.3)
     static let glowButtonTitle = AppTextStyle(size: 16, weight: .medium, textStyle: .body, maxScale: 1.3)
@@ -76,6 +78,8 @@ extension AppTextStyle {
     static let label = AppTypography.label
     static let tileLabel = AppTypography.tileLabel
     static let tileValue = AppTypography.tileValue
+    static let insightTitle = AppTypography.insightTitle
+    static let insightSummary = AppTypography.insightSummary
     static let tileUnit = AppTypography.tileUnit
     static let cardValue = AppTypography.cardValue
     static let glowButtonTitle = AppTypography.glowButtonTitle
@@ -97,22 +101,24 @@ private struct TextStyleModifier: ViewModifier {
 
     /// Явное соответствие размеров SwiftUI категориям UIKit (без опоры на конвертер SDK).
     private static func category(for size: DynamicTypeSize) -> UIContentSizeCategory {
-        switch size {
-        case .xSmall: return .extraSmall
-        case .small: return .small
-        case .medium: return .medium
-        case .large: return .large
-        case .xLarge: return .extraLarge
-        case .xxLarge: return .extraExtraLarge
-        case .xxxLarge: return .extraExtraExtraLarge
-        case .accessibility1: return .accessibilityMedium
-        case .accessibility2: return .accessibilityLarge
-        case .accessibility3: return .accessibilityExtraLarge
-        case .accessibility4: return .accessibilityExtraExtraLarge
-        case .accessibility5: return .accessibilityExtraExtraExtraLarge
-        @unknown default: return .large
-        }
+        categories[size] ?? .large
     }
+
+    /// Таблица вместо switch: SwiftLint ограничивает цикломатическую сложность функции 10.
+    private static let categories: [DynamicTypeSize: UIContentSizeCategory] = [
+        .xSmall: .extraSmall,
+        .small: .small,
+        .medium: .medium,
+        .large: .large,
+        .xLarge: .extraLarge,
+        .xxLarge: .extraExtraLarge,
+        .xxxLarge: .extraExtraExtraLarge,
+        .accessibility1: .accessibilityMedium,
+        .accessibility2: .accessibilityLarge,
+        .accessibility3: .accessibilityExtraLarge,
+        .accessibility4: .accessibilityExtraExtraLarge,
+        .accessibility5: .accessibilityExtraExtraExtraLarge
+    ]
 }
 
 extension View {

@@ -25,6 +25,8 @@ enum Size {
     /// Диаметры свечения и белой точки маркера: по умолчанию и на графике давления.
     static let markerGlow: CGFloat = 26
     static let markerDot: CGFloat = 12
+    /// Непрозрачность свечения маркера мини-графика (как у `AuraPalette.markerGlow`).
+    static let markerGlowOpacity: Double = 0.35
     static let chartMarkerGlow: CGFloat = 24
     static let chartMarkerDot: CGFloat = 10
 
@@ -38,23 +40,28 @@ enum Size {
     static let glowFadeEnd: Double = 1
 
     // Главный экран (эталон Figma 47:2127)
-    /// Верх ряда плиток от верха экрана и высота свечения-купола.
-    static let homeTilesTop: CGFloat = 470
-    /// Верх ряда плиток в состояниях empty и error (вывода нет, пустой купол не нужен).
+    /// Верх колонки (кнопка «Давление», «Показатели», бенто) от верха экрана.
+    static let homeColumnTop: CGFloat = 447
+    /// Верх колонки в состояниях empty и error (вывода нет, пустая зона под ним не нужна).
     static let homeCompactTop: CGFloat = 220
-    static let domeHeight: CGFloat = 470
+    /// Верх заголовка-вывода от верха экрана.
+    static let homeInsightTop: CGFloat = 238
+    /// Высота бенто (большая плитка слева и две плитки справа).
+    static let bentoHeight: CGFloat = 270
+    /// Высота свечения-купола: слой в макете сдвинут вверх (top −251 вместо −168), к ~350 свечение гаснет.
+    static let domeHeight: CGFloat = 350
     static let domeOuterWidth: CGFloat = 560
     static let domeOuterHeight: CGFloat = 400
-    static let domeOuterCenter: CGFloat = 90
+    static let domeOuterCenter: CGFloat = 7
     static let domeCoreWidth: CGFloat = 440
     static let domeCoreHeight: CGFloat = 170
-    static let domeCoreCenter: CGFloat = 130
+    static let domeCoreCenter: CGFloat = 47
     static let domeOuterBlur: CGFloat = 60
     static let domeCoreBlur: CGFloat = 36
     /// Доли высоты блока (с учётом выноса вверх): до `domeFadeStart` свечение полное, к `domeFadeEnd` его нет.
-    /// Конец стоит выше низа блока, чтобы под текстом вывода свечения не было.
-    static let domeFadeStart: Double = 0.4
-    static let domeFadeEnd: Double = 0.75
+    /// Ярко до ~y 75 от верха экрана, к ~y 320 почти погасло (блок выше экрана на `glowBleed`).
+    static let domeFadeStart: Double = 0.5
+    static let domeFadeEnd: Double = 0.95
     /// Предел непрозрачности свечения: белый текст на нём сохраняет читаемый контраст.
     static let domeOpacity: Double = 0.6
     static let tileHeight: CGFloat = 126
@@ -78,6 +85,9 @@ enum Size {
     // Карточки и графики
     static let metricIcon: CGFloat = 32
     static let sparklineHeight: CGFloat = 40
+    /// Мини-график в тёмной карточке пульса: 141×44 по макету.
+    static let sparklineSolidWidth: CGFloat = 141
+    static let sparklineSolidHeight: CGFloat = 44
     static let sparklineLine: CGFloat = 2
     static let sparklineDot: CGFloat = 8
     static let chartHeight: CGFloat = 190

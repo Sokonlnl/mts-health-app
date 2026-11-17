@@ -32,8 +32,6 @@ struct SkeletonCard: View {
 
 /// Скелетон плитки (loading).
 struct SkeletonTile: View {
-    var identifier = "skeleton-tile"
-
     var body: some View {
         VStack(spacing: Spacing.s) {
             SkeletonBlock(width: Size.metricIcon * 1.5)
@@ -44,7 +42,33 @@ struct SkeletonTile: View {
         .glassTile()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Загрузка")
+        .accessibilityIdentifier("skeleton-tile")
+    }
+}
+
+/// Скелетон вывода («Всё спокойно» и пояснение) в зоне свечения. Первый скелетон экрана: `loading-state`.
+struct SkeletonHeadline: View {
+    var identifier = "loading-state"
+
+    var body: some View {
+        VStack(spacing: Spacing.headlineGap) {
+            SkeletonBlock(width: Size.skeletonLineWide, height: Size.skeletonValue)
+            SkeletonBlock(width: Size.skeletonLineWide * 2)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Загрузка")
         .accessibilityIdentifier(identifier)
+    }
+}
+
+/// Скелетон кнопки «Давление» (loading).
+struct SkeletonButton: View {
+    var body: some View {
+        SkeletonBlock(height: Size.glowButtonHeight)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Загрузка")
+            .accessibilityIdentifier("skeleton-button")
     }
 }
 
@@ -80,11 +104,16 @@ struct SkeletonOrb: View {
     }
 }
 
-#Preview("SkeletonTile") {
-    HStack(spacing: Spacing.tileGap) {
-        SkeletonTile()
-        SkeletonTile()
-        SkeletonTile()
+#Preview("SkeletonTile, вывод, кнопка") {
+    VStack(spacing: Spacing.columnGap) {
+        SkeletonHeadline()
+        SkeletonButton()
+        BentoGrid {
+            SkeletonTile()
+        } side: {
+            SkeletonTile()
+            SkeletonTile()
+        }
     }
     .padding(Spacing.screenMargin)
     .background(AppColor.homeBackground)

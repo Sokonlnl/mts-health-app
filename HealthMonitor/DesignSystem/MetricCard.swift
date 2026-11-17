@@ -3,11 +3,12 @@ import SwiftUI
 /// Карточка показателя на главном экране.
 ///
 /// Раскладка (`layout`):
-/// - `.tile`: стеклянная плитка 126 pt (подпись, значение, единица, статус зоны текстом), без иконки и графика.
+/// - `.tile`: стеклянная плитка бенто (подпись, значение 38, единица, статус зоны текстом), без иконки и графика.
+///   Заполняет высоту, которую отдаёт `BentoGrid`.
 /// - `.compact`: карточка с иконкой, значением, статусом и мини-графиком.
 ///
 /// Поверхность (`surface`) у `.compact`: `.glass` (стекло, радиус 28) или `.solid` (#202020, контур #383838,
-/// радиус 32, контент по центру). Цвет статуса задаёт `tone`.
+/// радиус 32, иконка и название слева сверху, остальное по центру, график 141×44). Цвет статуса задаёт `tone`.
 /// Пустое состояние: `valueText == nil` (прочерк; VoiceOver читает «Нет данных»).
 struct MetricCard: View {
     enum Layout {
@@ -28,10 +29,8 @@ struct MetricCard: View {
     var series: [Double] = []
     var layout: Layout = .compact
     var surface: Surface = .glass
-    /// Мини-график в `.compact`.
-    var showsSparkline = true
-    /// Действие кнопки пустой карточки. `nil`: кнопка выключена.
-    var onAdd: (() -> Void)?
+    /// Стиль мини-графика (приходит из модели карточки).
+    var sparklineStyle: Sparkline.Style = .line
 
     private var isSolid: Bool { surface == .solid }
 
@@ -61,7 +60,7 @@ struct MetricCard: View {
                 .accessibilityHidden(valueText == nil)
             Text(unit)
                 .textStyle(.tileUnit)
-                .foregroundStyle(AppColor.neutral.text)
+                .foregroundStyle(AppColor.textSecondary)
                 .lineLimit(1)
                 .minimumScaleFactor(TextScale.compact)
             if let statusText {
@@ -93,10 +92,12 @@ struct MetricCard: View {
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            if showsSparkline {
-                Spacer(minLength: Spacing.xs)
-                Sparkline(values: series, color: kind.color, style: sparklineStyle)
-            }
+            Spacer(minLength: Spacing.xs)
+            Sparkline(
+                values: series, color: kind.color, style: sparklineStyle,
+                height: isSolid ? Size.sparklineSolidHeight : Size.sparklineHeight
+            )
+            .frame(maxWidth: isSolid ? Size.sparklineSolidWidth : .infinity)
             if valueText == nil {
                 emptyAction
             }
@@ -119,6 +120,7 @@ struct MetricCard: View {
                     .textStyle(.body)
                     .foregroundStyle(AppColor.textPrimary)
                     .lineLimit(1)
+                Spacer(minLength: 0)
             }
         } else {
             HStack(spacing: Spacing.s) {
@@ -149,7 +151,7 @@ struct MetricCard: View {
                     .accessibilityLabel(valueText.map { Text($0) } ?? Text(AppFormat.noData))
                 Text(unit)
                     .textStyle(.tileUnit)
-                    .foregroundStyle(AppColor.neutral.text)
+                    .foregroundStyle(AppColor.textSecondary)
             }
         } else {
             MetricValueText(
@@ -161,24 +163,14 @@ struct MetricCard: View {
         }
     }
 
-    private var sparklineStyle: Sparkline.Style {
-        switch kind {
-        case .pulse: return .marker
-        case .weight: return .forecast
-        case .pressure, .glucose: return .line
-        }
-    }
-
-    /// Кнопка пустой карточки. Без действия (экрана ввода показателя нет) она выключена и объяснена подписью.
+    /// Кнопка пустой карточки. Экрана ввода показателя нет: она всегда выключена и объяснена подписью.
     private var emptyAction: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            PrimaryButton(title: "Добавить измерение", style: .outline, isEnabled: onAdd != nil, action: onAdd ?? {})
+            PrimaryButton(title: AppFormat.addMeasurement, style: .outline, isEnabled: false, action: {})
                 .accessibilityIdentifier("metric-empty-add-\(kind.rawValue)")
-            if onAdd == nil {
-                Text("Ввод этого показателя пока недоступен")
-                    .textStyle(.caption)
-                    .foregroundStyle(AppColor.textSecondary)
-            }
+            Text(AppFormat.inputUnavailable)
+                .textStyle(.caption)
+                .foregroundStyle(AppColor.textSecondary)
         }
     }
 
@@ -199,40 +191,53 @@ struct MetricCard: View {
 }
 
 #Preview("MetricCard: плитки") {
-    VStack(spacing: Spacing.l) {
-        HStack(spacing: Spacing.tileGap) {
-            MetricCard(kind: .pressure, valueText: "122/79", unit: AppUnit.pressure, statusText: "Норма", tone: .positive, layout: .tile)
-            MetricCard(kind: .pulse, valueText: "68", unit: AppUnit.pulse, layout: .tile)
-            MetricCard(kind: .weight, valueText: "74,2", unit: AppUnit.weight, layout: .tile)
+    ScrollView {
+        VStack(spacing: Spacing.l) {
+            BentoGrid {
+                MetricCard(
+                    kind: .pressure, valueText: "122/79", unit: AppUnit.pressure,
+                    statusText: "Норма", tone: .positive, layout: .tile
+                )
+            } side: {
+                MetricCard(kind: .pulse, valueText: "68", unit: AppUnit.pulse, layout: .tile)
+                MetricCard(kind: .weight, valueText: "74,2", unit: AppUnit.weight, layout: .tile)
+            }
+            BentoGrid {
+                MetricCard(
+                    kind: .pressure, valueText: "134/86", unit: AppUnit.pressure,
+                    statusText: "Повышенное", tone: .caution, layout: .tile
+                )
+            } side: {
+                MetricCard(kind: .pulse, valueText: nil, unit: AppUnit.pulse, layout: .tile)
+                MetricCard(kind: .weight, valueText: nil, unit: AppUnit.weight, layout: .tile)
+            }
+            BentoGrid {
+                MetricCard(
+                    kind: .pressure, valueText: "148/94", unit: AppUnit.pressure,
+                    statusText: "Высокое", tone: .critical, layout: .tile
+                )
+            } side: {
+                SkeletonTile()
+                SkeletonTile()
+            }
+            BentoGrid {
+                MetricCard(kind: .pressure, valueText: nil, unit: AppUnit.pressure, statusText: AppFormat.noData, layout: .tile)
+            } side: {
+                MetricCard(kind: .pulse, valueText: nil, unit: AppUnit.pulse, layout: .tile)
+                MetricCard(kind: .weight, valueText: nil, unit: AppUnit.weight, layout: .tile)
+            }
         }
-        HStack(spacing: Spacing.tileGap) {
-            MetricCard(kind: .pressure, valueText: "134/86", unit: AppUnit.pressure, statusText: "Повышенное", tone: .caution, layout: .tile)
-            MetricCard(kind: .pressure, valueText: "148/94", unit: AppUnit.pressure, statusText: "Высокое", tone: .critical, layout: .tile)
-            MetricCard(kind: .weight, valueText: nil, unit: AppUnit.weight, layout: .tile)
-        }
-        HStack(spacing: Spacing.tileGap) {
-            MetricCard(kind: .pressure, valueText: nil, unit: AppUnit.pressure, statusText: AppFormat.noData, layout: .tile)
-            MetricCard(kind: .pulse, valueText: nil, unit: AppUnit.pulse, layout: .tile)
-            SkeletonTile()
-        }
+        .padding(Spacing.screenMargin)
     }
-    .padding(Spacing.screenMargin)
     .background(AppColor.homeBackground)
 }
 
 #Preview("MetricCard: solid, тона статуса") {
     VStack(spacing: Spacing.m) {
-        HStack(alignment: .top, spacing: Spacing.m) {
-            MetricCard(
-                kind: .pulse, valueText: "68", unit: AppUnit.pulse, statusText: "В покое", tone: .positive,
-                series: [66, 68, 65, 70, 67], surface: .solid
-            )
-            MetricCard(
-                kind: .weight, valueText: "74,2", unit: AppUnit.weight, statusText: "−0,4 кг за 2 недели", tone: .positive,
-                series: [74.6, 74.4, 74.2], surface: .solid, showsSparkline: false
-            )
-        }
-        .fixedSize(horizontal: false, vertical: true)
+        MetricCard(
+            kind: .pulse, valueText: "68", unit: AppUnit.pulse, statusText: AppFormat.restingStatus, tone: .positive,
+            series: [66, 68, 65, 70, 67], surface: .solid
+        )
         HStack(alignment: .top, spacing: Spacing.m) {
             MetricCard(
                 kind: .pulse, valueText: "104", unit: AppUnit.pulse, statusText: "Повышен", tone: .caution,
@@ -245,7 +250,7 @@ struct MetricCard: View {
         }
         .fixedSize(horizontal: false, vertical: true)
         MetricCard(
-            kind: .pulse, valueText: nil, unit: AppUnit.pulse, statusText: "Измерений пока нет", tone: .neutral,
+            kind: .pulse, valueText: nil, unit: AppUnit.pulse, statusText: AppFormat.noMeasurementsYet, tone: .neutral,
             surface: .solid
         )
     }
@@ -256,11 +261,11 @@ struct MetricCard: View {
 #Preview("MetricCard: glass") {
     HStack(alignment: .top, spacing: Spacing.m) {
         MetricCard(
-            kind: .pulse, valueText: "68", unit: AppUnit.pulse, statusText: "В покое", tone: .neutral,
+            kind: .pulse, valueText: "68", unit: AppUnit.pulse, statusText: AppFormat.restingStatus, tone: .neutral,
             series: [66, 68, 65, 70, 67]
         )
         MetricCard(
-            kind: .weight, valueText: "74,2", unit: AppUnit.weight, statusText: "−0,4 кг за 2 недели", tone: .neutral,
+            kind: .weight, valueText: "74,2", unit: AppUnit.weight, statusText: AppFormat.lastValue, tone: .neutral,
             series: [74.6, 74.4, 74.2]
         )
     }
@@ -269,13 +274,12 @@ struct MetricCard: View {
     .background(AppColor.background)
 }
 
-#Preview("MetricCard: пусто (с действием и без)") {
+#Preview("MetricCard: пусто (кнопка выключена)") {
     VStack(spacing: Spacing.l) {
         MetricCard(
             kind: .glucose, valueText: nil, unit: AppUnit.glucose,
-            statusText: "Измерений пока нет", tone: .neutral, onAdd: {}
+            statusText: AppFormat.noMeasurementsYet, tone: .neutral
         )
-        MetricCard(kind: .glucose, valueText: nil, unit: AppUnit.glucose, statusText: "Измерений пока нет", tone: .neutral)
     }
     .padding(Spacing.screenMargin)
     .background(AppColor.background)

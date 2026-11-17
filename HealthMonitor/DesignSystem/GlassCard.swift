@@ -67,7 +67,12 @@ struct GlassSurface<S: InsettableShape>: View {
     private func tile(fill: Color, rim: Color) -> some View {
         shape.fill(
             fill
-                .shadow(.inner(color: AppColor.tileInnerGlow, radius: Size.tileInnerRadius, x: -Size.tileInnerOffset, y: -Size.tileInnerOffset))
+                .shadow(.inner(
+                    color: AppColor.tileInnerGlow,
+                    radius: Size.tileInnerRadius,
+                    x: -Size.tileInnerOffset,
+                    y: -Size.tileInnerOffset
+                ))
                 .shadow(.inner(color: rim, radius: 0, x: Size.rimOffset, y: Size.rimOffset))
                 .shadow(.inner(color: rim, radius: 0, x: -Size.rimOffset, y: -Size.rimOffset))
         )
@@ -80,9 +85,9 @@ extension View {
         background { GlassSurface(shape: shape, style: style) }
     }
 
-    /// Стеклянная плитка главного экрана. Высота не фиксируется жёстко, чтобы текст рос с Dynamic Type.
+    /// Стеклянная плитка бенто: заполняет отданное место (высоту задаёт `BentoGrid`), не ниже `tileHeight`.
     func glassTile(radius: CGFloat = Radius.tile) -> some View {
-        frame(maxWidth: .infinity, minHeight: Size.tileHeight)
+        frame(maxWidth: .infinity, minHeight: Size.tileHeight, maxHeight: .infinity)
             .glassBackground(in: RoundedRectangle(cornerRadius: radius, style: .continuous), style: .tile)
     }
 

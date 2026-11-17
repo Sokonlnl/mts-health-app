@@ -1,11 +1,10 @@
 import SwiftUI
 
 /// Свечение-«купол» вверху главного экрана: размытое световое пятно в форме перевёрнутого купола,
-/// яркое сверху и гаснущее к `height`. Цвет берётся из палитры состояния. Собрано градиентами и blur, без растров.
+/// яркое сверху и гаснущее к `Size.domeHeight`. Цвет берётся из палитры состояния. Собрано градиентами и blur, без растров.
 /// Кладётся фоном внутрь прокрутки (`.background(alignment: .top)`), уезжает вместе с содержимым.
 struct DomeGlow: View {
     let palette: AuraPalette
-    var height: CGFloat = Size.domeHeight
     /// `false`: смена палитры без анимации (loading).
     var isAnimated = true
 
@@ -44,7 +43,7 @@ struct DomeGlow: View {
                 .offset(y: Size.glowBleed + Size.domeCoreCenter - Size.domeCoreHeight / 2)
         }
         .glowBlock(
-            height: height, fadeStart: Size.domeFadeStart, fadeEnd: Size.domeFadeEnd, palette: palette, animation: animation
+            height: Size.domeHeight, fadeStart: Size.domeFadeStart, fadeEnd: Size.domeFadeEnd, palette: palette, animation: animation
         )
     }
 }
@@ -55,7 +54,7 @@ private struct DomeGlowPreview: View {
 
     var body: some View {
         ScrollView {
-            Color.clear.frame(height: Size.homeTilesTop + Size.tileHeight)
+            Color.clear.frame(height: Size.homeColumnTop + Size.bentoHeight)
                 .background(alignment: .top) { DomeGlow(palette: palette, isAnimated: isAnimated) }
         }
         .background(AppColor.homeBackground)

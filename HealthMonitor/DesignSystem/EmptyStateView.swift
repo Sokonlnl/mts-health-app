@@ -12,7 +12,7 @@ struct EmptyStateView: View {
             title: "Пока нет измерений",
             message: message,
             identifier: identifier,
-            actionTitle: "Добавить измерение",
+            actionTitle: AppFormat.addMeasurement,
             action: action
         )
     }

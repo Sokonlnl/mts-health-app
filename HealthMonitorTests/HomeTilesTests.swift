@@ -14,7 +14,7 @@ final class HomeTilesTests: XCTestCase {
         let viewModel = await makeViewModel(
             pressure: [TestData.measurement("a", systolic: 122, diastolic: 79, secondsAgo: 0)]
         )
-        let tiles = viewModel.tiles
+        let tiles = [viewModel.pressureTile] + viewModel.sideTiles
         XCTAssertEqual(tiles.map(\.kind), [.pressure, .pulse, .weight])
         XCTAssertEqual(tiles[0].valueText, "122/79")
         XCTAssertEqual(tiles[0].statusText, PressureZone.normal.title)
@@ -24,7 +24,7 @@ final class HomeTilesTests: XCTestCase {
 
     func testEmptyPressureTileHasNoValueAndNoDataStatus() async {
         let viewModel = await makeViewModel(pressure: [])
-        let tile = viewModel.tiles[0]
+        let tile = viewModel.pressureTile
         XCTAssertNil(tile.valueText)
         XCTAssertEqual(tile.statusText, AppFormat.noData)
         XCTAssertEqual(viewModel.glowState, .noData)
@@ -35,24 +35,40 @@ final class HomeTilesTests: XCTestCase {
             pressure: [TestData.measurement("a", systolic: 134, diastolic: 86, secondsAgo: 0)]
         )
         XCTAssertEqual(viewModel.glowState, .elevated)
-        XCTAssertEqual(viewModel.tiles[0].statusText, PressureZone.elevated.title)
+        XCTAssertEqual(viewModel.pressureTile.statusText, PressureZone.elevated.title)
     }
 
-    func testPulseAndWeightCardsAreSolidPositiveAndOnlyPulseHasSparkline() async {
+    func testListCardsAreSolidPulseAndGlassGlucoseWithoutBentoRepeats() async {
         let viewModel = await makeViewModel(pressure: [])
-        let pulse = viewModel.card(.pulse)
-        XCTAssertEqual(pulse.tone, .positive)
-        XCTAssertTrue(pulse.showsSparkline)
-        let emptyWeight = viewModel.card(.weight)
-        XCTAssertEqual(emptyWeight.tone, .neutral, "Нет данных веса: статус нейтральный")
-        XCTAssertFalse(emptyWeight.showsSparkline)
+        XCTAssertEqual(viewModel.listCards.map(\.kind), [.pulse, .glucose], "Пульс и вес из бенто не повторяются")
+        XCTAssertEqual(viewModel.listCards.map(\.surface), [.solid, .glass])
+        XCTAssertEqual(viewModel.card(.pulse).tone, .positive)
+        XCTAssertEqual(viewModel.card(.weight).tone, .neutral, "Нет данных веса: статус нейтральный")
+    }
 
+    func testSurfaceAndSparklineStyleComeFromKindForDataAndEmptyCards() async {
+        let empty = MetricCardModel.empty(.pulse, unit: AppUnit.pulse)
+        XCTAssertEqual(empty.surface, .solid)
+        XCTAssertEqual(empty.sparklineStyle, .marker)
+        let withData = await makeViewModel(pressure: []).card(.pulse)
+        XCTAssertNotNil(withData.valueText)
+        XCTAssertEqual(withData.surface, .solid)
+        XCTAssertEqual(withData.sparklineStyle, .marker)
+        for kind in [MetricKind.pressure, .weight, .glucose] {
+            let card = MetricCardModel.empty(kind, unit: "")
+            XCTAssertEqual(card.surface, .glass)
+            XCTAssertEqual(card.sparklineStyle, .line)
+        }
+    }
+
+    func testSideTilesHaveNoStatus() async {
         var data = TestData.healthData(pressure: [])
         data.weight = MetricReading(latest: 74.2, series: [74.6, 74.2], daysInNorm: 7)
-        let withWeight = HomeViewModel(store: HealthStore(repository: StubRepository(data: data)), now: { TestClock.now })
-        await withWeight.load()
-        XCTAssertEqual(withWeight.card(.weight).tone, .positive)
-        XCTAssertFalse(withWeight.card(.weight).showsSparkline)
+        let viewModel = HomeViewModel(store: HealthStore(repository: StubRepository(data: data)), now: { TestClock.now })
+        await viewModel.load()
+        XCTAssertEqual(viewModel.sideTiles.map(\.kind), [.pulse, .weight])
+        XCTAssertEqual(viewModel.sideTiles[1].valueText, "74,2")
+        XCTAssertTrue(viewModel.sideTiles.allSatisfy { $0.statusText == nil })
     }
 
     // MARK: - Вид экрана
@@ -62,14 +78,14 @@ final class HomeTilesTests: XCTestCase {
         let viewModel = HomeViewModel(store: store, now: { TestClock.now })
         XCTAssertTrue(viewModel.isLoading)
         XCTAssertFalse(viewModel.showsInsight)
-        XCTAssertEqual(viewModel.tilesTop, Size.homeTilesTop)
+        XCTAssertEqual(viewModel.columnTop, Size.homeColumnTop)
     }
 
     func testContentLayoutShowsInsightWithFullTop() async {
         let viewModel = await makeViewModel(pressure: [TestData.measurement("a", systolic: 120, diastolic: 80, secondsAgo: 60)])
         XCTAssertFalse(viewModel.isLoading)
         XCTAssertTrue(viewModel.showsInsight)
-        XCTAssertEqual(viewModel.tilesTop, Size.homeTilesTop)
+        XCTAssertEqual(viewModel.columnTop, Size.homeColumnTop)
     }
 
     func testEmptyAndErrorLayoutHaveCompactTopWithoutInsight() async {
@@ -77,12 +93,12 @@ final class HomeTilesTests: XCTestCase {
         await empty.load()
         XCTAssertEqual(empty.screenState, .empty)
         XCTAssertFalse(empty.showsInsight)
-        XCTAssertEqual(empty.tilesTop, Size.homeCompactTop)
+        XCTAssertEqual(empty.columnTop, Size.homeCompactTop)
 
         let failing = HealthStore(repository: MockHealthRepository(scenario: .failure, delayNanoseconds: 0))
         let error = HomeViewModel(store: failing, now: { TestClock.now })
         await error.load()
         XCTAssertFalse(error.showsInsight)
-        XCTAssertEqual(error.tilesTop, Size.homeCompactTop)
+        XCTAssertEqual(error.columnTop, Size.homeCompactTop)
     }
 }

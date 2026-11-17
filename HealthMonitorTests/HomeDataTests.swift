@@ -44,7 +44,6 @@ final class HomeDataTests: XCTestCase {
         XCTAssertEqual(AppFormat.range(120...120), "120")
         XCTAssertEqual(AppFormat.range(nil), "–")
         XCTAssertEqual(AppFormat.decimal(72.4), "72,4")
-        XCTAssertEqual(AppFormat.signedDecimal(-0.8), "−0,8")
     }
 
     func testLaunchConfigParsing() {

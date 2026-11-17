@@ -1,25 +1,21 @@
 import CoreGraphics
 import Foundation
 
-/// Плитка показателя в ряду под свечением. Нет значения: `valueText == nil` (во View прочерк).
-struct TileModel: Identifiable, Equatable {
-    let kind: MetricKind
-    let valueText: String?
-    let unit: String
-    /// Статус зоны текстом (только у давления). Цвет задаёт `tone`, но смысл несёт текст.
-    let statusText: String?
-    let tone: StatusTone
-
-    var id: String { kind.id }
-    var label: String { kind.title }
-}
-
 /// Состояние зоны, плитки, вывод и тексты главного экрана.
 extension HomeViewModel {
     var emptyMessage: String { "Добавьте первое измерение давления, и здесь появится сводка за неделю." }
 
-    var tiles: [TileModel] {
-        [.pressure, .pulse, .weight].map(tile)
+    /// Большая плитка бенто (слева): давление со статусом зоны.
+    var pressureTile: MetricCardModel { tile(.pressure) }
+
+    /// Две плитки правой колонки бенто: пульс и вес, без статуса.
+    var sideTiles: [MetricCardModel] {
+        [.pulse, .weight].map(tile)
+    }
+
+    /// Карточки под бенто: широкая тёмная «Пульс» и стеклянная «Глюкоза» (повторов бенто нет).
+    var listCards: [MetricCardModel] {
+        [card(.pulse), card(.glucose)]
     }
 
     /// Состояние для цвета свечения: всегда по давлению, нет данных даёт серую палитру.
@@ -30,10 +26,10 @@ extension HomeViewModel {
     /// Вывод («Всё спокойно») показывается только при данных.
     var showsInsight: Bool { screenState == .content }
 
-    /// Верх ряда плиток. С выводом (и в loading, чтобы кадр не прыгал) полная высота, в empty и error компактная.
-    var tilesTop: CGFloat {
+    /// Верх колонки. С выводом (и в loading, чтобы кадр не прыгал) полная высота, в empty и error компактная.
+    var columnTop: CGFloat {
         switch screenState {
-        case .loading, .content: return Size.homeTilesTop
+        case .loading, .content: return Size.homeColumnTop
         case .empty, .error: return Size.homeCompactTop
         }
     }
@@ -58,14 +54,18 @@ extension HomeViewModel {
         return HeadlineModel(title: current.title, summary: current.summary, details: current.details)
     }
 
-    private func tile(_ kind: MetricKind) -> TileModel {
+    /// Плитка бенто из карточки показателя: статус зоны только у давления (без данных «Нет данных»), у остальных нет.
+    private func tile(_ kind: MetricKind) -> MetricCardModel {
         let model = card(kind)
-        guard kind == .pressure else {
-            return TileModel(kind: kind, valueText: model.valueText, unit: model.unit, statusText: nil, tone: .neutral)
+        let status: String?
+        switch (kind, model.valueText) {
+        case (.pressure, .some): status = model.statusText
+        case (.pressure, .none): status = AppFormat.noData
+        default: status = nil
         }
-        guard model.valueText != nil else {
-            return TileModel(kind: kind, valueText: nil, unit: model.unit, statusText: AppFormat.noData, tone: .neutral)
-        }
-        return TileModel(kind: kind, valueText: model.valueText, unit: model.unit, statusText: model.statusText, tone: model.tone)
+        return MetricCardModel(
+            kind: kind, valueText: model.valueText, unit: model.unit, statusText: status,
+            tone: kind == .pressure ? model.tone : .neutral, series: []
+        )
     }
 }

@@ -16,6 +16,10 @@ enum Spacing {
     static let tabBarClearance: CGFloat = 200
     /// Зазор между плитками показателей главного экрана.
     static let tileGap: CGFloat = 9
+    /// Зазор между блоками колонки главного экрана (кнопка, «Показатели», бенто, карточки).
+    static let columnGap: CGFloat = 13
+    /// Зазор между заголовком-выводом и пояснением.
+    static let headlineGap: CGFloat = 6
     /// Внутренний отступ стандартной карточки.
     static let cardPadding: CGFloat = 18
     /// Вертикальный отступ карточки-списка (у строк свои отступы).

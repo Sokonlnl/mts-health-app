@@ -8,14 +8,14 @@ struct HomeHeadline: View {
 
     var body: some View {
         VStack(spacing: Spacing.s) {
-            VStack(spacing: Spacing.xs) {
+            VStack(spacing: Spacing.headlineGap) {
                 Text(headline.title)
-                    .textStyle(.heroHeadline)
+                    .textStyle(.insightTitle)
                     .foregroundStyle(AppColor.textPrimary)
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 Text(headline.summary)
-                    .textStyle(.body)
+                    .textStyle(.insightSummary)
                     .foregroundStyle(AppColor.textSecondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)

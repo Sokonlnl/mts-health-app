@@ -65,26 +65,22 @@ final class HomeViewModel {
             kind: .pulse,
             valueText: "\(Int(latest.rounded()))",
             unit: AppUnit.pulse,
-            statusText: "В покое",
+            statusText: AppFormat.restingStatus,
             tone: .positive,
             series: reading.series
         )
     }
 
+    /// Вес показывается только значением в плитке бенто, без статуса и графика.
     private func weightCard(_ reading: MetricReading) -> MetricCardModel {
         guard let latest = reading.latest else { return .empty(.weight, unit: AppUnit.weight) }
-        var status = "Без изменений"
-        if let first = reading.series.first, let last = reading.series.last {
-            status = "\(AppFormat.signedDecimal(last - first)) кг за 2 недели"
-        }
         return MetricCardModel(
             kind: .weight,
             valueText: AppFormat.decimal(latest),
             unit: AppUnit.weight,
-            statusText: status,
-            tone: .positive,
-            series: reading.series,
-            showsSparkline: false
+            statusText: AppFormat.lastValue,
+            tone: .neutral,
+            series: reading.series
         )
     }
 
@@ -94,7 +90,7 @@ final class HomeViewModel {
             kind: .glucose,
             valueText: AppFormat.decimal(latest),
             unit: AppUnit.glucose,
-            statusText: "Последнее значение",
+            statusText: AppFormat.lastValue,
             tone: .neutral,
             series: reading.series
         )

@@ -1,20 +1,17 @@
 import SwiftUI
 
 /// Мини-график. Без данных рисует пунктир.
-/// `marker`: линия с маркером на последней точке (пульс). `forecast`: линия до точки и пунктир вперёд (вес).
+/// `marker`: линия с маркером на последней точке (пульс).
 struct Sparkline: View {
     enum Style {
         case line
         case marker
-        case forecast
     }
 
     let values: [Double]
     let color: Color
     var style: Style = .line
-
-    /// Доля ширины, которую занимает линия до точки при прогнозе.
-    private let forecastSplit: CGFloat = 0.75
+    var height: CGFloat = Size.sparklineHeight
 
     var body: some View {
         GeometryReader { proxy in
@@ -24,24 +21,20 @@ struct Sparkline: View {
                 chart(in: proxy.size)
             }
         }
-        .frame(height: Size.sparklineHeight)
+        .frame(height: height)
         .accessibilityHidden(true)
     }
 
     private func chart(in size: CGSize) -> some View {
-        let usable = style == .forecast ? size.width * forecastSplit : size.width
-        let points = makePoints(in: CGSize(width: usable, height: size.height))
+        let points = makePoints(in: size)
         let last = points.last ?? .zero
         return ZStack(alignment: .topLeading) {
             Path { path in
                 path.addLines(points)
             }
             .stroke(color, style: StrokeStyle(lineWidth: Size.sparklineLine, lineCap: .round, lineJoin: .round))
-            if style == .forecast {
-                dashedLine(from: last.x, to: size.width, y: last.y, color: color.opacity(0.5))
-            }
             if style != .line {
-                AuraMarker(glow: color.opacity(0.35), glowDiameter: Size.sparklineDot * 2, dotDiameter: Size.sparklineDot)
+                AuraMarker(glow: color.opacity(Size.markerGlowOpacity), glowDiameter: Size.sparklineDot * 2, dotDiameter: Size.sparklineDot)
                     .position(last)
             }
         }
@@ -75,7 +68,6 @@ struct Sparkline: View {
     VStack(spacing: Spacing.l) {
         Sparkline(values: [3, 5, 4, 7, 6, 9, 8], color: AppColor.pressure)
         Sparkline(values: [66, 68, 65, 70, 67, 69], color: AppColor.pulse, style: .marker)
-        Sparkline(values: [73.2, 73, 72.8, 72.6, 72.4], color: AppColor.weight, style: .forecast)
     }
     .padding(Spacing.l)
     .background(AppColor.background)

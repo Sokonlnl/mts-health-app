@@ -12,9 +12,12 @@ enum AppFormat {
     /// Пустое значение давления: «–/–».
     static let emptyPressureValue = "\(dash)/\(dash)"
 
-    static func longDate(_ date: Date) -> String {
-        format(date, pattern: "d MMMM")
-    }
+    /// Подписи карточек показателей на главном экране.
+    static let restingStatus = "В покое"
+    static let lastValue = "Последнее значение"
+    static let noMeasurementsYet = "Измерений пока нет"
+    static let addMeasurement = "Добавить измерение"
+    static let inputUnavailable = "Ввод этого показателя пока недоступен"
 
     static func time(_ date: Date) -> String {
         format(date, pattern: "HH:mm")
@@ -64,12 +67,6 @@ enum AppFormat {
     /// Число с одним знаком и запятой: 72,4.
     static func decimal(_ value: Double) -> String {
         String(format: "%.1f", value).replacingOccurrences(of: ".", with: ",")
-    }
-
-    /// Число со знаком и типографским минусом: −0,8.
-    static func signedDecimal(_ value: Double) -> String {
-        let text = String(format: "%+.1f", value)
-        return text.replacingOccurrences(of: ".", with: ",").replacingOccurrences(of: "-", with: "−")
     }
 
     private static func format(_ date: Date, pattern: String) -> String {
