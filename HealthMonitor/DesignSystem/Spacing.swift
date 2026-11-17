@@ -14,6 +14,8 @@ enum Spacing {
     static let minTapTarget: CGFloat = 44
     /// Нижний запас прокрутки: последняя карточка поднимается выше плавающей навигации и затухающего низа.
     static let tabBarClearance: CGFloat = 200
+    /// Зазор между плитками показателей главного экрана.
+    static let tileGap: CGFloat = 9
     /// Внутренний отступ стандартной карточки.
     static let cardPadding: CGFloat = 18
     /// Вертикальный отступ карточки-списка (у строк свои отступы).

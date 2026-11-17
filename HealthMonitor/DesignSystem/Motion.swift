@@ -17,10 +17,6 @@ enum Motion {
     static let palette = Animation.easeInOut(duration: paletteDuration)
     /// Появление текста значения и заголовка.
     static let contentSwap = Animation.timingCurve(0.2, 0.7, 0.2, 1, duration: contentSwapDuration)
-    /// Перемещение маркера на дуге.
-    static let marker = Animation.timingCurve(0.3, 0.7, 0.2, 1, duration: 0.8)
-    /// Подсветка выбранной пилюли показателя.
-    static let pillSelect = Animation.easeOut(duration: 0.45)
     /// Переключатель периодов.
     static let segment = Animation.easeInOut(duration: 0.3)
     /// Выезд шторки.

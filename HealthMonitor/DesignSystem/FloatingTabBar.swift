@@ -22,7 +22,7 @@ enum AppTab: String, CaseIterable {
     }
 }
 
-/// Плавающая нижняя навигация: стеклянная таблетка 64 pt, активный пункт подсвечен белым 14%.
+/// Плавающая нижняя навигация: стеклянная таблетка 292×64 pt, активный пункт подсвечен белым 14%.
 struct FloatingTabBar: View {
     @Binding var selection: AppTab
 
@@ -33,7 +33,7 @@ struct FloatingTabBar: View {
             }
         }
         .padding(.horizontal, Spacing.xs)
-        .frame(height: Size.navBar)
+        .frame(width: Size.tabBarWidth, height: Size.navBar)
         .glassBackground(in: Capsule())
     }
 
@@ -44,7 +44,9 @@ struct FloatingTabBar: View {
         } label: {
             VStack(spacing: Spacing.xs) {
                 Image(systemName: tab.iconName)
-                    .font(AppTextStyle.bodyStrong.font)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: Size.navIcon, height: Size.navIcon)
                     .accessibilityHidden(true)
                 Text(tab.title)
                     .textStyle(.caption)
@@ -68,7 +70,6 @@ private struct FloatingTabBarDemo: View {
     var body: some View {
         HStack(spacing: Spacing.m) {
             FloatingTabBar(selection: $selection)
-            IconButton(systemName: "plus", label: "Добавить измерение", diameter: Size.navAdd, action: {})
         }
         .padding(Spacing.screenMargin)
         .background(AppColor.background)

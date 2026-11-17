@@ -59,7 +59,7 @@ private struct CenterPreview: View {
     var body: some View {
         ZStack {
             AppColor.background.ignoresSafeArea()
-            AuraOrb(palette: palette, diameter: Size.orbHomeForm) {
+            AuraOrb(palette: palette, diameter: Size.orbPressure) {
                 AuraOrbCenter(
                     caption: "Давление",
                     value: value,

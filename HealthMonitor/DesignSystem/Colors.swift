@@ -41,13 +41,28 @@ enum AppColor {
     /// Тонировка шторки поверх материала.
     static let sheetTint = Color(hex: 0x06070B, opacity: 0.60)
 
+    // Главный экран (эталон Figma 47:2127)
+    static let homeBackground = Color(hex: 0x000000)
+    /// Стеклянная плитка: заливка, внутреннее свечение (-17,-17, blur 40) и тонкие кромки.
+    static let tileFill = Color.white.opacity(0.01)
+    static let tileInnerGlow = Color.white.opacity(0.14)
+    static let tileRim = Color.white.opacity(0.25)
+    /// Кнопка профиля: заливка и кромка.
+    static let profileFill = Color.white.opacity(0.03)
+    static let profileRim = Color.white.opacity(0.55)
+    /// Кнопка с зелёным свечением (GlowButton).
+    static let glowButtonFill = Color(hex: 0x0F0034, opacity: 0.23)
+    static let glowButtonEdge = Color(hex: 0x13D694)
+    static let glowButtonDeep = Color(hex: 0x002F1F)
+    /// Тёмная карточка показателя (`MetricCard` с `surface: .solid`).
+    static let solidCardFill = Color(hex: 0x202020)
+    static let solidCardStroke = Color(hex: 0x383838)
+
     // Заливки элементов управления
     static let fill = Color.white.opacity(0.08)
     static let fillSelected = Color.white.opacity(0.14)
     static let segmentActive = Color.white.opacity(0.16)
     static let orbRing = Color.white.opacity(0.18)
-    /// Столбики недели без выделения.
-    static let bar = Color.white.opacity(0.30)
 
     // Статусы (цвет текста; фон плашки белый 8%, контур белый 14%)
     static let success = status(0x5BF0B8)

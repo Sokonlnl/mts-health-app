@@ -30,6 +30,24 @@ struct SkeletonCard: View {
     }
 }
 
+/// Скелетон плитки (loading).
+struct SkeletonTile: View {
+    var identifier = "skeleton-tile"
+
+    var body: some View {
+        VStack(spacing: Spacing.s) {
+            SkeletonBlock(width: Size.metricIcon * 1.5)
+            SkeletonBlock(width: Size.metricIcon * 2, height: Size.skeletonValue)
+        }
+        .padding(.horizontal, Spacing.s)
+        .padding(.vertical, Spacing.m)
+        .glassTile()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Загрузка")
+        .accessibilityIdentifier(identifier)
+    }
+}
+
 /// Список скелетонов карточек (loading-состояние экрана). Первая карточка получает идентификатор
 /// `loading-state`, остальные `skeleton-card`.
 struct SkeletonList: View {
@@ -60,6 +78,16 @@ struct SkeletonOrb: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Загрузка")
     }
+}
+
+#Preview("SkeletonTile") {
+    HStack(spacing: Spacing.tileGap) {
+        SkeletonTile()
+        SkeletonTile()
+        SkeletonTile()
+    }
+    .padding(Spacing.screenMargin)
+    .background(AppColor.homeBackground)
 }
 
 #Preview("SkeletonCard") {

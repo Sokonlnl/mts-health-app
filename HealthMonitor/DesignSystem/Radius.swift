@@ -8,6 +8,10 @@ enum Radius {
     /// Скругление верха шторки.
     static let sheet: CGFloat = 32
     static let control: CGFloat = 20
+    /// Плитки показателей, кнопка профиля и тёмные карточки главного экрана.
+    static let tile: CGFloat = 32
+    /// Кнопка с зелёным свечением.
+    static let glowButton: CGFloat = 21
 }
 
 #Preview("Radius") {

@@ -41,13 +41,4 @@ extension PressureZone {
         case .high: return AppColor.zoneHigh
         }
     }
-
-    /// Цвет сегмента дуги зон: зелёный 60%, янтарный 75%, красный 75%.
-    var arcColor: Color {
-        switch self {
-        case .normal: return AppColor.success.text.opacity(0.60)
-        case .elevated: return AppColor.warning.text.opacity(0.75)
-        case .high: return AppColor.danger.text.opacity(0.75)
-        }
-    }
 }

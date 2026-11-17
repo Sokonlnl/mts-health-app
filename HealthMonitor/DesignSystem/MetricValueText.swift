@@ -19,6 +19,7 @@ struct MetricValueText: View {
                 .foregroundStyle(isPlaceholder ? AppColor.textTertiary : AppColor.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(TextScale.metric)
+                .accessibilityLabel(isPlaceholder ? Text(AppFormat.noData) : Text(value))
                 .accessibilityIdentifier(valueIdentifier)
             if !unit.isEmpty {
                 Text(unit)

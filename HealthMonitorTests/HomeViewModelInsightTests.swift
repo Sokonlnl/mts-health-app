@@ -50,11 +50,4 @@ final class HomeViewModelInsightTests: XCTestCase {
         let viewModel = await makeViewModel(pressure: [])
         XCTAssertEqual(viewModel.insight.title, "Пока нет данных")
     }
-
-    func testRingForPressureReflectsNormalDays() async {
-        let viewModel = await makeViewModel(pressure: calmWeek)
-        let ring = viewModel.rings.first { $0.kind == .pressure }
-        XCTAssertEqual(ring?.centerText, "7/7")
-        XCTAssertEqual(ring?.isEmpty, false)
-    }
 }

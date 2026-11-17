@@ -119,7 +119,7 @@ private struct OrbPreview: View {
     var body: some View {
         ZStack {
             AppColor.background.ignoresSafeArea()
-            AuraOrb(palette: palette, diameter: Size.orbHome, isAnimated: isAnimated) {
+            AuraOrb(palette: palette, diameter: Size.orbPressure, isAnimated: isAnimated) {
                 VStack(spacing: Spacing.xs) {
                     Text("122/79")
                         .textStyle(.heroValue)

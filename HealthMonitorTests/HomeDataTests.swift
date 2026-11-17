@@ -27,12 +27,6 @@ final class HomeDataTests: XCTestCase {
         XCTAssertTrue(HealthData.empty.isEmpty)
     }
 
-    func testWeekOverviewHasSevenDaysWithOneToday() {
-        let days = WeekOverview.days(measurements: MockHealthData.pressure(now: now), now: now)
-        XCTAssertEqual(days.map(\.label), ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"])
-        XCTAssertEqual(days.filter(\.isToday).count, 1)
-    }
-
     func testWeekStatsOnEmptyData() {
         let stats = WeekOverview.stats(measurements: [], now: now)
         XCTAssertEqual(stats, WeekStats(normalDays: 0, measuredDays: 0))

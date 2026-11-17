@@ -26,3 +26,6 @@ node scripts/checklist.mjs HEAD~3..HEAD
 | C09 | HealthMonitor/DesignSystem/AuraOrb.swift, HealthMonitor/DesignSystem/Motion.swift | Вращение выключается при `accessibilityReduceMotion` и `isAmbientMotionEnabled == false`; snapshot-кадры детерминированы. | snapshot-тесты |
 | C10 | project.yml, .github/workflows/** | Проект генерируется XcodeGen; артефакты `screenshots`, `snapshots`, `simulator-video` на месте; время UI-тестов не выросло заметно. | QA-LOG, медленные UI-тесты |
 | C11 | HealthMonitor/Data/** | Данные только из `Data/`, без сети (правило 7); моки детерминированы при заданном `now`. | CLAUDE.md, правило 7 |
+| C12 | HealthMonitor/DesignSystem/** | Новый View в DesignSystem: поиск по роли (Card, Tile, Button, Glow, Surface) среди существующих; если похожий есть — расширить его параметром, а не создавать новый. Обоснование нового компонента в описании коммита. | QA-009 (три дубля в перестройке главного) |
+| C14 | HealthMonitor/Features/**/*View.swift | View не выбирает tone, surface, showsSparkline и тексты по типу показателя: всё это приходит готовым из модели ViewModel и покрыто тестом. | QA-009, второй проход keeper |
+| C13 | HealthMonitor/Features/** | После замены экрана: компоненты, свойства ViewModel и токены без потребителей в продакшене удалены вместе с тестами, которые держат только их. | QA-009 (мёртвый код после перестройки) |

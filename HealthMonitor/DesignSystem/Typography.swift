@@ -48,10 +48,14 @@ enum AppTypography {
     static let heroHeadline = AppTextStyle(size: 22, weight: .bold, design: .rounded, textStyle: .title2)
     static let headline = AppTextStyle(size: 18, weight: .semibold, design: .rounded, textStyle: .headline)
     static let headlineCompact = AppTextStyle(size: 17, weight: .semibold, design: .rounded, textStyle: .headline)
-    static let pillValue = AppTextStyle(size: 15, weight: .bold, design: .rounded, textStyle: .subheadline, maxScale: 1.3)
     static let bodyStrong = AppTextStyle(size: 15, weight: .semibold, textStyle: .body)
     static let body = AppTextStyle(size: 15, weight: .regular, textStyle: .body)
     static let label = AppTextStyle(size: 14, weight: .medium, textStyle: .subheadline)
+    static let tileLabel = AppTextStyle(size: 14, weight: .regular, tracking: -0.28, textStyle: .subheadline, maxScale: 1.3)
+    static let tileValue = AppTextStyle(size: 28, weight: .light, tracking: -1.8, textStyle: .title1, maxScale: 1.3)
+    static let tileUnit = AppTextStyle(size: 13, weight: .regular, textStyle: .caption1, maxScale: 1.3)
+    static let cardValue = AppTextStyle(size: 38, weight: .regular, tracking: -1.2, textStyle: .largeTitle, maxScale: 1.3)
+    static let glowButtonTitle = AppTextStyle(size: 16, weight: .medium, textStyle: .body, maxScale: 1.3)
     static let caption = AppTextStyle(size: 12, weight: .regular, textStyle: .caption1)
     static let captionStrong = AppTextStyle(size: 13, weight: .semibold, textStyle: .caption1)
 }
@@ -65,10 +69,14 @@ extension AppTextStyle {
     static let heroHeadline = AppTypography.heroHeadline
     static let headline = AppTypography.headline
     static let headlineCompact = AppTypography.headlineCompact
-    static let pillValue = AppTypography.pillValue
     static let bodyStrong = AppTypography.bodyStrong
     static let body = AppTypography.body
     static let label = AppTypography.label
+    static let tileLabel = AppTypography.tileLabel
+    static let tileValue = AppTypography.tileValue
+    static let tileUnit = AppTypography.tileUnit
+    static let cardValue = AppTypography.cardValue
+    static let glowButtonTitle = AppTypography.glowButtonTitle
     static let caption = AppTypography.caption
     static let captionStrong = AppTypography.captionStrong
 }

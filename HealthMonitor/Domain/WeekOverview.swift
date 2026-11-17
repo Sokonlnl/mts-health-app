@@ -10,23 +10,6 @@ enum AppCalendar {
     }
 }
 
-/// День в строке недели.
-struct WeekDay: Identifiable, Equatable {
-    let id: Int
-    let label: String
-    let dayNumber: Int
-    let hasMeasurement: Bool
-    let isElevated: Bool
-    let isToday: Bool
-
-    var accessibilityText: String {
-        var parts = [label, "\(dayNumber)"]
-        if isToday { parts.append("сегодня") }
-        if hasMeasurement { parts.append(isElevated ? "есть измерение, значение повышено" : "есть измерение") }
-        return parts.joined(separator: ", ")
-    }
-}
-
 /// Сколько дней из последних 7 были с измерением и сколько из них в норме.
 struct WeekStats: Equatable {
     let normalDays: Int
@@ -34,26 +17,6 @@ struct WeekStats: Equatable {
 }
 
 enum WeekOverview {
-    static let labels = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-
-    /// Текущая неделя Пн–Вс.
-    static func days(measurements: [PressureMeasurement], now: Date, calendar: Calendar = AppCalendar.calendar) -> [WeekDay] {
-        let weekStart = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? calendar.startOfDay(for: now)
-        return labels.indices.map { offset in
-            let day = calendar.date(byAdding: .day, value: offset, to: weekStart) ?? weekStart
-            let items = measurements.filter { calendar.isDate($0.date, inSameDayAs: day) }
-            let elevated = items.contains { $0.zone > .normal }
-            return WeekDay(
-                id: offset,
-                label: labels[offset],
-                dayNumber: calendar.component(.day, from: day),
-                hasMeasurement: !items.isEmpty,
-                isElevated: elevated,
-                isToday: calendar.isDate(day, inSameDayAs: now)
-            )
-        }
-    }
-
     /// Статистика за последние 7 суток, включая сегодня.
     static func stats(measurements: [PressureMeasurement], now: Date, calendar: Calendar = AppCalendar.calendar) -> WeekStats {
         let today = calendar.startOfDay(for: now)

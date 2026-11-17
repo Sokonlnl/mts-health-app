@@ -16,11 +16,36 @@ enum CardInsets {
     )
 }
 
-/// Материал «жидкое стекло»: `ultraThinMaterial`, градиент заливки, контур, верхняя кромка, тень.
+/// Вид стеклянной поверхности.
+enum GlassStyle {
+    /// «Жидкое стекло»: `ultraThinMaterial`, градиент заливки, контур, верхняя кромка, тень (карточки, навигация).
+    case material
+    /// Плитка Figma: белый 1%, внутреннее свечение `-17 -17` blur 40, кромки `±1` белый 25%. Без материала.
+    case tile
+    /// Кнопка профиля Figma: как плитка, но заливка белый 3% и кромка белый 55%.
+    case profile
+}
+
+/// Единая стеклянная поверхность для любой формы. Вид задаёт `GlassStyle`.
 struct GlassSurface<S: InsettableShape>: View {
     let shape: S
+    var style: GlassStyle = .material
 
     var body: some View {
+        Group {
+            switch style {
+            case .material:
+                material
+            case .tile:
+                tile(fill: AppColor.tileFill, rim: AppColor.tileRim)
+            case .profile:
+                tile(fill: AppColor.profileFill, rim: AppColor.profileRim)
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    private var material: some View {
         ZStack {
             shape.fill(.ultraThinMaterial)
             shape.fill(
@@ -37,14 +62,28 @@ struct GlassSurface<S: InsettableShape>: View {
             )
         }
         .shadow(color: AppColor.shadow, radius: Size.glassShadow)
-        .accessibilityHidden(true)
+    }
+
+    private func tile(fill: Color, rim: Color) -> some View {
+        shape.fill(
+            fill
+                .shadow(.inner(color: AppColor.tileInnerGlow, radius: Size.tileInnerRadius, x: -Size.tileInnerOffset, y: -Size.tileInnerOffset))
+                .shadow(.inner(color: rim, radius: 0, x: Size.rimOffset, y: Size.rimOffset))
+                .shadow(.inner(color: rim, radius: 0, x: -Size.rimOffset, y: -Size.rimOffset))
+        )
     }
 }
 
 extension View {
     /// Стеклянный фон для любой формы (круг, капсула, скруглённый прямоугольник).
-    func glassBackground<S: InsettableShape>(in shape: S) -> some View {
-        background { GlassSurface(shape: shape) }
+    func glassBackground<S: InsettableShape>(in shape: S, style: GlassStyle = .material) -> some View {
+        background { GlassSurface(shape: shape, style: style) }
+    }
+
+    /// Стеклянная плитка главного экрана. Высота не фиксируется жёстко, чтобы текст рос с Dynamic Type.
+    func glassTile(radius: CGFloat = Radius.tile) -> some View {
+        frame(maxWidth: .infinity, minHeight: Size.tileHeight)
+            .glassBackground(in: RoundedRectangle(cornerRadius: radius, style: .continuous), style: .tile)
     }
 
     /// Оформляет вью как стеклянную карточку: `.glassCard()` или `.glassCard(radius: Radius.cardSmall)`.

@@ -89,7 +89,7 @@ final class ScreenshotTests: XCTestCase {
     func testNavigationFlowOpensPressureAndSheet() {
         let app = launch("home")
 
-        // Нажатие на карточку давления открывает экран давления.
+        // Нажатие на плитку давления открывает экран давления.
         let card = element(app, "pressure-card")
         XCTAssertTrue(card.waitForExistence(timeout: timeout))
         card.tap()
@@ -99,12 +99,11 @@ final class ScreenshotTests: XCTestCase {
         let back = element(app, "back-button")
         XCTAssertTrue(back.waitForExistence(timeout: timeout))
         back.tap()
-        XCTAssertTrue(element(app, "home-title").waitForExistence(timeout: timeout))
+        let button = element(app, "pressure-button")
+        XCTAssertTrue(button.waitForExistence(timeout: timeout), "Главный экран: кнопка «Давление»")
 
-        // «+» на главном тоже открывает экран давления.
-        let add = element(app, "add-button")
-        XCTAssertTrue(add.waitForExistence(timeout: timeout))
-        add.tap()
+        // Кнопка «Давление» тоже открывает экран давления.
+        button.tap()
         XCTAssertTrue(element(app, "pressure-title").waitForExistence(timeout: timeout))
 
         // «+» на экране давления открывает шторку.

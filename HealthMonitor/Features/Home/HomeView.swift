@@ -1,26 +1,62 @@
 import SwiftUI
 
-/// Главный экран: заголовок, пилюли, форма Aura, вывод, карточки показателей, плавающая навигация.
+/// Главный экран (эталон Figma 47:2127): свечение-купол, кнопка профиля, компактный вывод в зоне свечения,
+/// ряд плиток, кнопка «Давление», секция «Показатели», плавающая навигация.
 struct HomeView: View {
     @Bindable var viewModel: HomeViewModel
     let onOpenPressure: () -> Void
     @State private var tab: AppTab = .home
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.l) {
-                header
-                stateContent
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(spacing: 0) {
+                    domeArea(topInset: proxy.safeAreaInsets.top)
+                    VStack(spacing: Spacing.m) {
+                        stateContent
+                    }
+                    .padding(.horizontal, Spacing.screenMargin)
+                    .padding(.bottom, Spacing.tabBarClearance)
+                }
+                .frame(maxWidth: .infinity)
+                .background(alignment: .top) {
+                    DomeGlow(palette: viewModel.glowState.palette, isAnimated: !viewModel.isLoading)
+                }
             }
-            .padding(.horizontal, Spacing.screenMargin)
-            .padding(.top, Spacing.s)
-            .padding(.bottom, Spacing.tabBarClearance)
-            .auraScreenBackdrop(palette: viewModel.state.palette, glowHeight: Size.glowHomeHeight)
         }
-        .background(AppColor.background)
-        .auraBottomBar { bottomBar }
+        .ignoresSafeArea(edges: .top)
+        .background(AppColor.homeBackground.ignoresSafeArea())
+        .auraBottomBar(fadeColor: AppColor.homeBackground, fadeHeight: Size.homeBottomFadeHeight) { bottomBar }
         .toolbar(.hidden, for: .navigationBar)
         .task { await viewModel.load() }
+    }
+
+    // MARK: - Свечение, профиль и вывод
+
+    /// Верхняя зона до ряда плиток. Вывод показывается только с данными: в loading, empty и error его нет.
+    private func domeArea(topInset: CGFloat) -> some View {
+        ZStack(alignment: .top) {
+            Color.clear.frame(height: viewModel.tilesTop)
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    IconButton(systemName: "person", label: "Профиль", surface: .profile) { tab = .profile }
+                        .accessibilityIdentifier("profile-button")
+                }
+                Spacer(minLength: Spacing.l)
+                if viewModel.showsInsight {
+                    HomeHeadline(
+                        headline: viewModel.headline,
+                        isExpanded: viewModel.isInsightExpanded,
+                        onToggle: { withAnimation(Motion.standard) { viewModel.toggleInsight() } }
+                    )
+                    .shadow(color: AppColor.textShadow, radius: Size.textShadowRadius)
+                }
+            }
+            .padding(.top, topInset)
+            .padding(.bottom, Spacing.l)
+        }
+        .padding(.horizontal, Spacing.screenMargin)
     }
 
     // MARK: - Состояния
@@ -29,59 +65,48 @@ struct HomeView: View {
     private var stateContent: some View {
         switch viewModel.screenState {
         case .loading:
-            SkeletonOrb(diameter: Size.orbHome)
-            SkeletonList(count: 2)
+            HStack(spacing: Spacing.tileGap) {
+                SkeletonTile(identifier: "loading-state")
+                SkeletonTile()
+                SkeletonTile()
+            }
+            SkeletonList(count: 2, firstIdentifier: "skeleton-card")
         case .error(let message):
             ErrorStateView(message: message, retry: { Task { await viewModel.reload() } })
         case .empty:
-            pills
-            HomeHeroOrb(hero: viewModel.hero)
+            tilesRow
             EmptyStateView(
-                message: "Добавьте первое измерение давления, и здесь появится сводка за неделю.",
+                message: viewModel.emptyMessage,
                 action: onOpenPressure
             )
         case .content:
-            pills
-            HomeHeroOrb(hero: viewModel.hero)
-            HomeHeadline(
-                headline: viewModel.headline,
-                isExpanded: viewModel.isInsightExpanded,
-                onToggle: { withAnimation(Motion.standard) { viewModel.toggleInsight() } }
-            )
+            tilesRow
+            GlowButton(title: "Давление", systemImage: "play.fill", action: onOpenPressure)
+                .accessibilityIdentifier("pressure-button")
             metrics
         }
     }
 
     // MARK: - Блоки
 
-    private var header: some View {
-        HStack(spacing: Spacing.m) {
-            Text(viewModel.dateTitle)
-                .textStyle(.title)
-                .foregroundStyle(AppColor.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(TextScale.title)
-                .accessibilityIdentifier("home-title")
-                .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 0)
-            IconButton(systemName: "person.fill", label: "Профиль") { tab = .profile }
-                .accessibilityIdentifier("profile-button")
-        }
-    }
-
-    private var pills: some View {
-        HStack(spacing: 0) {
-            ForEach(viewModel.pills) { pill in
-                MetricPill(
-                    kind: pill.kind,
-                    valueText: pill.valueText,
-                    state: pill.state,
-                    isSelected: pill.isSelected,
-                    accessibilityText: pill.accessibilityText
-                ) {
-                    withAnimation(Motion.palette) { viewModel.select(pill.kind) }
+    private var tilesRow: some View {
+        HStack(spacing: Spacing.tileGap) {
+            ForEach(viewModel.tiles) { tile in
+                let content = MetricCard(
+                    kind: tile.kind,
+                    valueText: tile.valueText,
+                    unit: tile.unit,
+                    statusText: tile.statusText,
+                    tone: tile.tone,
+                    layout: .tile
+                )
+                if tile.kind == .pressure {
+                    Button(action: onOpenPressure) { content }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("pressure-card")
+                } else {
+                    content
                 }
-                .frame(maxWidth: .infinity)
             }
         }
     }
@@ -89,21 +114,18 @@ struct HomeView: View {
     private var metrics: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
             SectionHeader(title: "Показатели")
-            card(.pressure, layout: .wide)
-                .accessibilityIdentifier("pressure-card")
+                .frame(maxWidth: .infinity, alignment: .leading)
             HStack(alignment: .top, spacing: Spacing.m) {
-                card(.pulse)
-                card(.weight)
+                solidMetricCard(.pulse)
+                solidMetricCard(.weight)
             }
             .fixedSize(horizontal: false, vertical: true)
-            card(.glucose)
+            glucoseCard
         }
     }
 
-    private func card(_ kind: MetricKind, layout: MetricCard.Layout = .compact) -> some View {
+    private func solidMetricCard(_ kind: MetricKind) -> some View {
         let model = viewModel.card(kind)
-        let isPressure = kind == .pressure
-        let noAction: () -> Void = {}
         return MetricCard(
             kind: kind,
             valueText: model.valueText,
@@ -111,27 +133,60 @@ struct HomeView: View {
             statusText: model.statusText,
             tone: model.tone,
             series: model.series,
-            layout: layout,
-            weekBars: isPressure ? viewModel.weekBars : [],
-            // Экранов ввода пульса, веса и глюкозы пока нет: у этих карточек кнопка без действия.
-            onAdd: isPressure ? onOpenPressure : noAction,
-            onOpen: isPressure ? onOpenPressure : nil
+            surface: .solid,
+            showsSparkline: model.showsSparkline
+        )
+    }
+
+    private var glucoseCard: some View {
+        let model = viewModel.card(.glucose)
+        // Экрана ввода глюкозы нет: кнопка пустой карточки выключена и подписана (без действия).
+        return MetricCard(
+            kind: .glucose,
+            valueText: model.valueText,
+            unit: model.unit,
+            statusText: model.statusText,
+            tone: model.tone,
+            series: model.series
         )
     }
 
     private var bottomBar: some View {
-        HStack(spacing: Spacing.m) {
-            FloatingTabBar(selection: $tab)
-            IconButton(systemName: "plus", label: "Добавить измерение", diameter: Size.navAdd, action: onOpenPressure)
-                .accessibilityIdentifier("add-button")
-        }
+        FloatingTabBar(selection: $tab)
     }
 }
 
-#Preview("Home: данные") {
+private struct PreviewRepository: HealthRepository {
+    let data: HealthData
+
+    func load() async throws -> HealthData { data }
+}
+
+/// Главный экран с последним измерением давления заданной зоны (для превью палитры свечения).
+@MainActor
+private func previewHome(systolic: Int, diastolic: Int) -> some View {
+    var data = MockHealthData.make(now: Date())
+    let latest = PressureMeasurement(
+        id: "preview", date: Date(), systolic: systolic, diastolic: diastolic, pulse: 70, context: nil
+    )
+    data.pressure.insert(latest, at: 0)
+    let store = HealthStore(repository: PreviewRepository(data: data))
+    return HomeView(viewModel: HomeViewModel(store: store), onOpenPressure: {})
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Home: данные (норма)") {
     let store = HealthStore(repository: MockHealthRepository(delayNanoseconds: 0))
     return HomeView(viewModel: HomeViewModel(store: store), onOpenPressure: {})
         .preferredColorScheme(.dark)
+}
+
+#Preview("Home: повышенное") {
+    previewHome(systolic: 134, diastolic: 86)
+}
+
+#Preview("Home: высокое") {
+    previewHome(systolic: 148, diastolic: 94)
 }
 
 #Preview("Home: loading") {
