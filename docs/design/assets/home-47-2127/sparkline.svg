@@ -1,0 +1,12 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="141" height="44" viewBox="0 0 141 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Sparkline" clip-path="url(#clip0_0_56)">
+<path id="Vector" d="M2 28L24 22L46 26L68 16L90 20L112 12L136 18" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke="#FF6F9C"/>
+<path id="Vector_2" d="M136 26C140.418 26 144 22.4183 144 18C144 13.5817 140.418 10 136 10C131.582 10 128 13.5817 128 18C128 22.4183 131.582 26 136 26Z" fill="#FF6F9C" fill-opacity="0.28"/>
+<path id="Vector_3" d="M136 21.5C137.933 21.5 139.5 19.933 139.5 18C139.5 16.067 137.933 14.5 136 14.5C134.067 14.5 132.5 16.067 132.5 18C132.5 19.933 134.067 21.5 136 21.5Z" fill="white"/>
+</g>
+<defs>
+<clipPath id="clip0_0_56">
+<rect width="141" height="44" fill="white"/>
+</clipPath>
+</defs>
+</svg>

@@ -21,3 +21,6 @@ Packages/
 screenshots/
 .claude/state/
 .claude/settings.local.json
+
+# Растровые изображения из Figma неизвестного происхождения не публикуем
+docs/design/assets/**/*.png
