@@ -31,6 +31,8 @@ struct MetricCard: View {
     var surface: Surface = .glass
     /// Стиль мини-графика (приходит из модели карточки).
     var sparklineStyle: Sparkline.Style = .line
+    /// Готовая подпись справа от значения (из модели). `nil`: единица.
+    var valueCaption: String?
 
     private var isSolid: Bool { surface == .solid }
 
@@ -81,10 +83,10 @@ struct MetricCard: View {
     // MARK: - Карточка
 
     private var compactBody: some View {
-        VStack(alignment: isSolid ? .center : .leading, spacing: isSolid ? Spacing.xs : Spacing.m) {
+        VStack(alignment: isSolid ? .center : .leading, spacing: isSolid ? Spacing.m : Spacing.s) {
             header
             value
-            if let statusText {
+            if let statusText, valueText != nil || isSolid {
                 Text(statusText)
                     .textStyle(isSolid ? .tileUnit : .captionStrong)
                     .foregroundStyle(tone.colors.text)
@@ -92,7 +94,7 @@ struct MetricCard: View {
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: Spacing.xs)
+            Spacer(minLength: isSolid ? Spacing.m : Spacing.xs)
             Sparkline(
                 values: series, color: kind.color, style: sparklineStyle,
                 height: isSolid ? Size.sparklineSolidHeight : Size.sparklineHeight
@@ -131,8 +133,8 @@ struct MetricCard: View {
                     .background(AppColor.fill, in: Circle())
                     .accessibilityHidden(true)
                 Text(kind.title)
-                    .textStyle(.label)
-                    .foregroundStyle(AppColor.textSecondary)
+                    .textStyle(.bodyStrong)
+                    .foregroundStyle(AppColor.textPrimary)
                     .lineLimit(1)
                 Spacer(minLength: 0)
             }
@@ -156,7 +158,7 @@ struct MetricCard: View {
         } else {
             MetricValueText(
                 value: valueText ?? AppFormat.dash,
-                unit: unit,
+                unit: valueCaption ?? unit,
                 style: .metricCardSmall,
                 isPlaceholder: valueText == nil
             )
@@ -182,7 +184,7 @@ struct MetricCard: View {
         case .solid:
             let shape = RoundedRectangle(cornerRadius: Radius.tile, style: .continuous)
             content
-                .padding(Spacing.l)
+                .padding(Spacing.xl)
                 .frame(maxWidth: .infinity)
                 .background { shape.fill(AppColor.solidCardFill) }
                 .overlay { shape.strokeBorder(AppColor.solidCardStroke, lineWidth: Size.hairline) }
@@ -278,7 +280,8 @@ struct MetricCard: View {
     VStack(spacing: Spacing.l) {
         MetricCard(
             kind: .glucose, valueText: nil, unit: AppUnit.glucose,
-            statusText: AppFormat.noMeasurementsYet, tone: .neutral
+            statusText: AppFormat.noMeasurementsYet, tone: .neutral,
+            valueCaption: AppUnit.glucose + " · " + AppFormat.noMeasurementsYet.lowercased()
         )
     }
     .padding(Spacing.screenMargin)

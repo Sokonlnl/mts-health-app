@@ -124,7 +124,7 @@ private struct OrbPreview: View {
                     Text("122/79")
                         .textStyle(.heroValue)
                         .foregroundStyle(AppColor.textPrimary)
-                        .shadow(color: AppColor.textShadow, radius: 12)
+                        .shadow(color: AppColor.textShadow, radius: Size.textShadowRadius)
                     Text(title)
                         .textStyle(.label)
                         .foregroundStyle(AppColor.textPrimary)

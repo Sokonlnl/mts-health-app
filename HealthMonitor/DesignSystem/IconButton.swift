@@ -7,6 +7,8 @@ struct IconButton: View {
     let label: String
     var diameter: CGFloat = Size.iconButton
     var surface: GlassStyle = .material
+    /// Отсвет кромки (для `.profile`: цвет зоны давления).
+    var tint: Color?
     let action: () -> Void
 
     var body: some View {
@@ -15,7 +17,7 @@ struct IconButton: View {
                 .textStyle(.headline)
                 .foregroundStyle(AppColor.textPrimary)
                 .frame(width: diameter, height: diameter)
-                .glassBackground(in: Circle(), style: surface)
+                .glassBackground(in: Circle(), style: surface, tint: tint)
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)

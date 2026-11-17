@@ -130,8 +130,7 @@ struct PressureChartLegend: View {
             entry(color: AppColor.chartUpper, title: "Верхнее")
             entry(color: AppColor.chartLower, title: "Нижнее")
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Легенда: верхнее и нижнее давление")
+        .accessibilityHidden(true)
     }
 
     private func entry(color: Color, title: String) -> some View {

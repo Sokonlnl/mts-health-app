@@ -38,8 +38,8 @@ struct AppTextStyle {
 
 /// Типографика из docs/DESIGN.md. На макете Inter и Space Grotesk, в iOS: SF Pro и SF Pro Rounded.
 enum AppTypography {
-    static let heroValue = AppTextStyle(size: 68, weight: .ultraLight, tracking: -2, textStyle: .largeTitle, maxScale: 1.2)
-    static let heroValueCompact = AppTextStyle(size: 56, weight: .ultraLight, tracking: -2, textStyle: .largeTitle, maxScale: 1.2)
+    static let heroValue = AppTextStyle(size: 68, weight: .light, tracking: -2, textStyle: .largeTitle, maxScale: 1.2)
+    static let heroValueCompact = AppTextStyle(size: 56, weight: .light, tracking: -2, textStyle: .largeTitle, maxScale: 1.2)
     static let metricCard = AppTextStyle(
         size: 44, weight: .bold, design: .rounded, tracking: -1.2, textStyle: .largeTitle, maxScale: 1.4
     )
@@ -130,7 +130,7 @@ extension View {
 
 #Preview("Typography") {
     let styles: [(String, AppTextStyle)] = [
-        ("heroValue 68/200", .heroValue), ("heroValueCompact 56/200", .heroValueCompact),
+        ("heroValue 68/300", .heroValue), ("heroValueCompact 56/300", .heroValueCompact),
         ("metricCard 44/700", .metricCard), ("metricCardSmall 38/700", .metricCardSmall),
         ("title 24/700", .title), ("heroHeadline 22/700", .heroHeadline),
         ("headline 18/600", .headline), ("headlineCompact 17/600", .headlineCompact),

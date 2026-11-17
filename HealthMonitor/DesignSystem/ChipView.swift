@@ -10,8 +10,10 @@ struct ChipView: View {
         Button(action: action) {
             Text(title)
                 .textStyle(.bodyStrong)
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
                 .minimumScaleFactor(TextScale.compact)
+                .padding(.vertical, Spacing.xs)
                 .foregroundStyle(isSelected ? AppColor.textPrimary : AppColor.textSecondary)
                 .padding(.horizontal, Spacing.l)
                 .frame(minHeight: Spacing.minTapTarget)

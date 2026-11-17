@@ -6,29 +6,45 @@ struct HomeView: View {
     @Bindable var viewModel: HomeViewModel
     let onOpenPressure: () -> Void
     @State private var tab: AppTab = .home
+    @State private var scrollOffset: CGFloat = 0
+    private static let scrollSpace = "homeScroll"
 
     var body: some View {
         GeometryReader { proxy in
-            ScrollView {
-                VStack(spacing: 0) {
-                    domeArea(topInset: proxy.safeAreaInsets.top)
-                    VStack(spacing: Spacing.columnGap) {
-                        stateContent
-                    }
-                    .padding(.horizontal, Spacing.screenMargin)
-                    .padding(.bottom, Spacing.tabBarClearance)
-                }
-                .frame(maxWidth: .infinity)
-                .background(alignment: .top) {
-                    DomeGlow(palette: viewModel.glowState.palette, isAnimated: !viewModel.isLoading)
-                }
+            ZStack(alignment: .top) {
+                scroll(topInset: proxy.safeAreaInsets.top)
+                    .ignoresSafeArea(edges: .top)
+                StatusBarFade(
+                    height: proxy.safeAreaInsets.top + Size.statusBarFadeExtra,
+                    offset: scrollOffset
+                )
+                .ignoresSafeArea(edges: .top)
             }
-            .ignoresSafeArea(edges: .top)
         }
         .background(AppColor.homeBackground.ignoresSafeArea())
         .auraBottomBar(fadeColor: AppColor.homeBackground, fadeHeight: Size.homeBottomFadeHeight) { bottomBar }
         .toolbar(.hidden, for: .navigationBar)
         .task { await viewModel.load() }
+    }
+
+    private func scroll(topInset: CGFloat) -> some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                domeArea(topInset: topInset)
+                VStack(spacing: Spacing.columnGap) {
+                    stateContent
+                }
+                .padding(.horizontal, Spacing.screenMargin)
+                .padding(.bottom, Spacing.tabBarClearance)
+            }
+            .frame(maxWidth: .infinity)
+            .background(alignment: .top) {
+                DomeGlow(palette: viewModel.glowState.palette, isAnimated: !viewModel.isLoading)
+            }
+            .reportsScrollOffset(in: Self.scrollSpace)
+        }
+        .coordinateSpace(name: Self.scrollSpace)
+        .onPreferenceChange(ScrollOffsetKey.self) { scrollOffset = $0 }
     }
 
     // MARK: - Свечение, профиль и вывод
@@ -44,7 +60,6 @@ struct HomeView: View {
                         isExpanded: viewModel.isInsightExpanded,
                         onToggle: { withAnimation(Motion.standard) { viewModel.toggleInsight() } }
                     )
-                    .shadow(color: AppColor.textShadow, radius: Size.textShadowRadius)
                     .padding(.top, Size.homeInsightTop)
                 } else if viewModel.isLoading {
                     SkeletonHeadline()
@@ -54,7 +69,10 @@ struct HomeView: View {
             .frame(maxWidth: .infinity, minHeight: viewModel.columnTop, alignment: .top)
             HStack(spacing: 0) {
                 Spacer(minLength: 0)
-                IconButton(systemName: "person", label: "Профиль", surface: .profile) { tab = .profile }
+                IconButton(
+                    systemName: "person", label: "Профиль", surface: .profile, tint: viewModel.glowState.palette.profileTint
+                ) { tab = .profile }
+                    .padding(.trailing, Spacing.s)
                     .accessibilityIdentifier("profile-button")
             }
             .padding(.top, topInset)
@@ -126,7 +144,8 @@ struct HomeView: View {
             series: model.series,
             layout: layout,
             surface: model.surface,
-            sparklineStyle: model.sparklineStyle
+            sparklineStyle: model.sparklineStyle,
+            valueCaption: model.valueCaption
         )
     }
 

@@ -30,7 +30,7 @@ struct Sparkline: View {
         let last = points.last ?? .zero
         return ZStack(alignment: .topLeading) {
             Path { path in
-                path.addLines(points)
+                addSmoothLine(through: points, to: &path)
             }
             .stroke(color, style: StrokeStyle(lineWidth: Size.sparklineLine, lineCap: .round, lineJoin: .round))
             if style != .line {
@@ -51,6 +51,19 @@ struct Sparkline: View {
         )
     }
 
+    /// Плавная линия: квадратичные кривые через середины отрезков.
+    private func addSmoothLine(through points: [CGPoint], to path: inout Path) {
+        guard let first = points.first, let last = points.last else { return }
+        path.move(to: first)
+        for index in 1..<points.count {
+            let previous = points[index - 1]
+            let current = points[index]
+            let middle = CGPoint(x: (previous.x + current.x) / 2, y: (previous.y + current.y) / 2)
+            path.addQuadCurve(to: middle, control: previous)
+        }
+        path.addLine(to: last)
+    }
+
     private func makePoints(in size: CGSize) -> [CGPoint] {
         let low = values.min() ?? 0
         let high = values.max() ?? 1
@@ -58,7 +71,8 @@ struct Sparkline: View {
         let inset = Size.sparklineDot
         let step = (size.width - inset) / CGFloat(values.count - 1)
         return values.enumerated().map { index, value in
-            let ratio = CGFloat((value - low) / span)
+            let raw = CGFloat((value - low) / span)
+            let ratio = Size.sparklineCenter + (raw - Size.sparklineCenter) * Size.sparklineAmplitude
             return CGPoint(x: CGFloat(index) * step, y: inset + (size.height - 2 * inset) * (1 - ratio))
         }
     }

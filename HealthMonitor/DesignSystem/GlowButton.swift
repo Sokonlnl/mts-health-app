@@ -1,20 +1,40 @@
 import SwiftUI
 
-/// Поверхность кнопки с зелёным свечением: тёмно-фиолетовая заливка и два внутренних свечения
-/// (кромка `-1 -1` blur 4.4 и глубокое `0 -4` blur 50.7).
+/// Поверхность кнопки с зелёным свечением: тёмно-фиолетовая заливка, зелёная градиентная кромка 1,5 pt
+/// (ярче сверху-слева) и радиальный зелёный свет снизу. Приём как у плиток: на чёрном виден, в отличие от `.shadow(.inner)`.
 struct GlowButtonSurface: View {
     var isPressed = false
 
-    var body: some View {
+    private var shape: RoundedRectangle {
         RoundedRectangle(cornerRadius: Radius.glowButton, style: .continuous)
-            .fill(
-                AppColor.glowButtonFill
-                    .shadow(.inner(color: AppColor.glowButtonEdge, radius: Size.glowEdgeRadius, x: -Size.rimOffset, y: -Size.rimOffset))
-                    .shadow(.inner(color: AppColor.glowButtonEdge, radius: Size.glowEdgeRadius, x: Size.rimOffset, y: Size.rimOffset))
-                    .shadow(.inner(color: AppColor.glowButtonDeep, radius: Size.glowDeepRadius, x: 0, y: -Size.glowDeepOffset))
+    }
+
+    var body: some View {
+        ZStack {
+            shape.fill(AppColor.glowButtonFill)
+            shape.fill(
+                RadialGradient(
+                    colors: [AppColor.glowButtonEdge.opacity(Size.glowButtonLightOpacity), AppColor.glowButtonDeep, Color.clear],
+                    center: .bottom,
+                    startRadius: 0,
+                    endRadius: Size.glowButtonLightRadius
+                )
             )
-            .opacity(isPressed ? Size.pressedOpacity : 1)
-            .accessibilityHidden(true)
+            shape.strokeBorder(
+                LinearGradient(
+                    colors: [
+                        AppColor.glowButtonEdge,
+                        AppColor.glowButtonEdge.opacity(Size.glowButtonRimMidOpacity),
+                        AppColor.glowButtonEdge.opacity(Size.glowButtonRimEndOpacity)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: Size.glowButtonRim
+            )
+        }
+        .opacity(isPressed ? Size.pressedOpacity : 1)
+        .accessibilityHidden(true)
     }
 }
 

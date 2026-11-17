@@ -20,6 +20,7 @@ private struct GlassSheetModifier<SheetContent: View>: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            .accessibilityHidden(isPresented)
             .overlay {
                 ZStack(alignment: .bottom) {
                     if isPresented {

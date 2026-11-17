@@ -11,6 +11,9 @@ struct AuraPalette: Hashable {
 
     var colors: [Color] { [c0, c1, c2, c3, c4] }
 
+    /// Лёгкий отсвет кромки кнопки профиля цветом зоны.
+    var profileTint: Color { c0.opacity(Size.profileTintOpacity) }
+
     static let normal = AuraPalette(
         c0: Color(hex: 0x37F2B3), c1: Color(hex: 0x2BC4FF), c2: Color(hex: 0x6E6BFF),
         c3: Color(hex: 0xB58CFF), c4: Color(hex: 0x7DF7D5), markerGlow: Color(hex: 0x37F2B3, opacity: 0.35)

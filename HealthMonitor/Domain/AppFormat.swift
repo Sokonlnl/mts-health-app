@@ -17,6 +17,7 @@ enum AppFormat {
     static let lastValue = "Последнее значение"
     static let noMeasurementsYet = "Измерений пока нет"
     static let addMeasurement = "Добавить измерение"
+    static let notFilled = "не заполнено"
     static let inputUnavailable = "Ввод этого показателя пока недоступен"
 
     static func time(_ date: Date) -> String {

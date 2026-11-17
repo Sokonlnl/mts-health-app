@@ -30,6 +30,8 @@ enum GlassStyle {
 struct GlassSurface<S: InsettableShape>: View {
     let shape: S
     var style: GlassStyle = .material
+    /// Отсвет кромки поверх градиента (кнопка профиля).
+    var tint: Color?
 
     var body: some View {
         Group {
@@ -89,14 +91,17 @@ struct GlassSurface<S: InsettableShape>: View {
                 LinearGradient(colors: rim, startPoint: .topLeading, endPoint: .bottomTrailing),
                 lineWidth: Size.hairline
             )
+            if let tint {
+                shape.strokeBorder(tint, lineWidth: Size.hairline)
+            }
         }
     }
 }
 
 extension View {
     /// Стеклянный фон для любой формы (круг, капсула, скруглённый прямоугольник).
-    func glassBackground<S: InsettableShape>(in shape: S, style: GlassStyle = .material) -> some View {
-        background { GlassSurface(shape: shape, style: style) }
+    func glassBackground<S: InsettableShape>(in shape: S, style: GlassStyle = .material, tint: Color? = nil) -> some View {
+        background { GlassSurface(shape: shape, style: style, tint: tint) }
     }
 
     /// Стеклянная плитка бенто: заполняет отданное место (высоту задаёт `BentoGrid`), не ниже `tileHeight`.

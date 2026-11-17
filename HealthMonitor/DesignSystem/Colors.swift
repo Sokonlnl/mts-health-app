@@ -38,6 +38,8 @@ enum AppColor {
     static let shadow = Color.black.opacity(0.40)
     /// Тень текста значения на свечении формы.
     static let textShadow = Color.black.opacity(0.25)
+    /// Затемнение под текстом в центре формы Aura: контраст текста не ниже 4.5:1 на светлом градиенте.
+    static let orbScrim = Color.black.opacity(0.5)
     /// Тонировка шторки поверх материала.
     static let sheetTint = Color(hex: 0x06070B, opacity: 0.60)
 

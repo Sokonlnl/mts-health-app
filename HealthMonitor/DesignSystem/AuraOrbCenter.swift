@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// Содержимое по центру формы Aura: подпись, значение, единица, статус-пилюля.
-/// Без тёмной подложки и стеклянного круга: читаемость даёт тень текста и непрозрачность слоёв формы до 62%.
+/// Под текстом мягкая радиальная тёмная подложка (`AppColor.orbScrim`), стеклянного круга нет: читаемость
+/// даёт подложка, тень текста и непрозрачность слоёв формы до 62%.
 /// VoiceOver читает всё одной связкой (`accessibilityText`), форма скрыта.
 struct AuraOrbCenter: View {
     let caption: String?
@@ -23,18 +24,21 @@ struct AuraOrbCenter: View {
                 Text(caption)
                     .textStyle(.label)
                     .foregroundStyle(AppColor.textPrimary)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .minimumScaleFactor(TextScale.compact)
+                    .multilineTextAlignment(.center)
             }
             Text(value)
                 .textStyle(valueStyle)
                 .foregroundStyle(isPlaceholder ? AppColor.textTertiary : AppColor.textPrimary)
-                .shadow(color: AppColor.textShadow, radius: 12)
+                .shadow(color: AppColor.textShadow, radius: Size.textShadowRadius)
                 .lineLimit(1)
                 .minimumScaleFactor(TextScale.metric)
             Text(unit)
                 .textStyle(.label)
                 .foregroundStyle(AppColor.textPrimary)
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
                 .minimumScaleFactor(TextScale.compact)
             if let statusText {
                 StatusPill(text: statusText, tone: tone)
@@ -43,6 +47,14 @@ struct AuraOrbCenter: View {
         }
         .contentSwap(contentKey)
         .padding(.horizontal, Spacing.xl)
+        .background {
+            RadialGradient(
+                colors: [AppColor.orbScrim, Color.clear],
+                center: .center,
+                startRadius: 0,
+                endRadius: Size.orbScrimRadius
+            )
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
         .accessibilityIdentifier(valueIdentifier)

@@ -33,8 +33,8 @@ struct DomeGlow: View {
                 .fill(
                     RadialGradient(
                         stops: [
-                            .init(color: Color.white.opacity(Size.domeCenterWhite), location: 0),
-                            .init(color: palette.c4.opacity(Size.domeOpacity), location: 0.4),
+                            .init(color: palette.c0.opacity(Size.domeOpacity), location: 0),
+                            .init(color: palette.c0.opacity(Size.domeOpacity), location: 0.4),
                             .init(color: palette.c0.opacity(0), location: 1)
                         ],
                         center: .center,

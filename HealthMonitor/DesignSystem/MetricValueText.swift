@@ -25,7 +25,7 @@ struct MetricValueText: View {
                 Text(unit)
                     .textStyle(.label)
                     .foregroundStyle(AppColor.textSecondary)
-                    .lineLimit(1)
+                    .lineLimit(2)
                     .minimumScaleFactor(TextScale.compact)
             }
         }

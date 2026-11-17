@@ -8,13 +8,21 @@ struct SegmentedPicker<Option: Hashable>: View {
     var identifierPrefix = "segment"
 
     var body: some View {
+        // Крупный шрифт: если сегменты не помещаются в ширину, переключатель прокручивается по горизонтали.
+        ViewThatFits(in: .horizontal) {
+            row
+            ScrollView(.horizontal, showsIndicators: false) { row.fixedSize() }
+        }
+        .padding(Spacing.xs)
+        .glassBackground(in: Capsule())
+    }
+
+    private var row: some View {
         HStack(spacing: 0) {
             ForEach(options, id: \.self) { option in
                 segment(option)
             }
         }
-        .padding(Spacing.xs)
-        .glassBackground(in: Capsule())
     }
 
     private func segment(_ option: Option) -> some View {
@@ -26,7 +34,8 @@ struct SegmentedPicker<Option: Hashable>: View {
         } label: {
             Text(title(option))
                 .textStyle(.bodyStrong)
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
                 .minimumScaleFactor(TextScale.compact)
                 .foregroundStyle(isSelected ? AppColor.textPrimary : AppColor.textSecondary)
                 .frame(maxWidth: .infinity, minHeight: Size.segmentHeight)

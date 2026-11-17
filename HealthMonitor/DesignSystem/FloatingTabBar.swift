@@ -25,6 +25,12 @@ enum AppTab: String, CaseIterable {
 /// Плавающая нижняя навигация: стеклянная таблетка 292×64 pt, активный пункт подсвечен белым 14%.
 struct FloatingTabBar: View {
     @Binding var selection: AppTab
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    /// Крупный шрифт: подписи не помещаются, остаются иконки (подписи читает VoiceOver).
+    private var isIconOnly: Bool { dynamicTypeSize >= .accessibility1 }
+    /// Таблетка растягивается на экран с полями уже на очень крупном шрифте.
+    private var isWide: Bool { dynamicTypeSize >= .xxLarge }
 
     var body: some View {
         HStack(spacing: Spacing.xs) {
@@ -33,7 +39,7 @@ struct FloatingTabBar: View {
             }
         }
         .padding(.horizontal, Spacing.xs)
-        .frame(width: Size.tabBarWidth)
+        .frame(maxWidth: isWide ? .infinity : Size.tabBarWidth)
         .frame(minHeight: Size.navBar)
         .glassBackground(in: Capsule())
     }
@@ -49,10 +55,12 @@ struct FloatingTabBar: View {
                     .scaledToFit()
                     .frame(width: Size.navIcon, height: Size.navIcon)
                     .accessibilityHidden(true)
-                Text(tab.title)
-                    .textStyle(.caption)
-                    .lineLimit(1)
-                    .minimumScaleFactor(TextScale.compact)
+                if !isIconOnly {
+                    Text(tab.title)
+                        .textStyle(.caption)
+                        .lineLimit(1)
+                        .minimumScaleFactor(TextScale.compact)
+                }
             }
             .foregroundStyle(isSelected ? AppColor.textPrimary : AppColor.textSecondary)
             .frame(maxWidth: .infinity, minHeight: Size.navItem)
@@ -60,6 +68,7 @@ struct FloatingTabBar: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(tab.title)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier("tab-\(tab.rawValue)")
     }

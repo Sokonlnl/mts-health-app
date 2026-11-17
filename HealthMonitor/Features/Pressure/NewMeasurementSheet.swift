@@ -107,10 +107,12 @@ struct NewMeasurementSheet: View {
     }
 
     private var contextChips: some View {
-        HStack(spacing: Spacing.s) {
-            ForEach(MeasurementContext.allCases) { context in
-                ChipView(title: context.title, isSelected: viewModel.draft.context == context) {
-                    viewModel.toggleContext(context)
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Spacing.s) {
+                ForEach(MeasurementContext.allCases) { context in
+                    ChipView(title: context.title, isSelected: viewModel.draft.context == context) {
+                        viewModel.toggleContext(context)
+                    }
                 }
             }
         }

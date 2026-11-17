@@ -61,6 +61,15 @@ final class HomeTilesTests: XCTestCase {
         }
     }
 
+    func testValueCaptionForEmptyAndFilledCards() async {
+        let empty = MetricCardModel.empty(.glucose, unit: AppUnit.glucose)
+        XCTAssertEqual(empty.valueCaption, "ммоль/л · измерений пока нет")
+        let viewModel = await makeViewModel(pressure: [])
+        let pulse = viewModel.card(.pulse)
+        XCTAssertNotNil(pulse.valueText)
+        XCTAssertEqual(pulse.valueCaption, AppUnit.pulse)
+    }
+
     func testSideTilesHaveNoStatus() async {
         var data = TestData.healthData(pressure: [])
         data.weight = MetricReading(latest: 74.2, series: [74.6, 74.2], daysInNorm: 7)

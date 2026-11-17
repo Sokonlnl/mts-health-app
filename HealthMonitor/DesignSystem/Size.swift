@@ -20,6 +20,8 @@ enum Size {
 
     // Форма Aura и маркеры
     static let orbPressure: CGFloat = 240
+    /// Радиус радиальной тёмной подложки под текстом в центре формы.
+    static let orbScrimRadius: CGFloat = 120
     /// Насколько тонкая окружность больше формы.
     static let orbRingInset: CGFloat = 8
     /// Диаметры свечения и белой точки маркера: по умолчанию и на графике давления.
@@ -48,38 +50,41 @@ enum Size {
     static let homeInsightTop: CGFloat = 238
     /// Высота бенто (большая плитка слева и две плитки справа).
     static let bentoHeight: CGFloat = 270
-    /// Высота свечения-купола: слой в макете сдвинут вверх (top −251 вместо −168), к ~300 свечение гаснет.
-    static let domeHeight: CGFloat = 300
+    /// Высота свечения-купола: слой в макете сдвинут вверх (top −251 вместо −168), к ~350 свечение гаснет.
+    static let domeHeight: CGFloat = 360
     static let domeOuterWidth: CGFloat = 560
-    static let domeOuterHeight: CGFloat = 340
-    static let domeOuterCenter: CGFloat = 10
+    static let domeOuterHeight: CGFloat = 420
+    static let domeOuterCenter: CGFloat = 80
     static let domeCoreWidth: CGFloat = 440
-    static let domeCoreHeight: CGFloat = 170
-    static let domeCoreCenter: CGFloat = 50
+    static let domeCoreHeight: CGFloat = 200
+    static let domeCoreCenter: CGFloat = 90
     static let domeOuterBlur: CGFloat = 60
     static let domeCoreBlur: CGFloat = 36
     /// Доли высоты блока (с учётом выноса вверх): до `domeFadeStart` свечение полное, к `domeFadeEnd` его нет.
-    /// Ярко до ~y 100 от верха экрана, к ~y 290 почти погасло (блок выше экрана на `glowBleed`).
-    static let domeFadeStart: Double = 0.6
+    /// Ярко до ~y 120 от верха экрана, к ~y 340 почти погасло (зелень доходит до вывода) (блок выше экрана на `glowBleed`).
+    static let domeFadeStart: Double = 0.57
     static let domeFadeEnd: Double = 0.97
     /// Непрозрачность свечения (текст вывода лежит ниже купола, на чёрном).
     static let domeOpacity: Double = 0.85
-    /// Белая подмесь в центре ядра купола (почти белый центр, как в макете).
-    static let domeCenterWhite: Double = 0.4
     static let tileHeight: CGFloat = 126
     static let glowButtonHeight: CGFloat = 64
     static let glowButtonIcon: CGFloat = 20
+    /// Кнопка «Давление»: кромка 1,5 pt, радиус и непрозрачность зелёного света снизу, слабые участки кромки.
+    static let glowButtonRim: CGFloat = 1.5
+    static let glowButtonLightRadius: CGFloat = 130
+    static let glowButtonLightOpacity: Double = 0.45
+    static let glowButtonRimMidOpacity: Double = 0.2
+    static let glowButtonRimEndOpacity: Double = 0.6
+    /// Зелёная подсветка кромки кнопки профиля по палитре зоны.
+    static let profileTintOpacity: Double = 0.55
     static let cardIcon: CGFloat = 20
     /// Радиус свечения в правом нижнем углу плитки бенто и кнопки профиля.
     static let tileGlowRadius: CGFloat = 170
     static let profileGlowRadius: CGFloat = 40
-    static let rimOffset: CGFloat = 1
-    static let glowEdgeRadius: CGFloat = 2.2
-    static let glowDeepRadius: CGFloat = 25
-    static let glowDeepOffset: CGFloat = 4
     static let tabBarWidth: CGFloat = 292
-    static let homeBottomFadeHeight: CGFloat = 96
-    /// Радиус тени текста на свечении.
+    /// Градиент только подкладывается под навигацию: высота навигации (64) + 16.
+    static let homeBottomFadeHeight: CGFloat = 80
+    /// Радиус тени текста на форме Aura (экран давления).
     static let textShadowRadius: CGFloat = 12
     static let pressedOpacity: Double = 0.8
     static let disabledOpacity: Double = 0.4
@@ -92,6 +97,9 @@ enum Size {
     static let sparklineSolidHeight: CGFloat = 44
     static let sparklineLine: CGFloat = 2
     static let sparklineDot: CGFloat = 8
+    /// Амплитуда мини-графика (доля высоты) и её середина: линия спокойнее, чем на весь размах.
+    static let sparklineAmplitude: CGFloat = 0.6
+    static let sparklineCenter: CGFloat = 0.5
     static let chartHeight: CGFloat = 190
     static let chartLineUpper: CGFloat = 3
     static let chartLineLower: CGFloat = 2.5
@@ -125,4 +133,10 @@ enum TextScale {
     static let title: CGFloat = 0.7
     /// Подписи переключателей.
     static let compact: CGFloat = 0.8
+}
+
+extension Size {
+    /// Подложка под статус-бар при прокрутке: запас ниже статус-бара и путь прокрутки, на котором она проявляется.
+    static let statusBarFadeExtra: CGFloat = 16
+    static let statusBarFadeRamp: CGFloat = 40
 }

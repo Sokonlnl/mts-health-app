@@ -18,6 +18,12 @@ struct MetricCardModel: Identifiable, Equatable {
     /// Стиль мини-графика: у пульса маркер на последней точке. Единственный источник.
     var sparklineStyle: Sparkline.Style { kind == .pulse ? .marker : .line }
 
+    /// Подпись справа от значения: без значения единица и статус одной строкой («ммоль/л · измерений пока нет»).
+    var valueCaption: String {
+        guard valueText == nil, let statusText else { return unit }
+        return unit + " · " + statusText.lowercased()
+    }
+
     static func empty(_ kind: MetricKind, unit: String) -> MetricCardModel {
         MetricCardModel(
             kind: kind, valueText: nil, unit: unit, statusText: AppFormat.noMeasurementsYet, tone: .neutral, series: []

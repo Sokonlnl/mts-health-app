@@ -18,16 +18,17 @@ struct ValueFieldTile: View {
                 Text(title)
                     .textStyle(.caption)
                     .foregroundStyle(AppColor.textSecondary)
+                    .lineLimit(2)
                 Text(text.isEmpty ? AppFormat.dash : text)
                     .textStyle(.metricCardSmall)
                     // Прочерк декоративный: название и единица остаются textSecondary (DESIGN.md, «Контраст»).
                     .foregroundStyle(text.isEmpty ? AppColor.textTertiary : AppColor.textPrimary)
                     .lineLimit(1)
-                    .minimumScaleFactor(TextScale.metric)
+                    .minimumScaleFactor(TextScale.compact)
                 Text(unit)
                     .textStyle(.caption)
                     .foregroundStyle(AppColor.textSecondary)
-                    .lineLimit(1)
+                    .lineLimit(2)
                     .minimumScaleFactor(TextScale.compact)
             }
             .frame(maxWidth: .infinity, minHeight: Size.fieldTile)
@@ -43,7 +44,7 @@ struct ValueFieldTile: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(title)
-        .accessibilityValue(text.isEmpty ? "не заполнено" : "\(text) \(unit)")
+        .accessibilityValue(text.isEmpty ? AppFormat.notFilled : "\(text) \(unit)")
         .accessibilityAddTraits(isFocused ? .isSelected : [])
     }
 }
