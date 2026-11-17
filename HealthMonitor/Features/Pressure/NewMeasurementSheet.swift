@@ -117,6 +117,7 @@ struct NewMeasurementSheet: View {
     }
 }
 
+@MainActor
 private func sheetPreview(_ configure: (PressureViewModel) -> Void) -> some View {
     let store = HealthStore(repository: MockHealthRepository(delayNanoseconds: 0))
     let viewModel = PressureViewModel(store: store)
