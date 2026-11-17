@@ -46,14 +46,26 @@ struct TopGlow: View {
 struct BottomFade: View {
     var body: some View {
         LinearGradient(
-            colors: [Color.clear, AppColor.background],
+            stops: [
+                .init(color: AppColor.background.opacity(0), location: 0),
+                .init(color: AppColor.background.opacity(0.9), location: 0.35),
+                .init(color: AppColor.background, location: 0.6)
+            ],
             startPoint: .top,
             endPoint: .bottom
         )
-        .frame(height: Spacing.tabBarClearance)
+        .frame(height: Size.bottomFadeHeight)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
+}
+
+#Preview("BottomFade") {
+    ZStack(alignment: .bottom) {
+        AppColor.textSecondary
+        BottomFade()
+    }
+    .background(AppColor.background)
 }
 
 #Preview("TopGlow: норма") {

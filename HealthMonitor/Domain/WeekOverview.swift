@@ -5,7 +5,7 @@ enum AppCalendar {
     static var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.firstWeekday = 2
-        calendar.locale = Locale(identifier: "ru_RU")
+        calendar.locale = AppFormat.locale
         return calendar
     }
 }

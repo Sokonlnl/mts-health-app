@@ -62,6 +62,8 @@ enum Size {
     static let legendLine: CGFloat = 16
     static let statusDot: CGFloat = 8
     static let glassShadow: CGFloat = 24
+    /// Высота затухания над нижним краем: фон 100% у самого низа, 0% вверху.
+    static let bottomFadeHeight: CGFloat = 180
 
     // Состояния
     static let skeletonLine: CGFloat = 14

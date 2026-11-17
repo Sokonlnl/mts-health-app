@@ -42,6 +42,22 @@ final class ScreenshotTests: XCTestCase {
         attachScreenshot(app, name: "02-pressure")
     }
 
+    func testHomeScrolledScreenshot() {
+        let app = launch("home")
+        XCTAssertTrue(element(app, "pressure-card").waitForExistence(timeout: timeout))
+        app.swipeUp()
+        app.swipeUp()
+        attachScreenshot(app, name: "01-home-scrolled")
+    }
+
+    func testPressureScrolledScreenshot() {
+        let app = launch("pressure")
+        XCTAssertTrue(element(app, "pressure-chart").waitForExistence(timeout: timeout))
+        app.swipeUp()
+        app.swipeUp()
+        attachScreenshot(app, name: "02-pressure-scrolled")
+    }
+
     func testPressureSheetScreenshot() {
         let app = launch("pressureSheet")
         XCTAssertTrue(element(app, "sheet-title").waitForExistence(timeout: timeout))

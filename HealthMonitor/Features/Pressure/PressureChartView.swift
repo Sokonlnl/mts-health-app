@@ -33,7 +33,7 @@ struct PressureChartView: View {
         .chartPlotStyle { plot in
             plot.clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
         }
-        .environment(\.locale, Locale(identifier: "ru_RU"))
+        .environment(\.locale, AppFormat.locale)
         .frame(height: Size.chartHeight)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("График давления: верхнее и нижнее")

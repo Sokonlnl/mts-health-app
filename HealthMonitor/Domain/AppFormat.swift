@@ -2,6 +2,8 @@ import Foundation
 
 /// Форматирование значений и дат для UI (русская локаль).
 enum AppFormat {
+    /// Русская локаль для дат и осей графиков (не зависит от языка симулятора).
+    static let locale = Locale(identifier: "ru_RU")
     static let dash = "–"
     /// Подпись пустого состояния показателя.
     static let noData = "Нет данных"
@@ -72,7 +74,7 @@ enum AppFormat {
 
     private static func format(_ date: Date, pattern: String) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.locale = locale
         formatter.calendar = AppCalendar.calendar
         formatter.dateFormat = pattern
         return formatter.string(from: date)

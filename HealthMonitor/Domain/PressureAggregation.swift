@@ -29,10 +29,10 @@ enum PressurePeriod: CaseIterable {
     /// Формат подписей оси времени на графике.
     var axisFormat: Date.FormatStyle {
         switch self {
-        case .day: return .dateTime.hour()
-        case .week: return .dateTime.weekday(.abbreviated)
-        case .month: return .dateTime.day().month(.abbreviated)
-        case .sixMonths: return .dateTime.month(.abbreviated)
+        case .day: return .dateTime.hour().locale(AppFormat.locale)
+        case .week: return .dateTime.weekday(.abbreviated).locale(AppFormat.locale)
+        case .month: return .dateTime.day().month(.abbreviated).locale(AppFormat.locale)
+        case .sixMonths: return .dateTime.month(.abbreviated).locale(AppFormat.locale)
         }
     }
 
