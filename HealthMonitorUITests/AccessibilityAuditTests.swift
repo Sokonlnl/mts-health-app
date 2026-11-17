@@ -3,23 +3,26 @@ import XCTest
 /// Автоматический аудит доступности (iOS 17 `performAccessibilityAudit`) на каждом экране и состоянии:
 /// контраст, размер целей нажатия, подписи VoiceOver, Dynamic Type, обрезка текста, трейты.
 ///
-/// Каждая найденная проблема роняет тест, если для неё нет записи в `waivers` с причиной.
+/// Каждая найденная проблема роняет тест, если для неё нет записи в `AccessibilityWaivers` с причиной.
 /// Полный отчёт по экрану прикладывается вложением `a11y-<экран>` (артефакт `screenshots` в CI).
 final class AccessibilityAuditTests: XCTestCase {
     private let timeout: TimeInterval = 15
 
-    /// Осознанные исключения. Каждое с причиной; пустой список означает «без поблажек».
-    private struct Waiver {
-        let type: XCUIAccessibilityAuditType
-        /// accessibilityIdentifier элемента; nil означает «любой элемент этого типа на экране».
-        let identifier: String?
-        let reason: String
-    }
-
-    private let waivers: [Waiver] = []
+    /// Исключения живут в защищённом файле `AccessibilityWaivers.swift`.
+    private let waivers = AccessibilityWaivers.all
 
     override func setUpWithError() throws {
         continueAfterFailure = true
+    }
+
+    /// Исключение без причины недопустимо: иначе список `waivers` становится тихим выключателем аудита.
+    func testEveryWaiverHasReason() {
+        for waiver in waivers {
+            XCTAssertFalse(
+                waiver.reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                "Исключение \(waiver.type.rawValue) / \(waiver.identifier ?? "любой элемент") без причины"
+            )
+        }
     }
 
     // MARK: - Экраны

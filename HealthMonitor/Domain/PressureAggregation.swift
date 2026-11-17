@@ -52,10 +52,11 @@ struct PressureSummary: Equatable {
 }
 
 enum PressureAggregator {
-    /// Измерения внутри окна периода, по возрастанию даты.
+    /// Измерения внутри окна периода [начало периода, now], по возрастанию даты.
+    /// Записи с датой позже `now` (сбитые часы, ошибочный ввод) в период не попадают.
     static func measurements(_ all: [PressureMeasurement], in period: PressurePeriod, now: Date) -> [PressureMeasurement] {
         let start = period.startDate(now: now)
-        return all.filter { $0.date >= start }.sorted { $0.date < $1.date }
+        return all.filter { $0.date >= start && $0.date <= now }.sorted { $0.date < $1.date }
     }
 
     static func summary(_ all: [PressureMeasurement], period: PressurePeriod, now: Date) -> PressureSummary {
