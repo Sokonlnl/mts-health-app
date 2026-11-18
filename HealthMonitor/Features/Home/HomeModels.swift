@@ -55,7 +55,8 @@ struct HeadlineModel: Equatable {
 }
 
 /// Совет для карточки: тексты и автор приходят готовыми.
-struct AdviceCardModel: Equatable {
+struct AdviceCardModel: Identifiable, Equatable {
+    let id: String
     let title: String
     let text: String
     let author: String

@@ -51,16 +51,31 @@ extension HomeViewModel {
         HeartbeatRhythm(pulse: store.data.pulse.latest.map { Int($0.rounded()) })
     }
 
-    /// Совет для карточки в блоке «Советы от ГигаЧата»: подбирается по зоне последнего измерения, при повышенном и высоком
-    /// давлении с оговоркой (справочная информация).
-    var adviceCard: AdviceCardModel? {
+    /// Колода советов в текущем порядке (верхняя первая): порядок по зоне, затем сдвиг смахиваниями.
+    var adviceCards: [AdviceCardModel] {
         let zone = store.data.pressure.first?.zone
-        return AdviceSelector.pick(from: store.data.advice, zone: zone).map {
+        let disclaimer = AdviceSelector.disclaimer(for: zone)
+        let ordered = adviceDeck.ordered(AdviceSelector.ordered(store.data.advice, zone: zone))
+        return ordered.map {
             AdviceCardModel(
-                title: $0.title, text: $0.text, author: HomeText.gigachatName, role: HomeText.gigachatRole,
-                iconName: "sparkles", disclaimer: AdviceSelector.disclaimer(for: zone)
+                id: $0.id, title: $0.title, text: $0.text, author: HomeText.gigachatName, role: HomeText.gigachatRole,
+                iconName: "sparkles", disclaimer: disclaimer
             )
         }
+    }
+
+    /// Подпись положения для VoiceOver: «Совет 2 из 4».
+    var advicePositionText: String {
+        let count = store.data.advice.count
+        return HomeText.advicePosition(adviceDeck.position(count: count), of: count)
+    }
+
+    func showNextAdvice() {
+        adviceDeck.next(count: store.data.advice.count)
+    }
+
+    func showPreviousAdvice() {
+        adviceDeck.previous(count: store.data.advice.count)
     }
 
     var isLoading: Bool { screenState == .loading }

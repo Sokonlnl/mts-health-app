@@ -1,18 +1,17 @@
 import SwiftUI
 
-/// Верхний блок со свечением (главный экран 63:25250 и экран давления): тёмный центр, зелёная подсветка у нижнего края и
+/// Верхний блок со свечением экрана давления (главный экран использует картинку `HeroGlowImage`):
+/// тёмный центр, подсветка у нижнего края и
 /// по бокам, скругление снизу `Radius.hero`. Цвет берётся из палитры зоны (норма зелёный, повышенное янтарный,
 /// высокое красный, нет данных серый). Собрано градиентами и blur, без растров.
 /// Свечение мягко «дышит»: масштаб и яркость пятен меняются на несколько процентов, цикл `Motion.breathePeriod`,
 /// у пятен разные фазы. При «Уменьшить движение» и при выключенном `isAmbientMotionEnabled` дыхания и анимации палитры нет.
-/// `level`: общая яркость 0...1 (заставка: свечение разгорается из темноты).
 /// Заполняет отданное место: высоту задаёт вызывающий (`Size.heroHeight`, `Size.heroCompactHeight`, `Size.pressureHeroHeight`).
 /// Кладётся фоном верхнего блока внутри прокрутки (уезжает вместе с содержимым).
 struct DomeGlow: View {
     let palette: AuraPalette
     /// `false`: смена палитры без анимации (loading).
     var isAnimated = true
-    var level = 1.0
 
     private let gate = AmbientMotionGate()
 
@@ -36,7 +35,6 @@ struct DomeGlow: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         .clipShape(shape)
-        .opacity(level)
         .animation(animation, value: palette)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
@@ -86,11 +84,10 @@ private struct DomeGlowPreview: View {
     let palette: AuraPalette
     var isAnimated = true
     var height = Size.heroHeight
-    var level = 1.0
 
     var body: some View {
         ScrollView {
-            DomeGlow(palette: palette, isAnimated: isAnimated, level: level)
+            DomeGlow(palette: palette, isAnimated: isAnimated)
                 .frame(height: height)
         }
         .ignoresSafeArea()
@@ -105,7 +102,6 @@ private struct DomeGlowPreview: View {
 #Preview("DomeGlow: loading (без анимации)") { DomeGlowPreview(palette: .noData, isAnimated: false) }
 #Preview("DomeGlow: компактный (empty, error)") { DomeGlowPreview(palette: .noData, height: Size.heroCompactHeight) }
 #Preview("DomeGlow: экран давления") { DomeGlowPreview(palette: .normal, height: Size.pressureHeroHeight) }
-#Preview("DomeGlow: заставка, середина") { DomeGlowPreview(palette: .normal, level: 0.4) }
 #Preview("DomeGlow: «Уменьшить движение» (без дыхания)") {
     DomeGlowPreview(palette: .normal).environment(\.isAmbientMotionEnabled, false)
 }

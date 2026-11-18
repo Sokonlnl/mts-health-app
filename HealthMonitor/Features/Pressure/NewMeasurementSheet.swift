@@ -48,7 +48,7 @@ struct NewMeasurementSheet: View {
     private var dateRow: some View {
         HStack(spacing: Spacing.s) {
             Image(systemName: "calendar")
-                .textStyle(.bodyStrong)
+                .textStyle(.bodyStrong.asSymbol)
                 .foregroundStyle(AppColor.textSecondary)
                 .accessibilityHidden(true)
             Text(viewModel.draftDateText)

@@ -66,11 +66,13 @@ enum AppColor {
     /// Тёмная карточка совета (`GlassStyle.solid`): заливка #1B1B1B, кромка белый 5%.
     static let solidCardFill = Color(hex: 0x1B1B1B)
     static let solidCardStroke = Color.white.opacity(0.05)
-    /// Мини-шкала веса: красные и жёлтые полосы почти прозрачные, зелёная с градиентом (50%).
-    static let gaugeDanger = Color(hex: 0xFF6B81, opacity: 0.05)
-    static let gaugeWarning = Color(hex: 0xFFC857, opacity: 0.10)
-    static let gaugeGoodTop = Color(hex: 0x48FFC1, opacity: 0.50)
-    static let gaugeGoodBottom = Color(hex: 0x2B9974, opacity: 0.50)
+    /// Мини-шкала веса: жёлтые плашки приглушённые (#FFDA48 10%), средняя зелёная с градиентом (55%), маркер яркий #48FFC1.
+    static let gaugeWarning = Color(hex: 0xFFDA48, opacity: 0.10)
+    static let gaugeGoodTop = Color(hex: 0x48FFC1, opacity: 0.55)
+    static let gaugeGoodBottom = Color(hex: 0x2B9974, opacity: 0.55)
+    static let gaugeMarker = Color(hex: 0x48FFC1)
+    /// Сердце в карточке давления: центр градиента цвет зоны с этой непрозрачностью (#2B9974 при #48FFC1), края 100%.
+    static let heartCenterOpacity: Double = 0.6
     /// Полукруглая шкала глюкозы: дорожка и подсвеченный участок.
     static let gaugeTrack = Color.white.opacity(0.12)
     static let gaugeLit = Color(hex: 0x5BF0B8)
@@ -87,12 +89,6 @@ enum AppColor {
     static let warning = status(0xFFC857)
     static let danger = status(0xFF6B81)
     static let neutral = status(0x9AA3B5)
-
-    // Показатели
-    static let pressure = Color(hex: 0x7B8CFF)
-    static let pulse = Color(hex: 0xFF6F9C)
-    static let weight = Color(hex: 0x4FD4E6)
-    static let glucose = Color(hex: 0xFF9B5E)
 
     // График давления
     static let zoneNormal = Color(hex: 0x37F2B3, opacity: 0.09)
@@ -115,8 +111,6 @@ enum AppColor {
         ("primaryFill", AppColor.primaryFill), ("glassFillTop", AppColor.glassFillTop),
         ("glassStroke", AppColor.glassStroke), ("fill", AppColor.fill),
         ("fillSelected", AppColor.fillSelected), ("segmentActive", AppColor.segmentActive),
-        ("pressure", AppColor.pressure), ("pulse", AppColor.pulse),
-        ("weight", AppColor.weight), ("glucose", AppColor.glucose),
         ("zoneNormal", AppColor.zoneNormal), ("zoneElevated", AppColor.zoneElevated),
         ("zoneHigh", AppColor.zoneHigh),
         ("success", AppColor.success.text), ("warning", AppColor.warning.text),

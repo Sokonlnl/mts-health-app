@@ -4,7 +4,7 @@ import SwiftUI
 ///
 /// Раскладка (`layout`):
 /// - `.large`: большая стеклянная карточка давления 358×258, радиус 48, отступ 24: иконка и подпись, значение 59,7 с единицей,
-///   чип статуса зоны (`StatusPill` `.tinted`) и размытое «облако» цвета зоны в правом нижнем углу.
+///   чип статуса зоны (`StatusPill` `.tinted`) и сердце `HeartGlow` цвета зоны в правом нижнем углу.
 /// - `.small`: малая карточка (вес, глюкоза) 174,5×166, радиус 33,4, отступ 16: иконка и подпись, значение 24 с единицей
 ///   и мини-шкала внизу (`MetricGauge`).
 ///
@@ -48,10 +48,9 @@ struct MetricCard: View {
     private func header(iconSize: CGFloat, label: AppTextStyle) -> some View {
         HStack(spacing: Spacing.s) {
             Image(systemName: kind.iconName)
-                .resizable()
-                .scaledToFit()
+                .textStyle(.icon)
                 .frame(width: iconSize, height: iconSize)
-                .foregroundStyle(kind.color)
+                .foregroundStyle(AppColor.textDim)
             Text(kind.title)
                 .textStyle(label)
                 .foregroundStyle(AppColor.textDim)
@@ -78,7 +77,7 @@ struct MetricCard: View {
         .background {
             ZStack {
                 GlassSurface(shape: largeShape, style: .hero)
-                BeatingHeart(color: tone.colors.text, rhythm: rhythm).clipShape(largeShape)
+                HeartGlow(color: tone.colors.text, rhythm: rhythm).clipShape(largeShape)
             }
         }
     }
@@ -108,35 +107,6 @@ struct MetricCard: View {
         .padding(Spacing.l)
         .frame(maxWidth: .infinity, minHeight: Size.smallCardHeight, maxHeight: .infinity, alignment: .topLeading)
         .glassBackground(in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous), style: .flat)
-    }
-}
-
-/// Декоративное сердце (`heart.fill`) в правом нижнем углу большой карточки: размытый силуэт цвета зоны, бьётся
-/// двойным ударом с периодом 60 / пульс (`HeartbeatRhythm`). Без ритма, при «Уменьшить движение» и при выключенном
-/// `isAmbientMotionEnabled` сердце неподвижно.
-private struct BeatingHeart: View {
-    let color: Color
-    let rhythm: HeartbeatRhythm?
-
-    private let gate = AmbientMotionGate()
-
-    var body: some View {
-        TimelineView(.animation(minimumInterval: nil, paused: !(gate.isEnabled && rhythm != nil))) { context in
-            CornerGlow(
-                color: color, size: CGSize(width: Size.heartSize, height: Size.heartSize),
-                blur: Size.heartBlur, opacity: Size.heartOpacity, shift: Size.cornerGlowShift
-            ) {
-                Image(systemName: "heart.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .scaleEffect(scale(at: context.date))
-            }
-        }
-    }
-
-    private func scale(at date: Date) -> Double {
-        guard gate.isEnabled, let rhythm else { return 1 }
-        return rhythm.scale(at: date.timeIntervalSinceReferenceDate, amplitude: Motion.heartbeatAmplitude)
     }
 }
 

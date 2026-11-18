@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Карточка совета (Figma 63:25250): тёмная #1B1B1B 332×239, радиус 33,4, кромка белый 5%, позади две узкие карточки
-/// колоды (сдвинуты вниз), зелёное размытое пятно справа снизу. Заголовок, совет и автор с иконкой.
+/// Карточка совета (Figma 63:25250): тёмная #1B1B1B 332×239, радиус 33,4, кромка белый 5%, зелёное размытое пятно справа
+/// снизу. Заголовок, совет и автор с иконкой. Колоду из нескольких карточек собирает `AdviceDeckView`.
 /// Логотип ГигаЧата не встраивается: нейтральная иконка SF Symbol. Для VoiceOver одна связка текстов.
 struct AdviceCard: View {
     let title: String
@@ -43,7 +43,6 @@ struct AdviceCard: View {
                 glow.clipShape(shape)
             }
         }
-        .background(alignment: .bottom) { deck }
         .accessibilityElement(children: .combine)
     }
 
@@ -70,20 +69,6 @@ struct AdviceCard: View {
             color: AppColor.success.text, size: CGSize(width: Size.adviceGlowSize, height: Size.adviceGlowSize),
             blur: Size.adviceGlowBlur, opacity: Size.adviceGlowOpacity, shift: Size.cornerGlowShift
         )
-    }
-
-    /// Две карточки колоды позади: уже на `adviceStackInset` с каждой стороны и ниже на `adviceStackStep`.
-    private var deck: some View {
-        ZStack(alignment: .bottom) {
-            deckCard(level: 2)
-            deckCard(level: 1)
-        }
-    }
-
-    private func deckCard(level: Int) -> some View {
-        GlassSurface(shape: shape, style: .solid)
-            .padding(.horizontal, Size.adviceStackInset * CGFloat(level))
-            .offset(y: Size.adviceStackStep * CGFloat(level))
     }
 }
 

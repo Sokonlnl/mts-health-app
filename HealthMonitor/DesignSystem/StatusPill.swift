@@ -20,7 +20,7 @@ struct StatusPill: View {
         HStack(spacing: Spacing.xs) {
             if let systemImage {
                 Image(systemName: systemImage)
-                    .textStyle(.captionStrong)
+                    .textStyle(.captionStrong.asSymbol)
                     .accessibilityHidden(true)
             }
             Text(text)

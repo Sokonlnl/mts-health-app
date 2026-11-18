@@ -46,7 +46,7 @@ struct HomeHeadline: View {
                 Text(isExpanded ? "Свернуть" : "Подробнее")
                     .textStyle(.bodyStrong)
                 Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                    .textStyle(.captionStrong)
+                    .textStyle(.captionStrong.asSymbol)
                     .accessibilityHidden(true)
             }
             .foregroundStyle(AppColor.textPrimary)

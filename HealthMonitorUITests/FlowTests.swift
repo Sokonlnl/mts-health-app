@@ -13,7 +13,7 @@ final class FlowTests: XCTestCase {
 
     private func launch(_ screen: String) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments += ["-uiScreen", screen, LaunchConfig.disableIntroArgument]
+        app.launchArguments += [UITestArgs.screen, screen, UITestArgs.disableIntro]
         app.launch()
         return app
     }
@@ -104,11 +104,17 @@ final class FlowTests: XCTestCase {
 
     // MARK: - Главный экран
 
-    func testAnalysesTabShowsComingSoon() {
+    func testAnalysesTabShowsPlaceholderOnTapAndSwipe() {
         let app = launch("home")
-        XCTAssertFalse(element(app, "soon-toast").exists)
+        XCTAssertTrue(element(app, "tab-wellbeing").waitForExistence(timeout: timeout))
+        XCTAssertTrue(element(app, "tab-wellbeing").isSelected, "Открыта вкладка «Самочувствие»")
         tap(app, "tab-analyses")
-        XCTAssertTrue(element(app, "soon-toast").waitForExistence(timeout: timeout), "Заглушка «Анализы»: сообщение «Скоро»")
+        XCTAssertTrue(element(app, "analyses-placeholder").waitForExistence(timeout: timeout), "Вкладка «Анализы»: «Ещё в прогрессе»")
+        XCTAssertFalse(element(app, "soon-toast").exists, "Без сообщения «Скоро»")
+        tap(app, "tab-wellbeing")
+        XCTAssertTrue(element(app, "pressure-card").waitForExistence(timeout: timeout))
+        app.swipeLeft()
+        XCTAssertTrue(element(app, "analyses-placeholder").waitForExistence(timeout: timeout), "Свайп влево открывает «Анализы»")
     }
 
     func testGigaChatButtonShowsComingSoon() {

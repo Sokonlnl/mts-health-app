@@ -12,7 +12,7 @@ struct StateMessageView: View {
     var body: some View {
         VStack(spacing: Spacing.m) {
             Image(systemName: icon)
-                .textStyle(.metricCard)
+                .textStyle(.metricCard.asSymbol)
                 .foregroundStyle(AppColor.textSecondary)
                 .frame(width: Size.stateIcon, height: Size.stateIcon)
                 .accessibilityHidden(true)

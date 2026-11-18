@@ -14,8 +14,15 @@ enum AdviceSelector {
     /// Первый совет, подходящий зоне; без подходящего первый универсальный; иначе первый в списке.
     /// Без данных о давлении (`zone == nil`) берётся универсальный совет.
     static func pick(from items: [Advice], zone: PressureZone?) -> Advice? {
-        if let zone, let match = items.first(where: { $0.zones.contains(zone) }) { return match }
-        return items.first(where: { $0.zones.isEmpty }) ?? items.first
+        ordered(items, zone: zone).first
+    }
+
+    /// Порядок колоды до смахиваний: сначала советы для зоны, затем универсальные, затем остальные.
+    static func ordered(_ items: [Advice], zone: PressureZone?) -> [Advice] {
+        let matching = zone.map { zone in items.filter { $0.zones.contains(zone) } } ?? []
+        let universal = items.filter { $0.zones.isEmpty }
+        let rest = items.filter { item in !matching.contains(item) && !universal.contains(item) }
+        return matching + universal + rest
     }
 
     /// Оговорка при повышенном и высоком давлении (медицинская осторожность), для высокого с советом повторить измерение в покое.

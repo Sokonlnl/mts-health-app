@@ -7,6 +7,7 @@ struct HealthMonitorApp: App {
     private let config: LaunchConfig
 
     init() {
+        _ = AppFont.name
         let config = LaunchConfig.current
         let store = HealthStore(repository: MockHealthRepository(scenario: config.scenario))
         let pressure = PressureViewModel(store: store)

@@ -14,6 +14,10 @@ final class HomeViewModel {
     @ObservationIgnored let playsIntro: Bool
 
     var isInsightExpanded = false
+    /// Порядок колоды советов (смахивания).
+    var adviceDeck = AdviceDeck()
+    /// Открытая вкладка верхнего блока (свайп страниц и тап по заголовку).
+    var selectedTabID = HomeViewModel.wellbeingTabID
     /// Подсказка-заглушка «Скоро будет доступно» (сбрасывается сама).
     var toastMessage: String?
     /// Заставка ещё не сыграна: она играет один раз за запуск, при возврате с экрана давления не повторяется.
@@ -69,17 +73,15 @@ final class HomeViewModel {
         ]
     }
 
-    var selectedTabID: String { Self.wellbeingTabID }
+    var selectedTab: HomeTab { tabs.first { $0.id == selectedTabID } ?? tabs[0] }
 
-    var selectedTab: HomeTab { HomeTab(id: Self.wellbeingTabID, title: HomeText.tabWellbeing) }
-
-    /// Выбор вкладки: «Самочувствие» уже открыта, «Анализы» пока заглушка.
+    /// Выбор вкладки тапом по заголовку; неизвестный идентификатор игнорируется.
     func selectTab(_ id: String) {
-        guard id != selectedTabID else { return }
-        showComingSoon()
+        guard tabs.contains(where: { $0.id == id }) else { return }
+        selectedTabID = id
     }
 
-    /// Кнопка «Задать вопрос ГигаЧату» и вкладка «Анализы» пока не работают: короткое сообщение.
+    /// Кнопка «Задать вопрос ГигаЧату» пока не работает: короткое сообщение.
     func showComingSoon() {
         toastMessage = HomeText.comingSoon
     }

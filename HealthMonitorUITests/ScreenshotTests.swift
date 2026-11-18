@@ -11,7 +11,7 @@ final class ScreenshotTests: XCTestCase {
 
     private func launch(_ screen: String) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments += ["-uiScreen", screen, LaunchConfig.disableIntroArgument]
+        app.launchArguments += [UITestArgs.screen, screen, UITestArgs.disableIntro]
         app.launch()
         return app
     }

@@ -12,6 +12,8 @@ struct AppTextStyle {
     let textStyle: UIFont.TextStyle
     /// Верхний предел роста размера при Dynamic Type (во сколько раз). Ограничены только крупные числа.
     let maxScale: CGFloat
+    /// Иконка SF Symbols: всегда системный шрифт (SB Sans Display символов не содержит).
+    let isSymbol: Bool
 
     init(
         size: CGFloat,
@@ -20,7 +22,8 @@ struct AppTextStyle {
         tracking: CGFloat = 0,
         lineSpacing: CGFloat = 0,
         textStyle: UIFont.TextStyle,
-        maxScale: CGFloat = .greatestFiniteMagnitude
+        maxScale: CGFloat = .greatestFiniteMagnitude,
+        isSymbol: Bool = false
     ) {
         self.size = size
         self.weight = weight
@@ -29,6 +32,15 @@ struct AppTextStyle {
         self.lineSpacing = lineSpacing
         self.textStyle = textStyle
         self.maxScale = maxScale
+        self.isSymbol = isSymbol
+    }
+
+    /// Тот же размер и жирность, но для иконки SF Symbols (системный шрифт, SB Sans Display символов не содержит).
+    var asSymbol: AppTextStyle {
+        AppTextStyle(
+            size: size, weight: weight, design: design, tracking: tracking, lineSpacing: lineSpacing,
+            textStyle: textStyle, maxScale: maxScale, isSymbol: true
+        )
     }
 
     /// Шрифт для заданной категории Dynamic Type (размер масштабируется относительно textStyle, не выше maxScale).
@@ -36,11 +48,16 @@ struct AppTextStyle {
     fileprivate func font(for category: UIContentSizeCategory) -> Font {
         let traits = UITraitCollection(preferredContentSizeCategory: category)
         let scaled = UIFontMetrics(forTextStyle: textStyle).scaledValue(for: size, compatibleWith: traits)
-        return .system(size: min(scaled, size * maxScale), weight: weight, design: design)
+        let fitted = min(scaled, size * maxScale)
+        // SB Sans Display (только Regular): жирность и дизайн системного шрифта не переносятся, жирность не синтезируется.
+        if !isSymbol, let name = AppFont.name {
+            return .custom(name, fixedSize: fitted)
+        }
+        return .system(size: fitted, weight: weight, design: design)
     }
 }
 
-/// Типографика из docs/DESIGN.md. На макете SB Sans Display, Inter и Space Grotesk, в iOS: SF Pro и SF Pro Rounded.
+/// Типографика из docs/DESIGN.md. Весь текст SB Sans Display (Regular), фолбэк при отсутствии файла: SF Pro и SF Pro Rounded.
 enum AppTypography {
     /// Крупное значение давления (карточка главного экрана и верх экрана давления).
     static let heroValue = AppTextStyle(size: 59.7, weight: .light, tracking: -1.8, textStyle: .largeTitle, maxScale: 1.2)
@@ -78,6 +95,8 @@ enum AppTypography {
     static let glowButtonTitle = AppTextStyle(size: 16, weight: .medium, textStyle: .body)
     static let caption = AppTextStyle(size: 12, weight: .regular, textStyle: .caption1)
     static let captionStrong = AppTextStyle(size: 13, weight: .semibold, textStyle: .caption1)
+    /// Иконка 24 pt (SF Symbols): размер не растёт с Dynamic Type.
+    static let icon = AppTextStyle(size: 24, weight: .regular, textStyle: .title1, maxScale: 1, isSymbol: true)
 }
 
 extension AppTextStyle {
@@ -104,6 +123,7 @@ extension AppTextStyle {
     static let glowButtonTitle = AppTypography.glowButtonTitle
     static let caption = AppTypography.caption
     static let captionStrong = AppTypography.captionStrong
+    static let icon = AppTypography.icon
 }
 
 /// Применяет стиль с учётом `dynamicTypeSize` из окружения: при смене размера текста

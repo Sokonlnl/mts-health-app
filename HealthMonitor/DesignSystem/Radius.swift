@@ -12,7 +12,7 @@ enum Radius {
     /// Большая карточка давления.
     static let heroCard: CGFloat = 48
     /// Полосы мини-шкалы веса.
-    static let gauge: CGFloat = 4
+    static let gauge: CGFloat = 7
     /// Скругление низа верхнего блока со свечением.
     static let hero: CGFloat = 42
 }

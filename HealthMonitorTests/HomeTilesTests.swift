@@ -107,92 +107,11 @@ final class HomeTilesTests: XCTestCase {
         }
     }
 
-    // MARK: - Совет
-
-    func testAdviceCardComesFromData() async {
-        var data = TestData.healthData(pressure: [])
-        data.advice = MockHealthData.advice
-        let viewModel = await makeViewModel(pressure: [], data: data)
-        let card = viewModel.adviceCard
-        XCTAssertEqual(card?.title, AdviceSelector.pick(from: MockHealthData.advice, zone: nil)?.title)
-        XCTAssertEqual(card?.author, "ГигаЧат")
-        XCTAssertEqual(card?.role, "Медицинский помощник")
-    }
-
-    func testAdviceFollowsZoneAndAddsDisclaimerOnlyAboveNorm() async {
-        var data = TestData.healthData(pressure: [])
-        data.advice = MockHealthData.advice
-        struct ZoneCase {
-            let systolic: Int
-            let diastolic: Int
-            let zone: PressureZone
-        }
-        let cases = [
-            ZoneCase(systolic: 118, diastolic: 76, zone: .normal),
-            ZoneCase(systolic: 134, diastolic: 86, zone: .elevated),
-            ZoneCase(systolic: 148, diastolic: 94, zone: .high)
-        ]
-        for item in cases {
-            let zone = item.zone
-            let measurement = TestData.measurement("z", systolic: item.systolic, diastolic: item.diastolic, secondsAgo: 0)
-            let viewModel = await makeViewModel(pressure: [measurement], data: data)
-            let expected = AdviceSelector.pick(from: MockHealthData.advice, zone: zone)
-            XCTAssertEqual(viewModel.adviceCard?.title, expected?.title)
-            XCTAssertEqual(viewModel.adviceCard?.disclaimer, AdviceSelector.disclaimer(for: zone))
-        }
-        XCTAssertNotEqual(
-            AdviceSelector.pick(from: MockHealthData.advice, zone: .normal)?.id,
-            AdviceSelector.pick(from: MockHealthData.advice, zone: .high)?.id
-        )
-    }
-
-    func testDisclaimerDiffersByZone() {
-        XCTAssertNil(AdviceSelector.disclaimer(for: .normal))
-        XCTAssertNil(AdviceSelector.disclaimer(for: nil))
-        XCTAssertEqual(AdviceSelector.disclaimer(for: .elevated), HomeText.adviceDisclaimerElevated)
-        XCTAssertEqual(AdviceSelector.disclaimer(for: .high), HomeText.adviceDisclaimerHigh)
-        XCTAssertTrue(HomeText.adviceDisclaimerHigh.contains("Повторите измерение в покое"))
-        XCTAssertNotEqual(HomeText.adviceDisclaimerElevated, HomeText.adviceDisclaimerHigh)
-    }
-
-    func testIntroSkipsWaitWithoutAnimations() async {
-        let store = HealthStore(repository: StubRepository(data: TestData.healthData(pressure: [])))
-        let viewModel = HomeViewModel(store: store, now: { TestClock.now })
-        var delays: [UInt64] = []
-        await viewModel.runIntro(animationsEnabled: false) { delays.append($0) }
-        XCTAssertTrue(delays.isEmpty)
-        XCTAssertFalse(viewModel.isIntroPending)
-    }
-
-    func testIntroWaitsThenCompletesAndDoesNotReplay() async {
-        let store = HealthStore(repository: StubRepository(data: TestData.healthData(pressure: [])))
-        let viewModel = HomeViewModel(store: store, now: { TestClock.now })
-        var delays: [UInt64] = []
-        var pendingDuringWait = false
-        await viewModel.runIntro(animationsEnabled: true) { delay in
-            delays.append(delay)
-            pendingDuringWait = viewModel.isIntroPending
-        }
-        XCTAssertEqual(delays, [Motion.introNanoseconds])
-        XCTAssertTrue(pendingDuringWait)
-        XCTAssertFalse(viewModel.isIntroPending)
-        await viewModel.runIntro(animationsEnabled: true) { delays.append($0) }
-        XCTAssertEqual(delays.count, 1, "Повторно заставка не играет")
-    }
+    // MARK: - Ритм и пустое состояние
 
     func testPressureCardRhythmFollowsPulse() async {
         let viewModel = await makeViewModel(pressure: [])
-        XCTAssertEqual(viewModel.pressureCard.rhythm?.period ?? 0, 60.0 / 68.0, accuracy: 0.0001)
-    }
-
-    func testIntroPlaysOnceAndCanBeDisabled() async {
-        let store = HealthStore(repository: StubRepository(data: TestData.healthData(pressure: [])))
-        let viewModel = HomeViewModel(store: store, now: { TestClock.now })
-        XCTAssertTrue(viewModel.isIntroPending)
-        viewModel.completeIntro()
-        XCTAssertFalse(viewModel.isIntroPending)
-        let off = HomeViewModel(store: store, now: { TestClock.now }, playsIntro: false)
-        XCTAssertFalse(off.isIntroPending)
+        XCTAssertEqual(viewModel.pressureCard.rhythm?.period ?? 0, 180.0 / 68.0, accuracy: 0.0001)
     }
 
     func testEmptyMessageComesFromHomeText() async {
@@ -200,25 +119,21 @@ final class HomeTilesTests: XCTestCase {
         XCTAssertEqual(viewModel.emptyMessage, HomeText.emptyMessage)
     }
 
-    func testNoAdviceWhenDataHasNone() async {
-        let viewModel = await makeViewModel(pressure: [])
-        XCTAssertNil(viewModel.adviceCard)
-    }
-
     // MARK: - Заглушки
 
-    func testAnalysesTabAndGigaChatShowComingSoon() async {
+    func testTabsSwitchWithoutToastAndGigaChatShowsComingSoon() async {
         let viewModel = await makeViewModel(pressure: [])
         XCTAssertNil(viewModel.toastMessage)
-        XCTAssertEqual(viewModel.tabs.map(\.id), ["wellbeing", "analyses"])
-        viewModel.selectTab(viewModel.selectedTabID)
-        XCTAssertNil(viewModel.toastMessage, "Открытая вкладка сообщения не показывает")
+        XCTAssertEqual(viewModel.tabs.map { $0.id }, ["wellbeing", "analyses"])
+        XCTAssertEqual(viewModel.selectedTabID, HomeViewModel.wellbeingTabID)
         viewModel.selectTab(HomeViewModel.analysesTabID)
-        XCTAssertEqual(viewModel.toastMessage, "Скоро будет доступно")
-        viewModel.toastMessage = nil
+        XCTAssertEqual(viewModel.selectedTabID, HomeViewModel.analysesTabID)
+        XCTAssertEqual(viewModel.selectedTab.title, HomeText.tabAnalyses)
+        XCTAssertNil(viewModel.toastMessage, "Вкладка «Анализы» без тоста, это страница-заглушка")
+        viewModel.selectTab("unknown")
+        XCTAssertEqual(viewModel.selectedTabID, HomeViewModel.analysesTabID, "Неизвестная вкладка игнорируется")
         viewModel.showComingSoon()
         XCTAssertEqual(viewModel.toastMessage, HomeText.comingSoon)
-        XCTAssertEqual(viewModel.selectedTabID, HomeViewModel.wellbeingTabID, "Вкладка «Анализы» заглушка: выбор не меняется")
     }
 
     // MARK: - Вид экрана

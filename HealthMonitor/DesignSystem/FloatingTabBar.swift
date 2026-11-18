@@ -51,8 +51,7 @@ struct FloatingTabBar: View {
         } label: {
             VStack(spacing: Spacing.xs) {
                 Image(systemName: tab.iconName)
-                    .resizable()
-                    .scaledToFit()
+                    .textStyle(.icon)
                     .frame(width: Size.navIcon, height: Size.navIcon)
                     .accessibilityHidden(true)
                 if !isIconOnly {

@@ -32,8 +32,20 @@ enum Motion {
     static let breatheOpacityAmplitude: Double = 0.06
     static let breathePhases: [Double] = [0, 2.1, 4.2]
 
-    /// Сердцебиение в карточке давления: на сколько растёт сердце в пике удара.
-    static let heartbeatAmplitude: Double = 0.12
+    /// Сердцебиение в карточке давления: мягкое «дыхание-удар», на сколько растёт сердце в пике. Период задаёт
+    /// `HeartbeatRhythm` (60 / пульс × 3 с, 2,5–3,5 с).
+    static let heartbeatAmplitude: Double = 0.06
+
+    // Герой главного (картинка `HeroGlow`): «дыхание» в пределах 2–3%, медленно.
+    static let heroBreatheScaleAmplitude: Double = 0.025
+    static let heroBreatheOpacityAmplitude: Double = 0.03
+    static let heroBreathePeriod: TimeInterval = 6
+
+    // Колода советов: смахивание (пружина), порог и вылет карточки за экран.
+    static let adviceSwipe = Animation.spring(response: 0.42, dampingFraction: 0.82)
+    static let adviceSwipeThreshold: CGFloat = 80
+    static let adviceFlyOut: CGFloat = 420
+    static let adviceTiltDivisor: CGFloat = 40
 
     // Заставка при первом показе главного: свечение разгорается из темноты, затем элементы по очереди поднимаются снизу.
     static let introGlow = Animation.easeOut(duration: 0.7)

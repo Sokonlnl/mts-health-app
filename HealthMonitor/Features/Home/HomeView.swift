@@ -23,8 +23,16 @@ struct HomeView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            scroll(topInset: proxy.safeAreaInsets.top)
-                .ignoresSafeArea(edges: .top)
+            ZStack(alignment: .top) {
+                TabView(selection: $viewModel.selectedTabID) {
+                    scroll(topInset: proxy.safeAreaInsets.top).tag(HomeViewModel.wellbeingTabID)
+                    analysesPage.tag(HomeViewModel.analysesTabID)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                // Заголовки вкладок одним слоем над страницами: один набор элементов для VoiceOver и XCUI.
+                tabsRow
+            }
+            .ignoresSafeArea(edges: .top)
         }
         .statusBarFade(offset: scrollOffset)
         .background(AppColor.background.ignoresSafeArea())
@@ -81,14 +89,6 @@ struct HomeView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .top)
-            SegmentedPicker(
-                options: viewModel.tabs,
-                selection: Binding(get: { viewModel.selectedTab }, set: { viewModel.selectTab($0.id) }),
-                title: { $0.title },
-                style: .tabs,
-                identifier: { "tab-" + $0.id }
-            )
-            .padding(.top, Size.heroTabsTop)
             HStack(spacing: 0) {
                 Spacer(minLength: 0)
                 IconButton(
@@ -102,11 +102,37 @@ struct HomeView: View {
         .padding(.horizontal, Spacing.screenMargin)
         .frame(maxWidth: .infinity, minHeight: viewModel.heroHeight, alignment: .top)
         .background {
-            DomeGlow(
+            HeroGlowImage(
                 palette: viewModel.glowState.palette, isAnimated: !viewModel.isLoading,
                 level: isGlowLit || !gate.isEnabled ? 1 : 0
             )
         }
+    }
+
+    /// Заголовки вкладок «Самочувствие» и «Анализы»: тап меняет страницу, как и свайп.
+    private var tabsRow: some View {
+        SegmentedPicker(
+            options: viewModel.tabs,
+            selection: Binding(get: { viewModel.selectedTab }, set: { viewModel.selectTab($0.id) }),
+            title: { $0.title },
+            style: .tabs,
+            identifier: { "tab-" + $0.id }
+        )
+        .padding(.top, Size.heroTabsTop)
+        .frame(maxWidth: .infinity, alignment: .top)
+    }
+
+    /// Вкладка «Анализы»: заглушка «Ещё в прогрессе» по центру (заголовки вкладок рисует `tabsRow` поверх страниц).
+    private var analysesPage: some View {
+        ZStack(alignment: .top) {
+            StateMessageView(
+                icon: "hourglass", title: HomeText.analysesTitle, message: HomeText.analysesMessage,
+                identifier: "analyses-placeholder"
+            )
+            .padding(.horizontal, Spacing.screenMargin)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Состояния
@@ -170,10 +196,10 @@ struct HomeView: View {
             .introReveal(index: 3, isActive: isIntroActive)
             .padding(.top, Spacing.xxl)
             .accessibilityAddTraits(.isHeader)
-        if let advice = viewModel.adviceCard {
-            AdviceCard(
-                title: advice.title, text: advice.text, author: advice.author, role: advice.role,
-                iconName: advice.iconName, disclaimer: advice.disclaimer
+        if !viewModel.adviceCards.isEmpty {
+            AdviceDeckView(
+                cards: viewModel.adviceCards, positionText: viewModel.advicePositionText,
+                onNext: { viewModel.showNextAdvice() }, onPrevious: { viewModel.showPreviousAdvice() }
             )
             .introReveal(index: 3, isActive: isIntroActive)
             .padding(.horizontal, Spacing.adviceInset)

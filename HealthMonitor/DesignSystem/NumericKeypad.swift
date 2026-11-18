@@ -48,7 +48,7 @@ struct NumericKeypad: View {
     private var deleteKey: some View {
         Button(action: onDelete) {
             Image(systemName: "delete.left")
-                .textStyle(.headline)
+                .textStyle(.headline.asSymbol)
                 .foregroundStyle(AppColor.textPrimary)
                 .frame(maxWidth: .infinity, minHeight: Size.keypadKey)
                 .background(AppColor.fill, in: keyShape)

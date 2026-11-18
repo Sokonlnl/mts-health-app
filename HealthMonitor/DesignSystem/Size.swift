@@ -8,7 +8,7 @@ enum Size {
     static let primaryButton: CGFloat = 56
     static let navBar: CGFloat = 64
     static let navItem: CGFloat = 52
-    static let navIcon: CGFloat = 22
+    static let navIcon: CGFloat = 24
     static let segmentHeight: CGFloat = 44
     static let keypadKey: CGFloat = 52
     static let fieldTile: CGFloat = 76
@@ -58,10 +58,19 @@ enum Size {
     static let chipMinWidth: CGFloat = 76
     /// Декоративные пятна в углу карточек (`CornerGlow`): сдвиг за край.
     static let cornerGlowShift: CGFloat = 36
-    /// Сердце в правом нижнем углу большой карточки: размер, размытие, непрозрачность (цвет зоны).
-    static let heartSize: CGFloat = 170
-    static let heartBlur: CGFloat = 12
-    static let heartOpacity: Double = 0.55
+    /// Сердце в большой карточке (`HeartGlow`, Figma heart.svg 330×296 вместе с полями под размытие, сердце 264×230):
+    /// размытие слоёв и вынос рамки за правый нижний угол карточки.
+    static let heartFrame = CGSize(width: 330, height: 296)
+    static let heartBlur: CGFloat = 16.4
+    static let heartInnerBlur: CGFloat = 15.83
+    /// Внутренние чёрные слои сердца: наложение (overlay) 67% и жёсткий свет (hard light) 20%.
+    static let heartOverlayOpacity: Double = 0.67
+    static let heartHardLightOpacity: Double = 0.2
+    static let heartOffsetX: CGFloat = 30
+    static let heartOffsetY: CGFloat = 52
+    /// Радиус радиального градиента сердца (в единицах viewBox) и центр (доли рамки).
+    static let heartGradientRadius: CGFloat = 125
+    static let heartGradientCenter = UnitPoint(x: 150.58 / 330, y: 182.42 / 296)
     /// Кнопка ГигаЧата: ширина 330 при колонке 358.
     static let glowButtonWidth: CGFloat = 330
     static let glowButtonHeight: CGFloat = 64
@@ -81,10 +90,10 @@ enum Size {
     static let profileGlowRadius: CGFloat = 40
 
     // Мини-шкалы малых карточек
-    /// Полосы шкалы веса (сверху вниз): красная, жёлтая, зелёная, жёлтая, красная.
-    static let gaugeBandDanger: CGFloat = 6
-    static let gaugeBandWarning: CGFloat = 8
-    static let gaugeBandGood: CGFloat = 28
+    /// Три плашки шкалы веса (сверху вниз): жёлтая, зелёная, жёлтая, зазор между ними и линия-маркер.
+    static let gaugeBandWarning: CGFloat = 10
+    static let gaugeBandGood: CGFloat = 30
+    static let gaugeBandGap: CGFloat = 2
     static let gaugeMarker: CGFloat = 2
     /// Дуга шкалы глюкозы: диаметр окружности, толщина, доля подсвеченного участка и маркер.
     static let gaugeArcDiameter: CGFloat = 120

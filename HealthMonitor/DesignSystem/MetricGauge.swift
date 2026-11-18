@@ -2,7 +2,8 @@ import SwiftUI
 import Foundation
 
 /// Мини-шкала в малой карточке показателя. Чисто декоративная (значение читается текстом карточки), скрыта от VoiceOver.
-/// `.bands`: пять горизонтальных полос (красная, жёлтая, зелёная с градиентом, жёлтая, красная) и тонкая линия-маркер.
+/// `.bands`: три слегка скруглённые горизонтальные плашки (жёлтая приглушённая, зелёная с градиентом, жёлтая) и яркая
+/// зелёная линия-маркер поперёк.
 /// `.arc`: полукруглая дуга с подсвеченным участком и маркером-точкой.
 /// `position`: положение маркера 0...1 (у полос снизу вверх, у дуги слева направо), `nil`: маркера нет.
 struct MetricGauge: View {
@@ -24,37 +25,35 @@ struct MetricGauge: View {
         .accessibilityHidden(true)
     }
 
-    // MARK: - Полосы
+    // MARK: - Плашки
 
     private var bandsHeight: CGFloat {
-        (Size.gaugeBandDanger + Size.gaugeBandWarning) * 2 + Size.gaugeBandGood
+        Size.gaugeBandWarning * 2 + Size.gaugeBandGood + Size.gaugeBandGap * 2
+    }
+
+    private var bandShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: Radius.gauge, style: .continuous)
     }
 
     private var bands: some View {
-        VStack(spacing: 0) {
-            band(AppColor.gaugeDanger, height: Size.gaugeBandDanger)
-            band(AppColor.gaugeWarning, height: Size.gaugeBandWarning)
-            LinearGradient(
-                colors: [AppColor.gaugeGoodTop, AppColor.gaugeGoodBottom], startPoint: .top, endPoint: .bottom
-            )
-            .frame(height: Size.gaugeBandGood)
-            band(AppColor.gaugeWarning, height: Size.gaugeBandWarning)
-            band(AppColor.gaugeDanger, height: Size.gaugeBandDanger)
+        VStack(spacing: Size.gaugeBandGap) {
+            bandShape.fill(AppColor.gaugeWarning).frame(height: Size.gaugeBandWarning)
+            bandShape
+                .fill(LinearGradient(
+                    colors: [AppColor.gaugeGoodTop, AppColor.gaugeGoodBottom], startPoint: .top, endPoint: .bottom
+                ))
+                .frame(height: Size.gaugeBandGood)
+            bandShape.fill(AppColor.gaugeWarning).frame(height: Size.gaugeBandWarning)
         }
-        .clipShape(RoundedRectangle(cornerRadius: Radius.gauge, style: .continuous))
         .overlay(alignment: .top) {
             if let position {
                 Capsule()
-                    .fill(AppColor.textPrimary)
+                    .fill(AppColor.gaugeMarker)
                     .frame(height: Size.gaugeMarker)
                     .offset(y: CGFloat(1 - clamped(position)) * (bandsHeight - Size.gaugeMarker))
             }
         }
         .frame(height: bandsHeight)
-    }
-
-    private func band(_ color: Color, height: CGFloat) -> some View {
-        Rectangle().fill(color).frame(height: height)
     }
 
     // MARK: - Дуга
