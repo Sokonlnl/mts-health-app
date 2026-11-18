@@ -1,30 +1,41 @@
 import Foundation
 
-/// Порядок колоды советов: верхняя карточка и очередь за ней. Смахивание влево отправляет верхнюю в конец колоды
-/// (`next`), вправо возвращает последнюю наверх (`previous`). Чистая логика без UI, проверяется тестами.
+/// Состояние колоды советов: сколько карточек смахнули и с какой карточки начинается колода. Смахнутая карточка не
+/// возвращается; когда смахнули все, колода пуста до обновления (`refresh`). Чистая логика без UI, проверяется тестами.
 struct AdviceDeck: Equatable {
-    /// На сколько позиций колода сдвинута относительно исходного порядка.
-    private(set) var offset = 0
+    /// Сколько карточек смахнули с верха колоды.
+    private(set) var dismissed = 0
+    /// Сдвиг начала колоды: после обновления колода начинается с другого совета.
+    private(set) var start = 0
 
-    mutating func next(count: Int) {
-        guard count > 1 else { return }
-        offset = (offset + 1) % count
+    /// Смахивает верхнюю карточку. Когда смахнуты все, ничего не меняется.
+    mutating func dismissTop(count: Int) {
+        guard dismissed < count else { return }
+        dismissed += 1
     }
 
-    mutating func previous(count: Int) {
-        guard count > 1 else { return }
-        offset = (offset - 1 + count) % count
+    /// «Получить новые советы»: колода собирается заново и начинается со следующего совета.
+    mutating func refresh(count: Int) {
+        guard count > 0 else { return }
+        dismissed = 0
+        start = (start + 1) % count
     }
 
-    /// Элементы в текущем порядке колоды: первый на вершине.
-    func ordered<Item>(_ items: [Item]) -> [Item] {
+    /// Оставшиеся элементы в порядке колоды: первый на вершине.
+    func remaining<Item>(_ items: [Item]) -> [Item] {
         guard !items.isEmpty else { return [] }
-        let shift = ((offset % items.count) + items.count) % items.count
-        return Array(items[shift...] + items[..<shift])
+        let shift = start % items.count
+        let rotated = Array(items[shift...] + items[..<shift])
+        return Array(rotated.dropFirst(min(dismissed, rotated.count)))
     }
 
-    /// Номер верхней карточки в исходном порядке, с единицы.
+    /// Смахнуты все карточки (при пустом списке колоды нет).
+    func isExhausted(count: Int) -> Bool {
+        count > 0 && dismissed >= count
+    }
+
+    /// Номер верхней карточки среди всех, с единицы (для VoiceOver).
     func position(count: Int) -> Int {
-        count > 0 ? offset % count + 1 : 0
+        count > 0 ? min(dismissed, count - 1) + 1 : 0
     }
 }

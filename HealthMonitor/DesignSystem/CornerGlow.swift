@@ -9,16 +9,27 @@ struct CornerGlow: View {
     let blur: CGFloat
     let opacity: Double
     let shift: CGFloat
+    /// Пятно медленно плавает у угла (`Motion.cornerGlowDrift`). Без «Уменьшить движение» и в snapshot-тестах неподвижно.
+    var isDrifting = false
+
+    private let gate = AmbientMotionGate()
 
     var body: some View {
-        Ellipse()
-            .frame(width: size.width, height: size.height)
-            .foregroundStyle(color.opacity(opacity))
-            .blur(radius: blur)
-            .offset(x: shift, y: shift)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
+        TimelineView(.animation(minimumInterval: nil, paused: !(isDrifting && gate.isEnabled))) { context in
+            let phase = 2 * Double.pi * context.date.timeIntervalSinceReferenceDate / Motion.cornerGlowDriftPeriod
+            let active = isDrifting && gate.isEnabled
+            Ellipse()
+                .frame(width: size.width, height: size.height)
+                .foregroundStyle(color.opacity(opacity))
+                .blur(radius: blur)
+                .offset(
+                    x: shift + (active ? Motion.cornerGlowDrift * CGFloat(sin(phase)) : 0),
+                    y: shift + (active ? Motion.cornerGlowDrift * CGFloat(cos(phase * 0.7)) : 0)
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 

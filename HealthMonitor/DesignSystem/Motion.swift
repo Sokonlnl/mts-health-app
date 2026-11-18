@@ -41,6 +41,19 @@ enum Motion {
     static let heroBreatheOpacityAmplitude: Double = 0.03
     static let heroBreathePeriod: TimeInterval = 6
 
+    // Дрейф свечений главного: медленный плавный сдвиг по эллипсу. Периоды по осям разные, поэтому движение не повторяется в такт.
+    /// Свечение героя: на сколько pt уходит по горизонтали и вертикали и за сколько секунд проходит полный круг по каждой оси.
+    static let heroDriftX: CGFloat = 16
+    static let heroDriftY: CGFloat = 8
+    static let heroDriftPeriodX: TimeInterval = 11
+    static let heroDriftPeriodY: TimeInterval = 17
+    /// Зелёное пятно в карточке совета.
+    static let cornerGlowDrift: CGFloat = 8
+    static let cornerGlowDriftPeriod: TimeInterval = 9
+    /// Свет кнопки ГигаЧата: на какую долю ширины уходит центр света и за сколько секунд проходит туда и обратно.
+    static let buttonLightDrift: Double = 0.2
+    static let buttonLightPeriod: TimeInterval = 8
+
     // Колода советов: смахивание (пружина), порог и вылет карточки за экран.
     static let adviceSwipe = Animation.spring(response: 0.42, dampingFraction: 0.82)
     static let adviceSwipeThreshold: CGFloat = 80

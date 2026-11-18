@@ -25,6 +25,6 @@ extension View {
     }
     .background(AppColor.background)
     .auraBottomBar {
-        GlowButton(title: "Кнопка внизу", systemImage: "plus", action: {})
+        GlowButton(title: "Кнопка внизу", icon: .system("plus"), action: {})
     }
 }

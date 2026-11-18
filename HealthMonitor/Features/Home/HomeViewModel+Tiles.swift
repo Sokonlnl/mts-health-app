@@ -51,15 +51,15 @@ extension HomeViewModel {
         HeartbeatRhythm(pulse: store.data.pulse.latest.map { Int($0.rounded()) })
     }
 
-    /// Колода советов в текущем порядке (верхняя первая): порядок по зоне, затем сдвиг смахиваниями.
+    /// Оставшиеся карточки колоды (верхняя первая): порядок по зоне, затем без смахнутых. Пусто: показывается кнопка обновления.
     var adviceCards: [AdviceCardModel] {
         let zone = store.data.pressure.first?.zone
         let disclaimer = AdviceSelector.disclaimer(for: zone)
-        let ordered = adviceDeck.ordered(AdviceSelector.ordered(store.data.advice, zone: zone))
+        let ordered = adviceDeck.remaining(AdviceSelector.ordered(store.data.advice, zone: zone))
         return ordered.map {
             AdviceCardModel(
                 id: $0.id, title: $0.title, text: $0.text, author: HomeText.gigachatName, role: HomeText.gigachatRole,
-                iconName: "sparkles", disclaimer: disclaimer
+                iconName: HomeText.gigachatMarkAsset, disclaimer: disclaimer
             )
         }
     }
@@ -70,12 +70,17 @@ extension HomeViewModel {
         return HomeText.advicePosition(adviceDeck.position(count: count), of: count)
     }
 
-    func showNextAdvice() {
-        adviceDeck.next(count: store.data.advice.count)
+    /// Есть ли вообще советы (колода или кнопка «Получить новые советы»).
+    var hasAdvice: Bool { !store.data.advice.isEmpty }
+
+    /// Смахивание верхней карточки: назад она не возвращается.
+    func dismissAdvice() {
+        adviceDeck.dismissTop(count: store.data.advice.count)
     }
 
-    func showPreviousAdvice() {
-        adviceDeck.previous(count: store.data.advice.count)
+    /// «Получить новые советы»: колода собирается заново.
+    func refreshAdvice() {
+        adviceDeck.refresh(count: store.data.advice.count)
     }
 
     var isLoading: Bool { screenState == .loading }

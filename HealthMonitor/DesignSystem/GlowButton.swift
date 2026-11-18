@@ -5,6 +5,8 @@ import SwiftUI
 struct GlowButtonSurface: View {
     var isPressed = false
 
+    private let gate = AmbientMotionGate()
+
     private var shape: RoundedRectangle {
         RoundedRectangle(cornerRadius: Radius.glowButton, style: .continuous)
     }
@@ -12,14 +14,19 @@ struct GlowButtonSurface: View {
     var body: some View {
         ZStack {
             shape.fill(AppColor.glowButtonFill)
-            shape.fill(
-                RadialGradient(
-                    colors: [AppColor.glowButtonEdge.opacity(Size.glowButtonLightOpacity), AppColor.glowButtonDeep, Color.clear],
-                    center: .bottom,
-                    startRadius: 0,
-                    endRadius: Size.glowButtonLightRadius
+            // Зелёный свет снизу медленно плывёт вправо и влево (без «Уменьшить движение» стоит по центру).
+            TimelineView(.animation(minimumInterval: nil, paused: !gate.isEnabled)) { context in
+                let phase = 2 * Double.pi * context.date.timeIntervalSinceReferenceDate / Motion.buttonLightPeriod
+                let shift = gate.isEnabled ? Motion.buttonLightDrift * sin(phase) : 0
+                shape.fill(
+                    RadialGradient(
+                        colors: [AppColor.glowButtonEdge.opacity(Size.glowButtonLightOpacity), AppColor.glowButtonDeep, Color.clear],
+                        center: UnitPoint(x: 0.5 + shift, y: 1),
+                        startRadius: 0,
+                        endRadius: Size.glowButtonLightRadius
+                    )
                 )
-            )
+            }
             shape.strokeBorder(
                 LinearGradient(
                     colors: [
@@ -40,14 +47,20 @@ struct GlowButtonSurface: View {
 
 /// Кнопка с иконкой и текстом, внутреннее зелёное свечение (ГигаЧат на главном, «Добавить измерение» на экране давления).
 /// Высота 64 (растёт с крупным шрифтом), цель нажатия не меньше 44.
+/// Иконка кнопки: символ SF Symbols или картинка из каталога ресурсов.
+enum GlowButtonIcon {
+    case system(String)
+    case asset(String)
+}
+
 struct GlowButton: View {
     let title: String
-    let systemImage: String
+    let icon: GlowButtonIcon
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            GlowButtonLabel(title: title, systemImage: systemImage)
+            GlowButtonLabel(title: title, icon: icon)
         }
         .buttonStyle(GlowButtonStyle())
     }
@@ -55,11 +68,11 @@ struct GlowButton: View {
 
 private struct GlowButtonLabel: View {
     let title: String
-    let systemImage: String
+    let icon: GlowButtonIcon
 
     var body: some View {
         HStack(spacing: Spacing.s) {
-            Image(systemName: systemImage)
+            iconImage
                 .resizable()
                 .scaledToFit()
                 .frame(width: Size.glowButtonIcon, height: Size.glowButtonIcon)
@@ -73,6 +86,13 @@ private struct GlowButtonLabel: View {
         .foregroundStyle(AppColor.textPrimary)
         .frame(maxWidth: .infinity, minHeight: Size.glowButtonHeight)
         .contentShape(RoundedRectangle(cornerRadius: Radius.glowButton, style: .continuous))
+    }
+
+    private var iconImage: Image {
+        switch icon {
+        case .system(let name): return Image(systemName: name)
+        case .asset(let name): return Image(name)
+        }
     }
 }
 
@@ -88,10 +108,10 @@ private struct GlowButtonStyle: ButtonStyle {
 
 #Preview("GlowButton: норма, нажата, добавить") {
     VStack(spacing: Spacing.l) {
-        GlowButton(title: "Задать вопрос ГигаЧату", systemImage: "sparkles", action: {})
-        GlowButtonLabel(title: "Задать вопрос ГигаЧату (нажата)", systemImage: "sparkles")
+        GlowButton(title: "Задать вопрос ГигаЧату", icon: .asset(HomeText.gigachatMarkAsset), action: {})
+        GlowButtonLabel(title: "Задать вопрос ГигаЧату (нажата)", icon: .asset(HomeText.gigachatMarkAsset))
             .background { GlowButtonSurface(isPressed: true) }
-        GlowButton(title: "Недоступная кнопка", systemImage: "plus", action: {})
+        GlowButton(title: "Недоступная кнопка", icon: .system("plus"), action: {})
             .disabled(true)
     }
     .padding(Spacing.screenMargin)

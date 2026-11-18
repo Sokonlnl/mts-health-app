@@ -36,12 +36,12 @@ enum Size {
     /// Вкладки «Самочувствие / Анализы» (верх 114), вывод (центр блока на y 248, верх 202) и ширина вывода 272.
     static let heroTabsTop: CGFloat = 114
     /// Кнопка профиля поднята над отступом статус-бара на столько pt.
-    static let profileButtonLift: CGFloat = 12
+    static let profileButtonLift: CGFloat = 6
     /// Вкладки гаснут за столько pt прокрутки, чтобы не налезать на карточки.
     static let heroTabsFadeRamp: CGFloat = 60
     /// Доля ширины экрана, которую жест должен пройти (с учётом инерции), чтобы переключить вкладку.
     static let pageSwitchFraction: CGFloat = 0.3
-    static let heroInsightTop: CGFloat = 202
+    static let heroInsightTop: CGFloat = 218
     static let insightWidth: CGFloat = 272
     static let tabGap: CGFloat = 24
     /// Свечение: пятна у нижнего края блока (ширина, высота, размытие, вынос вниз) и боковое пятно.
@@ -122,10 +122,17 @@ enum Size {
 
     // Совет и колода
     static let adviceHeight: CGFloat = 239
+    /// Зазор между строками заголовка «Советы от ГигаЧата»: отрицательный, высота строки по макету 54 pt.
+    static let sectionTitleLineGap: CGFloat = -15.5
+    /// Прозрачность знака ГигаЧата в карточке совета (в Figma 20%).
+    static let gigachatMarkOpacity: Double = 0.2
     static let adviceAvatar: CGFloat = 41
     /// Карточки колоды позади: сдвиг вниз и сужение с каждой стороны на шаг.
     static let adviceStackStep: CGFloat = 10
-    static let adviceStackInset: CGFloat = 14
+    /// Во сколько уменьшается карточка за уровень глубины (28 pt из 332), сколько карточек видно и насколько темнее задняя.
+    static let adviceStackScaleStep: CGFloat = 0.085
+    static let adviceVisibleCards = 3
+    static let adviceBackDim: Double = 0.25
     static let adviceGlowSize: CGFloat = 150
     static let adviceGlowBlur: CGFloat = 50
     static let adviceGlowOpacity: Double = 0.35

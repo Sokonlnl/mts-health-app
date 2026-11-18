@@ -99,20 +99,21 @@ final class HomeAdviceAndIntroTests: XCTestCase {
         XCTAssertNil(viewModel.adviceCards.first)
     }
 
-    func testAdviceDeckRotatesAndWraps() async {
+    func testAdviceDismissAndRefresh() async {
         var data = TestData.healthData(pressure: [])
         data.advice = MockHealthData.advice
         let viewModel = await makeViewModel(pressure: [], data: data)
         let initial = viewModel.adviceCards.map { $0.id }
         XCTAssertEqual(initial.count, MockHealthData.advice.count)
-        viewModel.showNextAdvice()
-        XCTAssertEqual(viewModel.adviceCards.map { $0.id }, Array(initial.dropFirst()) + [initial[0]], "Верхняя уходит в конец")
+        XCTAssertTrue(viewModel.hasAdvice)
+        viewModel.dismissAdvice()
+        XCTAssertEqual(viewModel.adviceCards.map { $0.id }, Array(initial.dropFirst()), "Смахнутая карточка не возвращается")
         XCTAssertEqual(viewModel.advicePositionText, HomeText.advicePosition(2, of: initial.count))
-        viewModel.showPreviousAdvice()
-        XCTAssertEqual(viewModel.adviceCards.map { $0.id }, initial)
-        viewModel.showPreviousAdvice()
-        XCTAssertEqual(viewModel.adviceCards.map { $0.id }, [initial[initial.count - 1]] + initial.dropLast(), "Назад: последняя наверх")
-        for _ in initial { viewModel.showNextAdvice() }
-        XCTAssertEqual(viewModel.adviceCards.map { $0.id }.count, initial.count)
+        for _ in initial { viewModel.dismissAdvice() }
+        XCTAssertTrue(viewModel.adviceCards.isEmpty, "Смахнули все: колода пуста")
+        XCTAssertTrue(viewModel.hasAdvice, "Советы есть, показывается кнопка обновления")
+        viewModel.refreshAdvice()
+        XCTAssertEqual(viewModel.adviceCards.count, initial.count, "Обновление собирает колоду заново")
+        XCTAssertNotEqual(viewModel.adviceCards.first?.id, initial.first, "Колода начинается с другого совета")
     }
 }

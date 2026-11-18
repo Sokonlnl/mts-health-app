@@ -2,12 +2,13 @@ import SwiftUI
 
 /// Карточка совета (Figma 63:25250): тёмная #1B1B1B 332×239, радиус 33,4, кромка белый 5%, зелёное размытое пятно справа
 /// снизу. Заголовок, совет и автор с иконкой. Колоду из нескольких карточек собирает `AdviceDeckView`.
-/// Логотип ГигаЧата не встраивается: нейтральная иконка SF Symbol. Для VoiceOver одна связка текстов.
+/// Знак ГигаЧата из Figma (`GigaChatMark`, белый, в карточке с прозрачностью 20%). Для VoiceOver одна связка текстов.
 struct AdviceCard: View {
     let title: String
     let text: String
     let author: String
     let role: String
+    /// Имя картинки в каталоге ресурсов (знак автора).
     let iconName: String
     /// Оговорка под советом (при повышенном и высоком давлении). `nil`: без неё.
     var disclaimer: String?
@@ -48,10 +49,11 @@ struct AdviceCard: View {
 
     private var authorRow: some View {
         HStack(spacing: Spacing.m) {
-            Image(systemName: iconName)
-                .foregroundStyle(AppColor.textPrimary)
+            Image(iconName)
+                .resizable()
+                .scaledToFit()
                 .frame(width: Size.adviceAvatar, height: Size.adviceAvatar)
-                .background(AppColor.fillSelected, in: Circle())
+                .opacity(Size.gigachatMarkOpacity)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 0) {
                 Text(author)
@@ -67,7 +69,7 @@ struct AdviceCard: View {
     private var glow: some View {
         CornerGlow(
             color: AppColor.success.text, size: CGSize(width: Size.adviceGlowSize, height: Size.adviceGlowSize),
-            blur: Size.adviceGlowBlur, opacity: Size.adviceGlowOpacity, shift: Size.cornerGlowShift
+            blur: Size.adviceGlowBlur, opacity: Size.adviceGlowOpacity, shift: Size.cornerGlowShift, isDrifting: true
         )
     }
 }
@@ -78,7 +80,7 @@ struct AdviceCard: View {
         text: "Начните с 10 минут на свежем воздухе в комфортном темпе.",
         author: "ГигаЧат",
         role: "Медицинский помощник",
-        iconName: "sparkles"
+        iconName: HomeText.gigachatMarkAsset
     )
     .padding(.horizontal, Spacing.screenMargin + Spacing.adviceInset)
     .padding(.bottom, Spacing.xxl)
@@ -91,7 +93,7 @@ struct AdviceCard: View {
         text: "Небольшие стаканы воды помогают не забывать о питьевом режиме. Если есть ограничения, уточните их у врача.",
         author: "ГигаЧат",
         role: "Медицинский помощник",
-        iconName: "sparkles"
+        iconName: HomeText.gigachatMarkAsset
     )
     .padding(.horizontal, Spacing.screenMargin + Spacing.adviceInset)
     .padding(.bottom, Spacing.xxl)
@@ -104,7 +106,7 @@ struct AdviceCard: View {
         text: "Посидите спокойно несколько минут и измерьте давление ещё раз.",
         author: "ГигаЧат",
         role: "Медицинский помощник",
-        iconName: "sparkles",
+        iconName: HomeText.gigachatMarkAsset,
         disclaimer: HomeText.adviceDisclaimerHigh
     )
     .padding(.horizontal, Spacing.screenMargin + Spacing.adviceInset)

@@ -61,7 +61,7 @@ final class HomeDataTests: XCTestCase {
         let empty = WeekInsight.make(stats: WeekStats(normalDays: 0, measuredDays: 0)).details
         XCTAssertTrue(calm.contains("6 из 7"))
         XCTAssertTrue(mixed.contains("обсудите их с врачом"))
-        XCTAssertTrue(empty.contains("Добавьте первое измерение"))
+        XCTAssertTrue(empty.contains("Измерений за неделю пока нет"))
         XCTAssertNotEqual(calm, mixed)
     }
 

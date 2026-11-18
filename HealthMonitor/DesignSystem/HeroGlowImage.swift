@@ -33,14 +33,20 @@ struct HeroGlowImage: View {
             .overlay {
                 GeometryReader { geo in
                     TimelineView(.animation(minimumInterval: nil, paused: !gate.isEnabled)) { context in
-                        // Картинка выше блока на радиус скругления (её верхние углы, скруглены в экспорте, уходят за край) и шире
-                        // блока на амплитуду «дыхания» с каждой стороны: при сжатии по краям не обнажается фон.
-                        let bleed = geo.size.width * Motion.heroBreatheScaleAmplitude
+                        // Картинка выше блока на радиус скругления (её верхние углы, скруглены в экспорте, уходят за край),
+                        // шире на «дыхание» и дрейф с каждой стороны и ниже на дрейф: при сжатии и сдвиге фон не обнажается.
+                        let time = gate.isEnabled ? context.date.timeIntervalSinceReferenceDate : 0
+                        let bleed = geo.size.width * Motion.heroBreatheScaleAmplitude + Motion.heroDriftX
+                        let driftX = Motion.heroDriftX * CGFloat(sin(2 * Double.pi * time / Motion.heroDriftPeriodX))
+                        let driftY = Motion.heroDriftY * CGFloat(cos(2 * Double.pi * time / Motion.heroDriftPeriodY))
                         image(
-                            time: gate.isEnabled ? context.date.timeIntervalSinceReferenceDate : 0,
-                            size: CGSize(width: geo.size.width + bleed * 2, height: geo.size.height + Radius.hero)
+                            time: time,
+                            size: CGSize(
+                                width: geo.size.width + bleed * 2,
+                                height: geo.size.height + Radius.hero + Motion.heroDriftY * 2
+                            )
                         )
-                        .offset(x: -bleed, y: -Radius.hero)
+                        .offset(x: -bleed + driftX, y: -(Radius.hero + Motion.heroDriftY) + driftY)
                     }
                 }
             }

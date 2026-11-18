@@ -51,6 +51,6 @@ final class HomeViewModelInsightTests: XCTestCase {
 
     func testInsightWithoutMeasurements() async {
         let viewModel = await makeViewModel(pressure: [])
-        XCTAssertTrue(viewModel.insight.details.contains("Добавьте первое измерение"))
+        XCTAssertTrue(viewModel.insight.details.contains("Измерений за неделю пока нет"))
     }
 }

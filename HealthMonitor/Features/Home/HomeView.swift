@@ -9,6 +9,8 @@ struct HomeView: View {
     @State private var scrollOffset: CGFloat = 0
     /// Смещение страниц во время горизонтального жеста между вкладками.
     @State private var pageDrag: CGFloat = 0
+    /// Идёт жест по колоде советов: свайп страниц его не перехватывает.
+    @State private var isAdviceSwiping = false
     /// Заставка: свечение разгорелось из темноты. Без заставки сразу `true`.
     @State private var isGlowLit: Bool
     private let gate = AmbientMotionGate()
@@ -65,11 +67,15 @@ struct HomeView: View {
         .simultaneousGesture(
             DragGesture(minimumDistance: Spacing.l)
                 .onChanged { value in
-                    guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                    guard !isAdviceSwiping, abs(value.translation.width) > abs(value.translation.height) else { return }
                     // С первой страницы тянуть можно только влево, со второй только вправо.
                     pageDrag = index == 0 ? min(0, value.translation.width) : max(0, value.translation.width)
                 }
                 .onEnded { value in
+                    guard !isAdviceSwiping else {
+                        withAnimation(gate.isEnabled ? Motion.standard : nil) { pageDrag = 0 }
+                        return
+                    }
                     let isHorizontal = abs(value.translation.width) > abs(value.translation.height)
                     let travelled = abs(value.predictedEndTranslation.width) > width * Size.pageSwitchFraction
                     if isHorizontal, travelled {
@@ -188,7 +194,7 @@ struct HomeView: View {
             pressureCard.introReveal(index: 1, isActive: isIntroActive)
             smallCards.introReveal(index: 2, isActive: isIntroActive)
             adviceBlock
-            GlowButton(title: HomeText.gigachatButton, systemImage: "sparkles") { viewModel.showComingSoon() }
+            GlowButton(title: HomeText.gigachatButton, icon: .asset(HomeText.gigachatMarkAsset)) { viewModel.showComingSoon() }
                 .introReveal(index: 4, isActive: isIntroActive)
                 .frame(maxWidth: Size.glowButtonWidth)
                 .accessibilityIdentifier("gigachat-button")
@@ -218,19 +224,29 @@ struct HomeView: View {
 
     @ViewBuilder
     private var adviceBlock: some View {
-        Text(HomeText.adviceSectionTitle)
-            .textStyle(.sectionTitle)
-            .foregroundStyle(AppColor.textPrimary)
-            .multilineTextAlignment(.center)
-            .minimumScaleFactor(TextScale.title)
-            .frame(maxWidth: .infinity)
-            .introReveal(index: 3, isActive: isIntroActive)
-            .padding(.top, Spacing.xxl)
-            .accessibilityAddTraits(.isHeader)
-        if !viewModel.adviceCards.isEmpty {
+        // Две строки заголовка собираются стопкой с отрицательным зазором: `lineSpacing` меньше нуля SwiftUI игнорирует,
+        // а в макете высота строки 54 pt при шрифте 56,6.
+        VStack(spacing: Size.sectionTitleLineGap) {
+            ForEach(HomeText.adviceSectionTitle.components(separatedBy: "\n"), id: \.self) { line in
+                Text(line)
+                    .textStyle(.sectionTitle)
+                    .foregroundStyle(AppColor.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(TextScale.title)
+            }
+        }
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(HomeText.adviceSectionTitle.replacingOccurrences(of: "\n", with: " "))
+        .introReveal(index: 3, isActive: isIntroActive)
+        .padding(.top, Spacing.xxl)
+        .accessibilityAddTraits(.isHeader)
+        if viewModel.hasAdvice {
             AdviceDeckView(
                 cards: viewModel.adviceCards, positionText: viewModel.advicePositionText,
-                onNext: { viewModel.showNextAdvice() }, onPrevious: { viewModel.showPreviousAdvice() }
+                onDismiss: { viewModel.dismissAdvice() }, onRefresh: { viewModel.refreshAdvice() },
+                isSwiping: $isAdviceSwiping
             )
             .introReveal(index: 3, isActive: isIntroActive)
             .padding(.horizontal, Spacing.adviceInset)
