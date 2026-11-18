@@ -2,21 +2,24 @@ import SwiftUI
 
 /// Радиусы из docs/DESIGN.md.
 enum Radius {
-    static let pill: CGFloat = 999
-    static let card: CGFloat = 28
-    static let cardSmall: CGFloat = 24
     /// Скругление верха шторки.
     static let sheet: CGFloat = 32
     static let control: CGFloat = 20
-    /// Плитки показателей, кнопка профиля и тёмные карточки главного экрана.
-    static let tile: CGFloat = 32
+    /// Малые карточки (вес, глюкоза) и карточка совета.
+    static let tile: CGFloat = 33.4
     /// Кнопка с зелёным свечением.
     static let glowButton: CGFloat = 21
+    /// Большая карточка давления.
+    static let heroCard: CGFloat = 48
+    /// Полосы мини-шкалы веса.
+    static let gauge: CGFloat = 4
+    /// Скругление низа верхнего блока со свечением.
+    static let hero: CGFloat = 42
 }
 
 #Preview("Radius") {
     let items: [(String, CGFloat)] = [
-        ("pill", Radius.pill), ("card", Radius.card), ("cardSmall", Radius.cardSmall),
+        ("tile", Radius.tile), ("heroCard", Radius.heroCard), ("hero", Radius.hero),
         ("sheet", Radius.sheet), ("control", Radius.control)
     ]
     return VStack(spacing: Spacing.m) {

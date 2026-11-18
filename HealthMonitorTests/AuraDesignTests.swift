@@ -19,25 +19,6 @@ final class AuraDesignTests: XCTestCase {
         XCTAssertEqual(HealthState.noData.tone, .neutral)
     }
 
-    func testPressureScaleFractionsSumToOne() {
-        let sum = PressureZone.allCases.map { PressureScale.fraction(for: $0) }.reduce(0, +)
-        XCTAssertEqual(sum, 1, accuracy: 0.0001)
-    }
-
-    func testPressureScaleProgressFollowsZones() {
-        let normal = PressureScale.progress(systolic: 118, diastolic: 76)
-        let elevated = PressureScale.progress(systolic: 134, diastolic: 80)
-        let high = PressureScale.progress(systolic: 150, diastolic: 95)
-        XCTAssertLessThan(normal, 0.5)
-        XCTAssertTrue(elevated >= 0.5 && elevated < 0.625)
-        XCTAssertGreaterThanOrEqual(high, 0.625)
-    }
-
-    func testPressureScaleUsesWorseOfTwoValues() {
-        let byDiastolic = PressureScale.progress(systolic: 118, diastolic: 88)
-        XCTAssertGreaterThanOrEqual(byDiastolic, 0.5)
-    }
-
     // MARK: - Экран давления
 
     func testStepFocusedFillsClampsAndChangesValue() async {
@@ -62,6 +43,41 @@ final class AuraDesignTests: XCTestCase {
         let viewModel = await makePressure(pressure: [])
         XCTAssertEqual(viewModel.latestState, .noData)
         XCTAssertEqual(viewModel.latestStatusText, AppFormat.noData)
-        XCTAssertEqual(viewModel.orbUnitText, AppUnit.pressure)
+        XCTAssertEqual(viewModel.latestUnitText, AppUnit.pressure)
+    }
+
+    func testLatestUnitTextIncludesPulse() async {
+        let sample = TestData.measurement("a", systolic: 120, diastolic: 80, secondsAgo: 0, pulse: 68)
+        let viewModel = await makePressure(pressure: [sample])
+        XCTAssertEqual(viewModel.latestUnitText, "мм рт. ст. · пульс 68")
+    }
+
+    func testAverageToneFollowsAverageZone() async {
+        let normal = await makePressure(pressure: [TestData.measurement("a", systolic: 118, diastolic: 76, secondsAgo: 60)])
+        XCTAssertEqual(normal.averageTone, .positive)
+        let high = await makePressure(pressure: [TestData.measurement("b", systolic: 150, diastolic: 95, secondsAgo: 60)])
+        XCTAssertEqual(high.averageTone, .critical)
+        let none = await makePressure(pressure: [])
+        XCTAssertEqual(none.averageTone, .neutral, "Без измерений тон нейтральный")
+    }
+
+    func testPeriodEmptinessAndMessages() async {
+        let old = [TestData.measurement("old", systolic: 120, diastolic: 80, secondsAgo: 100 * TestClock.day)]
+        let viewModel = await makePressure(pressure: old)
+        viewModel.period = .week
+        XCTAssertFalse(viewModel.hasPeriodMeasurements)
+        XCTAssertEqual(viewModel.emptyPeriodMessage, "За выбранный период измерений нет.")
+        viewModel.period = .sixMonths
+        XCTAssertTrue(viewModel.hasPeriodMeasurements)
+        XCTAssertFalse(viewModel.emptyMessage.isEmpty)
+    }
+
+    func testHeroHeightIsCompactOnlyOnError() async {
+        let ok = await makePressure(pressure: [])
+        XCTAssertEqual(ok.heroHeight, Size.pressureHeroHeight)
+        let failing = HealthStore(repository: MockHealthRepository(scenario: .failure, delayNanoseconds: 0))
+        let error = PressureViewModel(store: failing, now: { TestClock.now })
+        await error.load()
+        XCTAssertEqual(error.heroHeight, Size.heroCompactHeight)
     }
 }

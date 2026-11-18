@@ -11,7 +11,7 @@ final class ScreenshotTests: XCTestCase {
 
     private func launch(_ screen: String) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments += ["-uiScreen", screen]
+        app.launchArguments += ["-uiScreen", screen, LaunchConfig.disableIntroArgument]
         app.launch()
         return app
     }
@@ -95,15 +95,14 @@ final class ScreenshotTests: XCTestCase {
         card.tap()
         XCTAssertTrue(element(app, "pressure-title").waitForExistence(timeout: timeout))
 
-        // Назад на главный.
+        // Назад на главный: карточка давления на месте.
         let back = element(app, "back-button")
         XCTAssertTrue(back.waitForExistence(timeout: timeout))
         back.tap()
-        let button = element(app, "pressure-button")
-        XCTAssertTrue(button.waitForExistence(timeout: timeout), "Главный экран: кнопка «Давление»")
+        XCTAssertTrue(card.waitForExistence(timeout: timeout), "Главный экран: карточка давления")
 
-        // Кнопка «Давление» тоже открывает экран давления.
-        button.tap()
+        // Повторное нажатие снова открывает экран давления.
+        card.tap()
         XCTAssertTrue(element(app, "pressure-title").waitForExistence(timeout: timeout))
 
         // «+» на экране давления открывает шторку.

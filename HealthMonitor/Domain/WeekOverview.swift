@@ -34,32 +34,25 @@ enum WeekOverview {
     }
 }
 
-/// Короткий и расширенный вывод по неделе. Без диагнозов.
+/// Расширенный вывод по неделе («Подробнее» в верхнем блоке). Без диагнозов.
 struct WeekInsight: Equatable {
-    let title: String
-    let summary: String
     let details: String
 
     static func make(stats: WeekStats) -> WeekInsight {
         if stats.measuredDays == 0 {
             return WeekInsight(
-                title: "Пока нет данных",
-                summary: "За неделю нет измерений давления.",
                 details: "Добавьте первое измерение, и здесь появится вывод по неделе. \(PressureZone.disclaimer)"
             )
         }
+        let days = "Давление в норме \(stats.normalDays) из \(stats.measuredDays) измеренных дней. "
         if stats.normalDays >= 5 {
             return WeekInsight(
-                title: "Спокойная неделя",
-                summary: "Давление в норме \(stats.normalDays) из 7 дней.",
-                details: "Большинство измерений за неделю попали в зону нормы по справочной шкале. "
+                details: days + "Большинство измерений за неделю попали в зону нормы по справочной шкале. "
                     + "Продолжайте измерять в одно и то же время. \(PressureZone.disclaimer)"
             )
         }
         return WeekInsight(
-            title: "Неделя с колебаниями",
-            summary: "Давление в норме \(stats.normalDays) из 7 дней.",
-            details: "Часть значений за неделю выше нормы по справочной шкале. Отмечайте контекст измерений. "
+            details: days + "Часть значений за неделю выше нормы по справочной шкале. Отмечайте контекст измерений. "
                 + "Если значения повторяются, обсудите их с врачом. \(PressureZone.disclaimer)"
         )
     }

@@ -114,7 +114,7 @@ struct PressureChartView: View {
         AxisMarks(values: [elevatedBand.lowerBound, elevatedBand.upperBound]) { value in
             AxisValueLabel {
                 if let number = value.as(Int.self) {
-                    Text(number == elevatedBand.upperBound ? "\(number)+" : "\(number)")
+                    Text(AppFormat.axisThreshold(number, upperBound: elevatedBand.upperBound))
                         .textStyle(.caption)
                         .foregroundStyle(AppColor.textSecondary)
                 }

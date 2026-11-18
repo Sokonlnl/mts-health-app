@@ -13,21 +13,25 @@ struct LaunchConfig: Equatable {
     }
 
     static let argumentName = "-uiScreen"
+    /// Отключает заставку главного (UI-тесты не ждут анимацию).
+    static let disableIntroArgument = "-uiTestsDisableIntro"
 
     let screen: Screen
+    var disablesIntro = false
 
     static var current: LaunchConfig {
         parse(ProcessInfo.processInfo.arguments)
     }
 
     static func parse(_ arguments: [String]) -> LaunchConfig {
+        let disablesIntro = arguments.contains(disableIntroArgument)
         guard let index = arguments.firstIndex(of: argumentName),
               arguments.indices.contains(index + 1),
               let screen = Screen(rawValue: arguments[index + 1])
         else {
-            return LaunchConfig(screen: .home)
+            return LaunchConfig(screen: .home, disablesIntro: disablesIntro)
         }
-        return LaunchConfig(screen: screen)
+        return LaunchConfig(screen: screen, disablesIntro: disablesIntro)
     }
 
     var scenario: MockScenario {

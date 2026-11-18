@@ -15,6 +15,7 @@ struct NewMeasurementSheet: View {
                     Text(hint)
                         .textStyle(.caption)
                         .foregroundStyle(AppColor.danger.text)
+                        .fixedSize(horizontal: false, vertical: true)
                         .accessibilityIdentifier("sheet-hint")
                 }
                 contextChips
@@ -33,6 +34,7 @@ struct NewMeasurementSheet: View {
             Text("Новое измерение")
                 .textStyle(.title)
                 .foregroundStyle(AppColor.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("sheet-title")
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: Spacing.s)
@@ -50,6 +52,7 @@ struct NewMeasurementSheet: View {
                 .foregroundStyle(AppColor.textSecondary)
                 .accessibilityHidden(true)
             Text(viewModel.draftDateText)
+                .fixedSize(horizontal: false, vertical: true)
                 .textStyle(.body)
                 .foregroundStyle(AppColor.textSecondary)
         }
@@ -94,15 +97,19 @@ struct NewMeasurementSheet: View {
 
     @ViewBuilder
     private var result: some View {
-        if let zone = viewModel.draft.zone {
+        if let tone = viewModel.draftResultTone {
             Text(viewModel.draftResultText)
                 .textStyle(.bodyStrong)
-                .foregroundStyle(zone.tone.colors.text)
+                .foregroundStyle(tone.colors.text)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("sheet-result")
         } else {
             Text(viewModel.draftResultText)
                 .textStyle(.caption)
                 .foregroundStyle(AppColor.textSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

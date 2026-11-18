@@ -1,12 +1,14 @@
 import SwiftUI
 import UIKit
 
-/// Текстовый стиль: шрифт, межбуквенный интервал, поведение при Dynamic Type.
+/// Текстовый стиль: шрифт, межбуквенный интервал, интерлиньяж, поведение при Dynamic Type.
 struct AppTextStyle {
     let size: CGFloat
     let weight: Font.Weight
     let design: Font.Design
     let tracking: CGFloat
+    /// Добавка к высоте строки (отрицательная сжимает строки, как `line-height` меньше кегля в макете).
+    let lineSpacing: CGFloat
     let textStyle: UIFont.TextStyle
     /// Верхний предел роста размера при Dynamic Type (во сколько раз). Ограничены только крупные числа.
     let maxScale: CGFloat
@@ -16,6 +18,7 @@ struct AppTextStyle {
         weight: Font.Weight,
         design: Font.Design = .default,
         tracking: CGFloat = 0,
+        lineSpacing: CGFloat = 0,
         textStyle: UIFont.TextStyle,
         maxScale: CGFloat = .greatestFiniteMagnitude
     ) {
@@ -23,6 +26,7 @@ struct AppTextStyle {
         self.weight = weight
         self.design = design
         self.tracking = tracking
+        self.lineSpacing = lineSpacing
         self.textStyle = textStyle
         self.maxScale = maxScale
     }
@@ -36,10 +40,10 @@ struct AppTextStyle {
     }
 }
 
-/// Типографика из docs/DESIGN.md. На макете Inter и Space Grotesk, в iOS: SF Pro и SF Pro Rounded.
+/// Типографика из docs/DESIGN.md. На макете SB Sans Display, Inter и Space Grotesk, в iOS: SF Pro и SF Pro Rounded.
 enum AppTypography {
-    static let heroValue = AppTextStyle(size: 68, weight: .light, tracking: -2, textStyle: .largeTitle, maxScale: 1.2)
-    static let heroValueCompact = AppTextStyle(size: 56, weight: .light, tracking: -2, textStyle: .largeTitle, maxScale: 1.2)
+    /// Крупное значение давления (карточка главного экрана и верх экрана давления).
+    static let heroValue = AppTextStyle(size: 59.7, weight: .light, tracking: -1.8, textStyle: .largeTitle, maxScale: 1.2)
     static let metricCard = AppTextStyle(
         size: 44, weight: .bold, design: .rounded, tracking: -1.2, textStyle: .largeTitle, maxScale: 1.4
     )
@@ -53,12 +57,24 @@ enum AppTypography {
     static let bodyStrong = AppTextStyle(size: 15, weight: .semibold, textStyle: .body)
     static let body = AppTextStyle(size: 15, weight: .regular, textStyle: .body)
     static let label = AppTextStyle(size: 14, weight: .medium, textStyle: .subheadline)
-    static let tileLabel = AppTextStyle(size: 14, weight: .regular, tracking: -0.28, textStyle: .subheadline)
-    static let tileValue = AppTextStyle(size: 38, weight: .light, tracking: -1.8, textStyle: .largeTitle, maxScale: 1.3)
-    static let insightTitle = AppTextStyle(size: 22, weight: .regular, tracking: -0.3, textStyle: .title2)
+    /// Подпись большой карточки и вкладки в верхнем блоке (16).
+    static let cardLabel = AppTextStyle(size: 16, weight: .regular, tracking: -0.3, textStyle: .callout)
+    /// Подпись малой карточки (14).
+    static let smallCardLabel = AppTextStyle(size: 14, weight: .regular, tracking: -0.28, textStyle: .subheadline)
+    static let smallCardValue = AppTextStyle(size: 24, weight: .regular, tracking: -0.5, textStyle: .title2, maxScale: 1.3)
+    static let unitLabel = AppTextStyle(size: 13, weight: .regular, textStyle: .caption1)
+    static let chipLabel = AppTextStyle(size: 14, weight: .semibold, textStyle: .subheadline)
+    /// Вывод в верхнем блоке: 34,6 pt при высоте строки 31.
+    static let insightTitle = AppTextStyle(
+        size: 34.6, weight: .regular, tracking: -0.47, lineSpacing: -3.6, textStyle: .largeTitle, maxScale: 1.4
+    )
     static let insightSummary = AppTextStyle(size: 14, weight: .regular, textStyle: .subheadline)
-    static let tileUnit = AppTextStyle(size: 13, weight: .regular, textStyle: .caption1)
-    static let cardValue = AppTextStyle(size: 38, weight: .regular, tracking: -1.2, textStyle: .largeTitle, maxScale: 1.3)
+    /// Заголовок блока советов: 56,6 pt при высоте строки 54.
+    static let sectionTitle = AppTextStyle(
+        size: 56.6, weight: .regular, tracking: -4.5, lineSpacing: -2.6, textStyle: .largeTitle, maxScale: 1.2
+    )
+    static let adviceTitle = AppTextStyle(size: 23, weight: .regular, tracking: -0.35, lineSpacing: 4, textStyle: .title2)
+    static let adviceBody = AppTextStyle(size: 14, weight: .regular, lineSpacing: 2, textStyle: .subheadline)
     static let glowButtonTitle = AppTextStyle(size: 16, weight: .medium, textStyle: .body)
     static let caption = AppTextStyle(size: 12, weight: .regular, textStyle: .caption1)
     static let captionStrong = AppTextStyle(size: 13, weight: .semibold, textStyle: .caption1)
@@ -66,7 +82,6 @@ enum AppTypography {
 
 extension AppTextStyle {
     static let heroValue = AppTypography.heroValue
-    static let heroValueCompact = AppTypography.heroValueCompact
     static let metricCard = AppTypography.metricCard
     static let metricCardSmall = AppTypography.metricCardSmall
     static let title = AppTypography.title
@@ -76,12 +91,16 @@ extension AppTextStyle {
     static let bodyStrong = AppTypography.bodyStrong
     static let body = AppTypography.body
     static let label = AppTypography.label
-    static let tileLabel = AppTypography.tileLabel
-    static let tileValue = AppTypography.tileValue
+    static let cardLabel = AppTypography.cardLabel
+    static let smallCardLabel = AppTypography.smallCardLabel
+    static let smallCardValue = AppTypography.smallCardValue
+    static let unitLabel = AppTypography.unitLabel
+    static let chipLabel = AppTypography.chipLabel
     static let insightTitle = AppTypography.insightTitle
     static let insightSummary = AppTypography.insightSummary
-    static let tileUnit = AppTypography.tileUnit
-    static let cardValue = AppTypography.cardValue
+    static let sectionTitle = AppTypography.sectionTitle
+    static let adviceTitle = AppTypography.adviceTitle
+    static let adviceBody = AppTypography.adviceBody
     static let glowButtonTitle = AppTypography.glowButtonTitle
     static let caption = AppTypography.caption
     static let captionStrong = AppTypography.captionStrong
@@ -97,6 +116,7 @@ private struct TextStyleModifier: ViewModifier {
         content
             .font(style.font(for: Self.category(for: dynamicTypeSize)))
             .tracking(style.tracking)
+            .lineSpacing(style.lineSpacing)
     }
 
     /// Явное соответствие размеров SwiftUI категориям UIKit (без опоры на конвертер SDK).
@@ -130,13 +150,14 @@ extension View {
 
 #Preview("Typography") {
     let styles: [(String, AppTextStyle)] = [
-        ("heroValue 68/300", .heroValue), ("heroValueCompact 56/300", .heroValueCompact),
+        ("heroValue 59.7/300", .heroValue),
         ("metricCard 44/700", .metricCard), ("metricCardSmall 38/700", .metricCardSmall),
         ("title 24/700", .title), ("heroHeadline 22/700", .heroHeadline),
         ("headline 18/600", .headline), ("headlineCompact 17/600", .headlineCompact),
         ("body 15/600", .bodyStrong), ("body 15/400", .body),
-        ("label 14/500", .label), ("caption 12/400", .caption),
-        ("caption 13/600", .captionStrong)
+        ("cardLabel 16", .cardLabel), ("label 14/500", .label), ("smallCardValue 24", .smallCardValue),
+        ("chipLabel 14/600", .chipLabel), ("caption 12/400", .caption),
+        ("caption 13/600", .captionStrong), ("adviceTitle 23", .adviceTitle)
     ]
     return VStack(alignment: .leading, spacing: 8) {
         ForEach(styles, id: \.0) { item in

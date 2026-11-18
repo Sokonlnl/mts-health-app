@@ -4,34 +4,32 @@ import Observation
 @MainActor
 @Observable
 final class HomeViewModel {
+    /// Идентификаторы вкладок верхнего блока: «Самочувствие» открыта, «Анализы» заглушка.
+    static let wellbeingTabID = "wellbeing"
+    static let analysesTabID = "analyses"
+
     let store: HealthStore
     @ObservationIgnored let now: () -> Date
+    /// Играть ли заставку при первом показе (`-uiTestsDisableIntro` выключает её).
+    @ObservationIgnored let playsIntro: Bool
 
     var isInsightExpanded = false
+    /// Подсказка-заглушка «Скоро будет доступно» (сбрасывается сама).
+    var toastMessage: String?
+    /// Заставка ещё не сыграна: она играет один раз за запуск, при возврате с экрана давления не повторяется.
+    private(set) var isIntroPending: Bool
 
-    init(store: HealthStore, now: @escaping () -> Date = { Date() }) {
+    init(store: HealthStore, now: @escaping () -> Date = { Date() }, playsIntro: Bool = true) {
         self.store = store
         self.now = now
+        self.playsIntro = playsIntro
+        self.isIntroPending = playsIntro
     }
 
     var screenState: ScreenState { store.screenState }
 
     var insight: WeekInsight {
         WeekInsight.make(stats: WeekOverview.stats(measurements: store.data.pressure, now: now()))
-    }
-
-    var cards: [MetricCardModel] {
-        let data = store.data
-        return [
-            pressureCard(data.pressure),
-            pulseCard(data.pulse),
-            weightCard(data.weight),
-            glucoseCard(data.glucose)
-        ]
-    }
-
-    func card(_ kind: MetricKind) -> MetricCardModel {
-        cards.first { $0.kind == kind } ?? .empty(kind, unit: "")
     }
 
     func load() async {
@@ -46,53 +44,43 @@ final class HomeViewModel {
         isInsightExpanded.toggle()
     }
 
-    private func pressureCard(_ measurements: [PressureMeasurement]) -> MetricCardModel {
-        guard let latest = measurements.first else { return .empty(.pressure, unit: AppUnit.pressure) }
-        let series = measurements.prefix(14).reversed().map { Double($0.systolic) }
-        return MetricCardModel(
-            kind: .pressure,
-            valueText: AppFormat.pressureValue(latest.systolic, latest.diastolic),
-            unit: AppUnit.pressure,
-            statusText: latest.zone.title,
-            tone: latest.zone.tone,
-            series: series
-        )
+    /// Заставка после загрузки: при включённой анимации ждёт `Motion.introNanoseconds` (`sleep` подменяется в тестах),
+    /// затем отмечает её сыгранной. Без анимации и при повторном вызове завершается сразу.
+    func runIntro(
+        animationsEnabled: Bool,
+        sleep: (UInt64) async -> Void = { try? await Task.sleep(nanoseconds: $0) }
+    ) async {
+        guard isIntroPending else { return }
+        if animationsEnabled { await sleep(Motion.introNanoseconds) }
+        completeIntro()
     }
 
-    private func pulseCard(_ reading: MetricReading) -> MetricCardModel {
-        guard let latest = reading.latest else { return .empty(.pulse, unit: AppUnit.pulse) }
-        return MetricCardModel(
-            kind: .pulse,
-            valueText: "\(Int(latest.rounded()))",
-            unit: AppUnit.pulse,
-            statusText: AppFormat.restingStatus,
-            tone: .positive,
-            series: reading.series
-        )
+    /// Отмечает заставку сыгранной.
+    func completeIntro() {
+        isIntroPending = false
     }
 
-    /// Вес показывается только значением в плитке бенто, без статуса и графика.
-    private func weightCard(_ reading: MetricReading) -> MetricCardModel {
-        guard let latest = reading.latest else { return .empty(.weight, unit: AppUnit.weight) }
-        return MetricCardModel(
-            kind: .weight,
-            valueText: AppFormat.decimal(latest),
-            unit: AppUnit.weight,
-            statusText: AppFormat.lastValue,
-            tone: .neutral,
-            series: reading.series
-        )
+    // MARK: - Заглушки
+
+    var tabs: [HomeTab] {
+        [
+            HomeTab(id: Self.wellbeingTabID, title: HomeText.tabWellbeing),
+            HomeTab(id: Self.analysesTabID, title: HomeText.tabAnalyses)
+        ]
     }
 
-    private func glucoseCard(_ reading: MetricReading) -> MetricCardModel {
-        guard let latest = reading.latest else { return .empty(.glucose, unit: AppUnit.glucose) }
-        return MetricCardModel(
-            kind: .glucose,
-            valueText: AppFormat.decimal(latest),
-            unit: AppUnit.glucose,
-            statusText: AppFormat.lastValue,
-            tone: .neutral,
-            series: reading.series
-        )
+    var selectedTabID: String { Self.wellbeingTabID }
+
+    var selectedTab: HomeTab { HomeTab(id: Self.wellbeingTabID, title: HomeText.tabWellbeing) }
+
+    /// Выбор вкладки: «Самочувствие» уже открыта, «Анализы» пока заглушка.
+    func selectTab(_ id: String) {
+        guard id != selectedTabID else { return }
+        showComingSoon()
+    }
+
+    /// Кнопка «Задать вопрос ГигаЧату» и вкладка «Анализы» пока не работают: короткое сообщение.
+    func showComingSoon() {
+        toastMessage = HomeText.comingSoon
     }
 }

@@ -1,288 +1,194 @@
 import SwiftUI
 
-/// Карточка показателя на главном экране.
+/// Карточка показателя на главном экране (Figma 63:25250).
 ///
 /// Раскладка (`layout`):
-/// - `.tile`: стеклянная плитка бенто (подпись, значение 38, единица, статус зоны текстом), без иконки и графика.
-///   Заполняет высоту, которую отдаёт `BentoGrid`.
-/// - `.compact`: карточка с иконкой, значением, статусом и мини-графиком.
+/// - `.large`: большая стеклянная карточка давления 358×258, радиус 48, отступ 24: иконка и подпись, значение 59,7 с единицей,
+///   чип статуса зоны (`StatusPill` `.tinted`) и размытое «облако» цвета зоны в правом нижнем углу.
+/// - `.small`: малая карточка (вес, глюкоза) 174,5×166, радиус 33,4, отступ 16: иконка и подпись, значение 24 с единицей
+///   и мини-шкала внизу (`MetricGauge`).
 ///
-/// Поверхность (`surface`) у `.compact`: `.glass` (стекло, радиус 28) или `.solid` (#202020, контур #383838,
-/// радиус 32, иконка и название слева сверху, остальное по центру, график 141×44). Цвет статуса задаёт `tone`.
-/// Пустое состояние: `valueText == nil` (прочерк; VoiceOver читает «Нет данных»).
+/// Пустое состояние: `isPlaceholder` (прочерк textTertiary, рядом читаемая подпись). Для VoiceOver карточка одна
+/// связка с готовой подписью (`accessibilityText`); идентификатор задаёт вызывающий на самой карточке.
 struct MetricCard: View {
     enum Layout {
-        case tile
-        case compact
-    }
-
-    enum Surface {
-        case glass
-        case solid
+        case large
+        case small
     }
 
     let kind: MetricKind
-    let valueText: String?
+    let valueText: String
+    var isPlaceholder = false
+    /// Единица или (в пустой карточке) готовая подпись «единица · статус».
     let unit: String
     var statusText: String?
     var tone: StatusTone = .neutral
-    var series: [Double] = []
-    var layout: Layout = .compact
-    var surface: Surface = .glass
-    /// Стиль мини-графика (приходит из модели карточки).
-    var sparklineStyle: Sparkline.Style = .line
-    /// Готовая подпись справа от значения (из модели). `nil`: единица.
-    var valueCaption: String?
-
-    private var isSolid: Bool { surface == .solid }
+    var layout: Layout = .small
+    var gauge: MetricGauge.Style?
+    var gaugePosition: Double?
+    /// Ритм сердцебиения декоративного сердца (`.large`). `nil`: сердце неподвижно.
+    var rhythm: HeartbeatRhythm?
+    let accessibilityText: String
 
     var body: some View {
-        switch layout {
-        case .tile:
-            tileBody
-        case .compact:
-            surfaced(compactBody)
+        Group {
+            switch layout {
+            case .large:
+                largeBody
+            case .small:
+                smallBody
+            }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
     }
 
-    // MARK: - Плитка
+    private var valueColor: Color { isPlaceholder ? AppColor.textTertiary : AppColor.textPrimary }
 
-    private var tileBody: some View {
-        VStack(spacing: Spacing.xs) {
+    private func header(iconSize: CGFloat, label: AppTextStyle) -> some View {
+        HStack(spacing: Spacing.s) {
+            Image(systemName: kind.iconName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: iconSize, height: iconSize)
+                .foregroundStyle(kind.color)
             Text(kind.title)
-                .textStyle(.tileLabel)
-                .foregroundStyle(AppColor.textPrimary)
+                .textStyle(label)
+                .foregroundStyle(AppColor.textDim)
                 .lineLimit(1)
-                .minimumScaleFactor(TextScale.compact)
-            Text(valueText ?? AppFormat.dash)
-                .textStyle(.tileValue)
-                .foregroundStyle(valueText == nil ? AppColor.textTertiary : AppColor.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(TextScale.metric)
-                .accessibilityHidden(valueText == nil)
-            Text(unit)
-                .textStyle(.tileUnit)
-                .foregroundStyle(AppColor.textSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(TextScale.compact)
-            if let statusText {
-                Text(statusText)
-                    .textStyle(.tileUnit)
-                    .foregroundStyle(tone.colors.text)
-                    .lineLimit(1)
-                    .minimumScaleFactor(TextScale.compact)
-            }
         }
-        .padding(.horizontal, Spacing.s)
-        .padding(.vertical, Spacing.m)
-        .glassTile()
-        .accessibilityElement(children: .combine)
-        .accessibilityValue(valueText == nil && statusText == nil ? AppFormat.noData : "")
     }
 
-    // MARK: - Карточка
+    // MARK: - Большая
 
-    private var compactBody: some View {
-        VStack(alignment: isSolid ? .center : .leading, spacing: isSolid ? Spacing.m : Spacing.s) {
-            header
-            value
-            if let statusText, valueText != nil || isSolid {
-                Text(statusText)
-                    .textStyle(isSolid ? .tileUnit : .captionStrong)
-                    .foregroundStyle(tone.colors.text)
-                    .multilineTextAlignment(isSolid ? .center : .leading)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: isSolid ? Spacing.m : Spacing.xs)
-            Sparkline(
-                values: series, color: kind.color, style: sparklineStyle,
-                height: isSolid ? Size.sparklineSolidHeight : Size.sparklineHeight
+    private var largeShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: Radius.heroCard, style: .continuous)
+    }
+
+    private var largeBody: some View {
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            header(iconSize: Size.cardIconLarge, label: .cardLabel)
+            Spacer(minLength: Spacing.s)
+            MetricValueBlock(
+                valueText: valueText, unit: unit, statusText: statusText, tone: tone, isPlaceholder: isPlaceholder
             )
-            .frame(maxWidth: isSolid ? Size.sparklineSolidWidth : .infinity)
-            if valueText == nil {
-                emptyAction
-            }
         }
-        .frame(maxHeight: .infinity, alignment: .top)
-        .accessibilityElement(children: .contain)
-    }
-
-    @ViewBuilder
-    private var header: some View {
-        if isSolid {
-            HStack(spacing: Spacing.s) {
-                Image(systemName: kind.iconName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: Size.cardIcon, height: Size.cardIcon)
-                    .foregroundStyle(kind.color)
-                    .accessibilityHidden(true)
-                Text(kind.title)
-                    .textStyle(.body)
-                    .foregroundStyle(AppColor.textPrimary)
-                    .lineLimit(1)
-                Spacer(minLength: 0)
-            }
-        } else {
-            HStack(spacing: Spacing.s) {
-                Image(systemName: kind.iconName)
-                    .textStyle(.captionStrong)
-                    .foregroundStyle(kind.color)
-                    .frame(width: Size.metricIcon, height: Size.metricIcon)
-                    .background(AppColor.fill, in: Circle())
-                    .accessibilityHidden(true)
-                Text(kind.title)
-                    .textStyle(.bodyStrong)
-                    .foregroundStyle(AppColor.textPrimary)
-                    .lineLimit(1)
-                Spacer(minLength: 0)
+        .padding(Spacing.xxl)
+        .frame(maxWidth: .infinity, minHeight: Size.pressureCardHeight, alignment: .topLeading)
+        .background {
+            ZStack {
+                GlassSurface(shape: largeShape, style: .hero)
+                BeatingHeart(color: tone.colors.text, rhythm: rhythm).clipShape(largeShape)
             }
         }
     }
 
-    @ViewBuilder
-    private var value: some View {
-        if isSolid {
-            VStack(spacing: Spacing.xs) {
-                Text(valueText ?? AppFormat.dash)
-                    .textStyle(.cardValue)
-                    .foregroundStyle(valueText == nil ? AppColor.textTertiary : AppColor.textPrimary)
+    // MARK: - Малая
+
+    private var smallBody: some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            header(iconSize: Size.cardIconLarge, label: .smallCardLabel)
+            HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
+                Text(valueText)
+                    .textStyle(.smallCardValue)
+                    .foregroundStyle(valueColor)
                     .lineLimit(1)
                     .minimumScaleFactor(TextScale.metric)
-                    .accessibilityLabel(valueText.map { Text($0) } ?? Text(AppFormat.noData))
                 Text(unit)
-                    .textStyle(.tileUnit)
-                    .foregroundStyle(AppColor.textSecondary)
+                    .textStyle(.unitLabel)
+                    .foregroundStyle(AppColor.neutral.text)
+                    .lineLimit(2)
             }
-        } else {
-            MetricValueText(
-                value: valueText ?? AppFormat.dash,
-                unit: valueCaption ?? unit,
-                style: .metricCardSmall,
-                isPlaceholder: valueText == nil
-            )
+            Spacer(minLength: Spacing.xs)
+            if let gauge {
+                MetricGauge(style: gauge, position: gaugePosition)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
         }
-    }
-
-    /// Кнопка пустой карточки. Экрана ввода показателя нет: она всегда выключена и объяснена подписью.
-    private var emptyAction: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            PrimaryButton(title: AppFormat.addMeasurement, style: .outline, isEnabled: false, action: {})
-                .accessibilityIdentifier("metric-empty-add-\(kind.rawValue)")
-            Text(AppFormat.inputUnavailable)
-                .textStyle(.caption)
-                .foregroundStyle(AppColor.textSecondary)
-        }
-    }
-
-    @ViewBuilder
-    private func surfaced<Content: View>(_ content: Content) -> some View {
-        switch surface {
-        case .glass:
-            content.glassCard(radius: Radius.card, insets: CardInsets.compact)
-        case .solid:
-            let shape = RoundedRectangle(cornerRadius: Radius.tile, style: .continuous)
-            content
-                .padding(Spacing.xl)
-                .frame(maxWidth: .infinity)
-                .background { shape.fill(AppColor.solidCardFill) }
-                .overlay { shape.strokeBorder(AppColor.solidCardStroke, lineWidth: Size.hairline) }
-        }
+        .padding(Spacing.l)
+        .frame(maxWidth: .infinity, minHeight: Size.smallCardHeight, maxHeight: .infinity, alignment: .topLeading)
+        .glassBackground(in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous), style: .flat)
     }
 }
 
-#Preview("MetricCard: плитки") {
+/// Декоративное сердце (`heart.fill`) в правом нижнем углу большой карточки: размытый силуэт цвета зоны, бьётся
+/// двойным ударом с периодом 60 / пульс (`HeartbeatRhythm`). Без ритма, при «Уменьшить движение» и при выключенном
+/// `isAmbientMotionEnabled` сердце неподвижно.
+private struct BeatingHeart: View {
+    let color: Color
+    let rhythm: HeartbeatRhythm?
+
+    private let gate = AmbientMotionGate()
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: nil, paused: !(gate.isEnabled && rhythm != nil))) { context in
+            CornerGlow(
+                color: color, size: CGSize(width: Size.heartSize, height: Size.heartSize),
+                blur: Size.heartBlur, opacity: Size.heartOpacity, shift: Size.cornerGlowShift
+            ) {
+                Image(systemName: "heart.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .scaleEffect(scale(at: context.date))
+            }
+        }
+    }
+
+    private func scale(at date: Date) -> Double {
+        guard gate.isEnabled, let rhythm else { return 1 }
+        return rhythm.scale(at: date.timeIntervalSinceReferenceDate, amplitude: Motion.heartbeatAmplitude)
+    }
+}
+
+#Preview("MetricCard: большая (норма, повышенное, высокое, нет данных)") {
     ScrollView {
-        VStack(spacing: Spacing.l) {
-            BentoGrid {
-                MetricCard(
-                    kind: .pressure, valueText: "122/79", unit: AppUnit.pressure,
-                    statusText: "Норма", tone: .positive, layout: .tile
-                )
-            } side: {
-                MetricCard(kind: .pulse, valueText: "68", unit: AppUnit.pulse, layout: .tile)
-                MetricCard(kind: .weight, valueText: "74,2", unit: AppUnit.weight, layout: .tile)
-            }
-            BentoGrid {
-                MetricCard(
-                    kind: .pressure, valueText: "134/86", unit: AppUnit.pressure,
-                    statusText: "Повышенное", tone: .caution, layout: .tile
-                )
-            } side: {
-                MetricCard(kind: .pulse, valueText: nil, unit: AppUnit.pulse, layout: .tile)
-                MetricCard(kind: .weight, valueText: nil, unit: AppUnit.weight, layout: .tile)
-            }
-            BentoGrid {
-                MetricCard(
-                    kind: .pressure, valueText: "148/94", unit: AppUnit.pressure,
-                    statusText: "Высокое", tone: .critical, layout: .tile
-                )
-            } side: {
-                SkeletonTile()
-                SkeletonTile()
-            }
-            BentoGrid {
-                MetricCard(kind: .pressure, valueText: nil, unit: AppUnit.pressure, statusText: AppFormat.noData, layout: .tile)
-            } side: {
-                MetricCard(kind: .pulse, valueText: nil, unit: AppUnit.pulse, layout: .tile)
-                MetricCard(kind: .weight, valueText: nil, unit: AppUnit.weight, layout: .tile)
-            }
+        VStack(spacing: Spacing.columnGap) {
+            MetricCard(
+                kind: .pressure, valueText: "122/79", unit: AppUnit.pressure, statusText: "Норма", tone: .positive,
+                layout: .large, accessibilityText: "Давление 122 на 79, норма"
+            )
+            MetricCard(
+                kind: .pressure, valueText: "134/86", unit: AppUnit.pressure, statusText: "Повышенное", tone: .caution,
+                layout: .large, accessibilityText: "Давление 134 на 86, повышенное"
+            )
+            MetricCard(
+                kind: .pressure, valueText: "148/94", unit: AppUnit.pressure, statusText: "Высокое", tone: .critical,
+                layout: .large, accessibilityText: "Давление 148 на 94, высокое"
+            )
+            MetricCard(
+                kind: .pressure, valueText: AppFormat.emptyPressureValue, isPlaceholder: true, unit: AppUnit.pressure,
+                statusText: AppFormat.noData, tone: .neutral, layout: .large, accessibilityText: "Давление: нет данных"
+            )
         }
         .padding(Spacing.screenMargin)
     }
-    .background(AppColor.homeBackground)
-}
-
-#Preview("MetricCard: solid, тона статуса") {
-    VStack(spacing: Spacing.m) {
-        MetricCard(
-            kind: .pulse, valueText: "68", unit: AppUnit.pulse, statusText: AppFormat.restingStatus, tone: .positive,
-            series: [66, 68, 65, 70, 67], surface: .solid
-        )
-        HStack(alignment: .top, spacing: Spacing.m) {
-            MetricCard(
-                kind: .pulse, valueText: "104", unit: AppUnit.pulse, statusText: "Повышен", tone: .caution,
-                series: [90, 98, 104], surface: .solid
-            )
-            MetricCard(
-                kind: .pulse, valueText: "132", unit: AppUnit.pulse, statusText: "Высокий", tone: .critical,
-                series: [100, 120, 132], surface: .solid
-            )
-        }
-        .fixedSize(horizontal: false, vertical: true)
-        MetricCard(
-            kind: .pulse, valueText: nil, unit: AppUnit.pulse, statusText: AppFormat.noMeasurementsYet, tone: .neutral,
-            surface: .solid
-        )
-    }
-    .padding(Spacing.screenMargin)
-    .background(AppColor.homeBackground)
-}
-
-#Preview("MetricCard: glass") {
-    HStack(alignment: .top, spacing: Spacing.m) {
-        MetricCard(
-            kind: .pulse, valueText: "68", unit: AppUnit.pulse, statusText: AppFormat.restingStatus, tone: .neutral,
-            series: [66, 68, 65, 70, 67]
-        )
-        MetricCard(
-            kind: .weight, valueText: "74,2", unit: AppUnit.weight, statusText: AppFormat.lastValue, tone: .neutral,
-            series: [74.6, 74.4, 74.2]
-        )
-    }
-    .fixedSize(horizontal: false, vertical: true)
-    .padding(Spacing.screenMargin)
     .background(AppColor.background)
 }
 
-#Preview("MetricCard: пусто (кнопка выключена)") {
-    VStack(spacing: Spacing.l) {
-        MetricCard(
-            kind: .glucose, valueText: nil, unit: AppUnit.glucose,
-            statusText: AppFormat.noMeasurementsYet, tone: .neutral,
-            valueCaption: AppUnit.glucose + " · " + AppFormat.noMeasurementsYet.lowercased()
-        )
+#Preview("MetricCard: малые (данные и пусто)") {
+    VStack(spacing: Spacing.columnGap) {
+        HStack(spacing: Spacing.tileGap) {
+            MetricCard(
+                kind: .weight, valueText: "72,4", unit: AppUnit.weight, gauge: .bands, gaugePosition: 0.45,
+                accessibilityText: "Вес 72,4 кг"
+            )
+            MetricCard(
+                kind: .glucose, valueText: "5,4", unit: AppUnit.glucose, gauge: .arc, gaugePosition: 0.4,
+                accessibilityText: "Глюкоза 5,4 ммоль/л"
+            )
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        HStack(spacing: Spacing.tileGap) {
+            MetricCard(
+                kind: .weight, valueText: AppFormat.dash, isPlaceholder: true,
+                unit: AppFormat.unitCaption(AppUnit.weight, status: AppFormat.noMeasurementsYet), accessibilityText: "Вес: нет данных"
+            )
+            MetricCard(
+                kind: .glucose, valueText: AppFormat.dash, isPlaceholder: true,
+                unit: AppFormat.unitCaption(AppUnit.glucose, status: AppFormat.noMeasurementsYet), accessibilityText: "Глюкоза: нет данных"
+            )
+        }
+        .fixedSize(horizontal: false, vertical: true)
     }
     .padding(Spacing.screenMargin)
     .background(AppColor.background)
@@ -290,13 +196,32 @@ struct MetricCard: View {
 
 // У карточки показателя loading и error показываются на уровне экрана: скелетон и сообщение об ошибке.
 #Preview("MetricCard: loading") {
-    SkeletonList(count: 2)
-        .padding(Spacing.screenMargin)
-        .background(AppColor.background)
+    VStack(spacing: Spacing.columnGap) {
+        SkeletonCard(identifier: "skeleton-card", minHeight: Size.pressureCardHeight, radius: Radius.heroCard)
+        SkeletonCard(minHeight: Size.smallCardHeight, radius: Radius.tile)
+    }
+    .padding(Spacing.screenMargin)
+    .background(AppColor.background)
 }
 
 #Preview("MetricCard: error") {
     ErrorStateView(message: "Сервис временно недоступен. Проверьте соединение и повторите попытку.", retry: {})
         .padding(Spacing.screenMargin)
         .background(AppColor.background)
+}
+
+#Preview("MetricCard: большая, сердце бьётся 68 уд/мин и без движения") {
+    VStack(spacing: Spacing.columnGap) {
+        MetricCard(
+            kind: .pressure, valueText: "122/79", unit: AppUnit.pressure, statusText: "Норма", tone: .positive,
+            layout: .large, rhythm: HeartbeatRhythm(pulse: 68), accessibilityText: "Давление 122 на 79, норма"
+        )
+        MetricCard(
+            kind: .pressure, valueText: "122/79", unit: AppUnit.pressure, statusText: "Норма", tone: .positive,
+            layout: .large, rhythm: HeartbeatRhythm(pulse: 68), accessibilityText: "Давление 122 на 79, норма"
+        )
+        .environment(\.isAmbientMotionEnabled, false)
+    }
+    .padding(Spacing.screenMargin)
+    .background(AppColor.background)
 }

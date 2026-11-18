@@ -18,13 +18,36 @@ final class HomeDataTests: XCTestCase {
         XCTAssertGreaterThan(now.timeIntervalSince(oldest), 170 * 86_400)
     }
 
-    func testMockGlucoseIsEmpty() {
+    func testMockHasWeightGlucoseAndAdvice() {
         let data = MockHealthData.make(now: now)
-        XCTAssertNil(data.glucose.latest)
+        XCTAssertEqual(data.glucose.latest, 5.4)
         XCTAssertNotNil(data.pulse.latest)
         XCTAssertNotNil(data.weight.latest)
+        XCTAssertFalse(data.advice.isEmpty)
         XCTAssertFalse(data.isEmpty)
         XCTAssertTrue(HealthData.empty.isEmpty)
+        XCTAssertTrue(HealthData.empty.advice.isEmpty)
+    }
+
+    func testMockAdviceIsReferenceWithoutDiagnoses() {
+        let ids = Set(MockHealthData.advice.map(\.id))
+        XCTAssertEqual(ids.count, MockHealthData.advice.count, "Идентификаторы советов уникальны")
+        for advice in MockHealthData.advice {
+            let text = (advice.title + " " + advice.text).lowercased()
+            XCTAssertFalse(text.contains("диагноз"), advice.id)
+            XCTAssertFalse(text.contains("лечени"), advice.id)
+        }
+    }
+
+    func testGaugeScalePositionClampsToRange() {
+        let scale = GaugeScale(range: 50...100)
+        XCTAssertEqual(scale.position(of: 50), 0, accuracy: 0.0001)
+        XCTAssertEqual(scale.position(of: 75), 0.5, accuracy: 0.0001)
+        XCTAssertEqual(scale.position(of: 100), 1, accuracy: 0.0001)
+        XCTAssertEqual(scale.position(of: 20), 0, accuracy: 0.0001)
+        XCTAssertEqual(scale.position(of: 140), 1, accuracy: 0.0001)
+        XCTAssertEqual(GaugeScale.glucose.position(of: 5.4), 0.4, accuracy: 0.0001)
+        XCTAssertEqual(GaugeScale(range: 5...5).position(of: 5), 0, accuracy: 0.0001, "Пустой диапазон не делит на ноль")
     }
 
     func testWeekStatsOnEmptyData() {
@@ -33,9 +56,13 @@ final class HomeDataTests: XCTestCase {
     }
 
     func testInsightVariants() {
-        XCTAssertEqual(WeekInsight.make(stats: WeekStats(normalDays: 6, measuredDays: 7)).title, "Спокойная неделя")
-        XCTAssertEqual(WeekInsight.make(stats: WeekStats(normalDays: 2, measuredDays: 7)).title, "Неделя с колебаниями")
-        XCTAssertEqual(WeekInsight.make(stats: WeekStats(normalDays: 0, measuredDays: 0)).title, "Пока нет данных")
+        let calm = WeekInsight.make(stats: WeekStats(normalDays: 6, measuredDays: 7)).details
+        let mixed = WeekInsight.make(stats: WeekStats(normalDays: 2, measuredDays: 7)).details
+        let empty = WeekInsight.make(stats: WeekStats(normalDays: 0, measuredDays: 0)).details
+        XCTAssertTrue(calm.contains("6 из 7"))
+        XCTAssertTrue(mixed.contains("обсудите их с врачом"))
+        XCTAssertTrue(empty.contains("Добавьте первое измерение"))
+        XCTAssertNotEqual(calm, mixed)
     }
 
     func testFormatting() {
@@ -44,6 +71,32 @@ final class HomeDataTests: XCTestCase {
         XCTAssertEqual(AppFormat.range(120...120), "120")
         XCTAssertEqual(AppFormat.range(nil), "–")
         XCTAssertEqual(AppFormat.decimal(72.4), "72,4")
+        XCTAssertEqual(AppFormat.unitCaption("ммоль/л", status: "Измерений пока нет"), "ммоль/л · измерений пока нет")
+        XCTAssertEqual(AppFormat.pressureUnit(pulse: nil), AppUnit.pressure)
+        XCTAssertEqual(AppFormat.pressureUnit(pulse: 68), "мм рт. ст. · пульс 68")
+        XCTAssertEqual(AppFormat.metricAccessibility(title: "Вес", value: "72,4", unit: "кг", status: nil), "Вес 72,4 кг")
+        XCTAssertEqual(AppFormat.metricAccessibility(title: "Вес", value: nil, unit: "кг", status: nil), "Вес: нет данных")
+    }
+
+    func testMockContextMatchesHourOfMeasurement() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let items = MockHealthData.pressure(now: now)
+        XCTAssertFalse(items.isEmpty)
+        for item in items {
+            XCTAssertEqual(item.context, MeasurementContext.matching(item.date), item.id)
+        }
+        let calendar = AppCalendar.calendar
+        func date(hour: Int) -> Date {
+            calendar.date(bySettingHour: hour, minute: 0, second: 0, of: now) ?? now
+        }
+        XCTAssertNil(MeasurementContext.matching(date(hour: 4)))
+        XCTAssertEqual(MeasurementContext.matching(date(hour: 5)), .morning)
+        XCTAssertEqual(MeasurementContext.matching(date(hour: 10)), .morning)
+        XCTAssertNil(MeasurementContext.matching(date(hour: 11)))
+        XCTAssertNil(MeasurementContext.matching(date(hour: 16)))
+        XCTAssertEqual(MeasurementContext.matching(date(hour: 17)), .evening)
+        XCTAssertEqual(MeasurementContext.matching(date(hour: 22)), .evening)
+        XCTAssertNil(MeasurementContext.matching(date(hour: 23)))
     }
 
     func testLaunchConfigParsing() {
@@ -52,6 +105,9 @@ final class HomeDataTests: XCTestCase {
         XCTAssertEqual(LaunchConfig.parse(["-uiScreen", "unknown"]).screen, .home)
         XCTAssertEqual(LaunchConfig.parse(["-uiScreen", "error"]).scenario, .failure)
         XCTAssertEqual(LaunchConfig.parse(["-uiScreen", "pressure"]).initialPath, [.pressure])
+        XCTAssertFalse(LaunchConfig.parse([]).disablesIntro)
+        XCTAssertTrue(LaunchConfig.parse([LaunchConfig.disableIntroArgument]).disablesIntro)
+        XCTAssertTrue(LaunchConfig.parse(["-uiScreen", "pressure", LaunchConfig.disableIntroArgument]).disablesIntro)
     }
 
     @MainActor

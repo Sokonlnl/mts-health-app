@@ -1,71 +1,89 @@
 import CoreGraphics
 import Foundation
 
-/// Состояние зоны, плитки, вывод и тексты главного экрана.
+/// Карточки, вывод, совет и вид верхнего блока главного экрана.
 extension HomeViewModel {
-    var emptyMessage: String { "Добавьте первое измерение давления, и здесь появится сводка за неделю." }
+    var emptyMessage: String { HomeText.emptyMessage }
 
-    /// Большая плитка бенто (слева): давление со статусом зоны.
-    var pressureTile: MetricCardModel { tile(.pressure) }
-
-    /// Две плитки правой колонки бенто: пульс и вес, без статуса.
-    var sideTiles: [MetricCardModel] {
-        [.pulse, .weight].map(tile)
+    /// Большая карточка давления со статусом зоны (без данных «Нет данных»).
+    var pressureCard: MetricCardModel {
+        guard let latest = store.data.pressure.first else {
+            return MetricCardModel(
+                kind: .pressure, valueText: nil, unit: AppUnit.pressure, statusText: AppFormat.noData, tone: .neutral,
+                gaugePosition: nil
+            )
+        }
+        return MetricCardModel(
+            kind: .pressure,
+            valueText: AppFormat.pressureValue(latest.systolic, latest.diastolic),
+            unit: AppUnit.pressure,
+            statusText: latest.zone.title,
+            tone: latest.zone.tone,
+            gaugePosition: nil,
+            rhythm: heartbeat
+        )
     }
 
-    /// Карточки под бенто: широкая тёмная «Пульс» и стеклянная «Глюкоза» (повторов бенто нет).
-    var listCards: [MetricCardModel] {
-        [card(.pulse), card(.glucose)]
+    var weightCard: MetricCardModel {
+        gaugeCard(.weight, reading: store.data.weight, unit: AppUnit.weight, scale: .weight)
     }
 
-    /// Состояние для цвета свечения: всегда по давлению, нет данных даёт серую палитру.
-    var glowState: HealthState { state(for: .pressure) }
+    var glucoseCard: MetricCardModel {
+        gaugeCard(.glucose, reading: store.data.glucose, unit: AppUnit.glucose, scale: .glucose)
+    }
+
+    /// Малые карточки в ряд: вес и глюкоза.
+    var smallCards: [MetricCardModel] { [weightCard, glucoseCard] }
+
+    /// Состояние для цвета свечения: по последнему измерению давления, нет данных даёт серую палитру.
+    var glowState: HealthState {
+        store.data.pressure.first.map { HealthState(zone: $0.zone) } ?? .noData
+    }
+
+    /// Вывод: заголовок и пояснение по зоне последнего измерения, подробности по неделе.
+    var headline: HeadlineModel {
+        let text = HomeText.headline(for: glowState)
+        return HeadlineModel(title: text.title, summary: text.summary, details: insight.details)
+    }
+
+    /// Ритм сердцебиения по пульсу из данных (без пульса 60 уд/мин).
+    var heartbeat: HeartbeatRhythm {
+        HeartbeatRhythm(pulse: store.data.pulse.latest.map { Int($0.rounded()) })
+    }
+
+    /// Совет для карточки в блоке «Советы от ГигаЧата»: подбирается по зоне последнего измерения, при повышенном и высоком
+    /// давлении с оговоркой (справочная информация).
+    var adviceCard: AdviceCardModel? {
+        let zone = store.data.pressure.first?.zone
+        return AdviceSelector.pick(from: store.data.advice, zone: zone).map {
+            AdviceCardModel(
+                title: $0.title, text: $0.text, author: HomeText.gigachatName, role: HomeText.gigachatRole,
+                iconName: "sparkles", disclaimer: AdviceSelector.disclaimer(for: zone)
+            )
+        }
+    }
 
     var isLoading: Bool { screenState == .loading }
 
-    /// Вывод («Всё спокойно») показывается только при данных.
+    /// Вывод показывается только при данных.
     var showsInsight: Bool { screenState == .content }
 
-    /// Верх колонки. С выводом (и в loading, чтобы кадр не прыгал) полная высота, в empty и error компактная.
-    var columnTop: CGFloat {
+    /// Высота верхнего блока: полная с выводом (и в loading, чтобы кадр не прыгал), в empty и error компактная.
+    var heroHeight: CGFloat {
         switch screenState {
-        case .loading, .content: return Size.homeColumnTop
-        case .empty, .error: return Size.homeCompactTop
+        case .loading, .content: return Size.heroHeight
+        case .empty, .error: return Size.heroCompactHeight
         }
     }
 
-    func state(for kind: MetricKind) -> HealthState {
-        let data = store.data
-        switch kind {
-        case .pressure:
-            return data.pressure.first.map { HealthState(zone: $0.zone) } ?? .noData
-        case .pulse:
-            return data.pulse.latest == nil ? .noData : .neutral
-        case .weight:
-            return data.weight.latest == nil ? .noData : .neutral
-        case .glucose:
-            return data.glucose.latest == nil ? .noData : .neutral
-        }
-    }
-
-    /// Заголовок-вывод по недельной статистике давления.
-    var headline: HeadlineModel {
-        let current = insight
-        return HeadlineModel(title: current.title, summary: current.summary, details: current.details)
-    }
-
-    /// Плитка бенто из карточки показателя: статус зоны только у давления (без данных «Нет данных»), у остальных нет.
-    private func tile(_ kind: MetricKind) -> MetricCardModel {
-        let model = card(kind)
-        let status: String?
-        switch (kind, model.valueText) {
-        case (.pressure, .some): status = model.statusText
-        case (.pressure, .none): status = AppFormat.noData
-        default: status = nil
-        }
-        return MetricCardModel(
-            kind: kind, valueText: model.valueText, unit: model.unit, statusText: status,
-            tone: kind == .pressure ? model.tone : .neutral, series: []
+    private func gaugeCard(_ kind: MetricKind, reading: MetricReading, unit: String, scale: GaugeScale) -> MetricCardModel {
+        MetricCardModel(
+            kind: kind,
+            valueText: reading.latest.map(AppFormat.decimal),
+            unit: unit,
+            statusText: nil,
+            tone: .neutral,
+            gaugePosition: reading.latest.map(scale.position(of:))
         )
     }
 }

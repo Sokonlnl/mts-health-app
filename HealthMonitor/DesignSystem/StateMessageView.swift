@@ -20,11 +20,13 @@ struct StateMessageView: View {
                 .textStyle(.headline)
                 .foregroundStyle(AppColor.textPrimary)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier(identifier)
             Text(message)
                 .textStyle(.body)
                 .foregroundStyle(AppColor.textSecondary)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
             if let actionTitle, let action {
                 PrimaryButton(title: actionTitle, action: action)
                     .accessibilityIdentifier("\(identifier)-action")

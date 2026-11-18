@@ -190,4 +190,35 @@ final class PressureViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.averageText, AppFormat.dash)
         XCTAssertTrue(viewModel.periodMeasurements.isEmpty)
     }
+
+    // MARK: - Модели для View
+
+    func testDraftResultToneAppearsOnlyWithZone() async {
+        let (viewModel, _) = await makeViewModel()
+        viewModel.openSheet()
+        XCTAssertNil(viewModel.draftResultTone)
+        XCTAssertEqual(viewModel.draftResultText, "Введите значения")
+        enter(viewModel, [1, 3, 0, 8, 5])
+        XCTAssertEqual(viewModel.draftResultTone, .caution)
+        XCTAssertEqual(viewModel.draftResultText, "Будет: \(PressureZone.elevated.title)")
+    }
+
+    func testHistoryRowCarriesStatusTextAndTone() async {
+        let (viewModel, _) = await makeViewModel(
+            pressure: [TestData.measurement("h", systolic: 148, diastolic: 94, secondsAgo: 60)]
+        )
+        XCTAssertEqual(viewModel.historyRows.first?.statusText, PressureZone.high.title)
+        XCTAssertEqual(viewModel.historyRows.first?.tone, .critical)
+    }
+
+    func testZonePlatesMarkCurrentZoneAndPlaceholder() async {
+        let (viewModel, _) = await makeViewModel(
+            pressure: [TestData.measurement("p", systolic: 134, diastolic: 86, secondsAgo: 60)]
+        )
+        XCTAssertEqual(viewModel.zonePlates.filter(\.isCurrent).map(\.title), [PressureZone.elevated.title])
+        XCTAssertFalse(viewModel.latestIsPlaceholder)
+        let (empty, _) = await makeViewModel(pressure: [])
+        XCTAssertTrue(empty.latestIsPlaceholder)
+        XCTAssertTrue(empty.zonePlates.allSatisfy { !$0.isCurrent })
+    }
 }

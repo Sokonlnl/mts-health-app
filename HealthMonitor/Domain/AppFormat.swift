@@ -12,13 +12,30 @@ enum AppFormat {
     /// Пустое значение давления: «–/–».
     static let emptyPressureValue = "\(dash)/\(dash)"
 
-    /// Подписи карточек показателей на главном экране.
-    static let restingStatus = "В покое"
-    static let lastValue = "Последнее значение"
+    /// Подписи карточек показателей на главном экране и экране давления.
     static let noMeasurementsYet = "Измерений пока нет"
     static let addMeasurement = "Добавить измерение"
     static let notFilled = "не заполнено"
-    static let inputUnavailable = "Ввод этого показателя пока недоступен"
+    static let emptyPeriod = "За выбранный период измерений нет."
+
+    /// Единица давления с пульсом последнего измерения: «мм рт. ст. · пульс 68» (без пульса только единица).
+    static func pressureUnit(pulse: Int?) -> String {
+        guard let pulse else { return AppUnit.pressure }
+        return "\(AppUnit.pressure) · пульс \(pulse)"
+    }
+
+    /// Подпись «единица · статус» одной строкой: «ммоль/л · измерений пока нет».
+    static func unitCaption(_ unit: String, status: String) -> String {
+        "\(unit) · \(status.lowercased())"
+    }
+
+    /// Подпись VoiceOver карточки показателя: «Вес 72,4 кг» или «Вес: нет данных».
+    static func metricAccessibility(title: String, value: String?, unit: String, status: String?) -> String {
+        guard let value else { return "\(title): \(noData.lowercased())" }
+        let base = "\(title) \(value) \(unit)"
+        guard let status else { return base }
+        return "\(base), \(status.lowercased())"
+    }
 
     static func time(_ date: Date) -> String {
         format(date, pattern: "HH:mm")
@@ -53,10 +70,9 @@ enum AppFormat {
         return "\(date) · \(context.title)"
     }
 
-    /// Пульс с единицей: «70 уд/мин», без значения прочерк.
-    static func pulseValue(_ pulse: Int?) -> String {
-        guard let pulse else { return dash }
-        return "\(pulse) \(AppUnit.pulse)"
+    /// Подпись границы зоны на оси графика: верхняя граница с плюсом («140+»), остальные числом («130»).
+    static func axisThreshold(_ value: Int, upperBound: Int) -> String {
+        value == upperBound ? "\(value)+" : "\(value)"
     }
 
     static func range(_ range: ClosedRange<Int>?) -> String {

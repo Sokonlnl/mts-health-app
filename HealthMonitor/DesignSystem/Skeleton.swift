@@ -15,6 +15,8 @@ struct SkeletonBlock: View {
 /// Скелетон карточки (loading-состояние).
 struct SkeletonCard: View {
     var identifier = "skeleton-card"
+    var minHeight = Size.skeletonCard
+    var radius = Radius.tile
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
@@ -22,27 +24,11 @@ struct SkeletonCard: View {
             SkeletonBlock(height: Size.skeletonValue)
             SkeletonBlock(width: Size.skeletonLineWide)
         }
-        .frame(maxWidth: .infinity, minHeight: Size.skeletonCard, alignment: .leading)
-        .glassCard()
+        .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .leading)
+        .glassCard(radius: radius)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Загрузка")
         .accessibilityIdentifier(identifier)
-    }
-}
-
-/// Скелетон плитки (loading).
-struct SkeletonTile: View {
-    var body: some View {
-        VStack(spacing: Spacing.s) {
-            SkeletonBlock(width: Size.metricIcon * 1.5)
-            SkeletonBlock(width: Size.metricIcon * 2, height: Size.skeletonValue)
-        }
-        .padding(.horizontal, Spacing.s)
-        .padding(.vertical, Spacing.m)
-        .glassTile()
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Загрузка")
-        .accessibilityIdentifier("skeleton-tile")
     }
 }
 
@@ -62,7 +48,7 @@ struct SkeletonHeadline: View {
     }
 }
 
-/// Скелетон кнопки «Давление» (loading).
+/// Скелетон кнопки ГигаЧата (loading).
 struct SkeletonButton: View {
     var body: some View {
         SkeletonBlock(height: Size.glowButtonHeight)
@@ -87,36 +73,18 @@ struct SkeletonList: View {
     }
 }
 
-/// Тёмная нейтральная форма без вращения для loading-состояния экрана.
-struct SkeletonOrb: View {
-    let diameter: CGFloat
-
-    var body: some View {
-        AuraOrb(palette: .noData, diameter: diameter, isAnimated: false) {
-            VStack(spacing: Spacing.s) {
-                SkeletonBlock(width: Size.skeletonLineWide, height: Size.skeletonValue)
-                SkeletonBlock(width: Size.skeletonLineWide / 2)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Загрузка")
-    }
-}
-
-#Preview("SkeletonTile, вывод, кнопка") {
+#Preview("Скелетоны: вывод, карточки, кнопка") {
     VStack(spacing: Spacing.columnGap) {
         SkeletonHeadline()
-        SkeletonButton()
-        BentoGrid {
-            SkeletonTile()
-        } side: {
-            SkeletonTile()
-            SkeletonTile()
+        SkeletonCard(identifier: "skeleton-card", minHeight: Size.pressureCardHeight, radius: Radius.heroCard)
+        HStack(spacing: Spacing.tileGap) {
+            SkeletonCard(minHeight: Size.smallCardHeight, radius: Radius.tile)
+            SkeletonCard(minHeight: Size.smallCardHeight, radius: Radius.tile)
         }
+        SkeletonButton()
     }
     .padding(Spacing.screenMargin)
-    .background(AppColor.homeBackground)
+    .background(AppColor.background)
 }
 
 #Preview("SkeletonCard") {
@@ -125,11 +93,8 @@ struct SkeletonOrb: View {
         .background(AppColor.background)
 }
 
-#Preview("SkeletonList + форма") {
-    VStack(spacing: Spacing.l) {
-        SkeletonOrb(diameter: Size.orbPressure)
-        SkeletonList(count: 2)
-    }
-    .padding(Spacing.screenMargin)
-    .background(AppColor.background)
+#Preview("SkeletonList") {
+    SkeletonList(count: 2)
+        .padding(Spacing.screenMargin)
+        .background(AppColor.background)
 }

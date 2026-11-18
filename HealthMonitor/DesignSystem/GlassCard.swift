@@ -20,10 +20,14 @@ enum CardInsets {
 enum GlassStyle {
     /// «Жидкое стекло»: `ultraThinMaterial`, градиент заливки, контур, верхняя кромка, тень (карточки, навигация).
     case material
-    /// Плитка Figma: белый 3%, свечение в правом нижнем углу, градиентная кромка 1 pt. Без материала.
-    case tile
     /// Кнопка профиля Figma: как плитка, но кромка ярче (до белого 70%).
     case profile
+    /// Большая карточка давления: белый 3%, свечение справа внизу, кромка 1 pt белый 55% сверху-слева и снизу-справа.
+    case hero
+    /// Малая карточка: заливка белый 6%, кромка белый 5% 0,8 pt.
+    case flat
+    /// Тёмная карточка совета: заливка #1B1B1B, кромка белый 5%.
+    case solid
 }
 
 /// Единая стеклянная поверхность для любой формы. Вид задаёт `GlassStyle`.
@@ -38,18 +42,22 @@ struct GlassSurface<S: InsettableShape>: View {
             switch style {
             case .material:
                 material
-            case .tile:
-                tile(
-                    fill: AppColor.tileFill,
-                    rim: [AppColor.tileRimTop, AppColor.tileRimMid, AppColor.tileRimBottom],
-                    glowRadius: Size.tileGlowRadius
-                )
             case .profile:
                 tile(
                     fill: AppColor.profileFill,
                     rim: [AppColor.profileRimTop, AppColor.profileRimMid, AppColor.profileRimBottom],
                     glowRadius: Size.profileGlowRadius
                 )
+            case .hero:
+                tile(
+                    fill: AppColor.tileFill,
+                    rim: [AppColor.heroCardRim, AppColor.tileRimMid, AppColor.heroCardRim],
+                    glowRadius: Size.tileGlowRadius
+                )
+            case .flat:
+                plate(fill: AppColor.flatFill, stroke: AppColor.flatStroke, lineWidth: Size.flatRim)
+            case .solid:
+                plate(fill: AppColor.solidCardFill, stroke: AppColor.solidCardStroke, lineWidth: Size.hairline)
             }
         }
         .accessibilityHidden(true)
@@ -72,6 +80,14 @@ struct GlassSurface<S: InsettableShape>: View {
             )
         }
         .shadow(color: AppColor.shadow, radius: Size.glassShadow)
+    }
+
+    /// Плоская карточка: заливка и тонкая кромка.
+    private func plate(fill: Color, stroke: Color, lineWidth: CGFloat) -> some View {
+        ZStack {
+            shape.fill(fill)
+            shape.strokeBorder(stroke, lineWidth: lineWidth)
+        }
     }
 
     /// Плитка Figma: заливка, мягкое свечение в правом нижнем углу и градиентная кромка 1 pt.
@@ -104,34 +120,33 @@ extension View {
         background { GlassSurface(shape: shape, style: style, tint: tint) }
     }
 
-    /// Стеклянная плитка бенто: заполняет отданное место (высоту задаёт `BentoGrid`), не ниже `tileHeight`.
-    func glassTile(radius: CGFloat = Radius.tile) -> some View {
-        frame(maxWidth: .infinity, minHeight: Size.tileHeight, maxHeight: .infinity)
-            .glassBackground(in: RoundedRectangle(cornerRadius: radius, style: .continuous), style: .tile)
-    }
-
-    /// Оформляет вью как стеклянную карточку: `.glassCard()` или `.glassCard(radius: Radius.cardSmall)`.
+    /// Оформляет вью как карточку: `.glassCard()` или `.glassCard(radius: Radius.heroCard, style: .hero)`.
     /// Паддинг входит в стиль, снаружи его добавлять не нужно.
-    func glassCard(radius: CGFloat = Radius.card, insets: EdgeInsets = CardInsets.standard) -> some View {
+    /// По умолчанию материал малых карточек нового главного экрана (`.flat`: белый 6%, кромка 5%, радиус 33,4).
+    func glassCard(
+        radius: CGFloat = Radius.tile, insets: EdgeInsets = CardInsets.standard, style: GlassStyle = .flat
+    ) -> some View {
         padding(insets)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .glassBackground(in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .glassBackground(in: RoundedRectangle(cornerRadius: radius, style: .continuous), style: style)
     }
 }
 
 #Preview("GlassCard") {
     ZStack {
         AppColor.background.ignoresSafeArea()
-        TopGlow(palette: .normal, height: Size.glowPressureHeight)
+        DomeGlow(palette: .normal)
+            .frame(height: Size.pressureHeroHeight)
+            .frame(maxHeight: .infinity, alignment: .top)
         VStack(spacing: Spacing.l) {
-            Text("Карточка card 28")
+            Text("Карточка tile 33,4")
                 .textStyle(.body)
                 .foregroundStyle(AppColor.textPrimary)
                 .glassCard()
-            Text("Карточка cardSmall 24, compact")
+            Text("Карточка compact, материал")
                 .textStyle(.body)
                 .foregroundStyle(AppColor.textPrimary)
-                .glassCard(radius: Radius.cardSmall, insets: CardInsets.compact)
+                .glassCard(insets: CardInsets.compact, style: .material)
             Text("Карточка-список")
                 .textStyle(.body)
                 .foregroundStyle(AppColor.textPrimary)

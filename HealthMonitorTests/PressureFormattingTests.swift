@@ -20,9 +20,9 @@ final class PressureFormattingTests: XCTestCase {
         XCTAssertEqual(withContext, "\(plain) · Утро")
     }
 
-    func testPulseValue() {
-        XCTAssertEqual(AppFormat.pulseValue(70), "70 \(AppUnit.pulse)")
-        XCTAssertEqual(AppFormat.pulseValue(nil), AppFormat.dash)
+    func testAxisThreshold() {
+        XCTAssertEqual(AppFormat.axisThreshold(140, upperBound: 140), "140+")
+        XCTAssertEqual(AppFormat.axisThreshold(130, upperBound: 139), "130")
     }
 
     @MainActor
@@ -30,7 +30,6 @@ final class PressureFormattingTests: XCTestCase {
         let store = HealthStore(repository: MockHealthRepository(scenario: .empty, delayNanoseconds: 0))
         let viewModel = PressureViewModel(store: store, now: { self.now })
         XCTAssertEqual(viewModel.latestValueText, AppFormat.emptyPressureValue)
-        XCTAssertEqual(viewModel.latestDateText, AppFormat.noMeasurements)
         XCTAssertTrue(viewModel.historyRows.isEmpty)
     }
 }

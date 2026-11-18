@@ -6,7 +6,6 @@ enum Size {
     static let iconButton: CGFloat = 44
     static let stepperButton: CGFloat = 48
     static let primaryButton: CGFloat = 56
-    static let compactButton: CGFloat = 44
     static let navBar: CGFloat = 64
     static let navItem: CGFloat = 52
     static let navIcon: CGFloat = 22
@@ -18,88 +17,103 @@ enum Size {
     /// Обводка активного поля ввода.
     static let focusRing: CGFloat = 2
 
-    // Форма Aura и маркеры
-    static let orbPressure: CGFloat = 240
-    /// Радиус радиальной тёмной подложки под текстом в центре формы.
-    static let orbScrimRadius: CGFloat = 120
-    /// Насколько тонкая окружность больше формы.
-    static let orbRingInset: CGFloat = 8
-    /// Диаметры свечения и белой точки маркера: по умолчанию и на графике давления.
+    // Маркеры (график давления)
     static let markerGlow: CGFloat = 26
     static let markerDot: CGFloat = 12
-    /// Непрозрачность свечения маркера мини-графика (как у `AuraPalette.markerGlow`).
-    static let markerGlowOpacity: Double = 0.35
     static let chartMarkerGlow: CGFloat = 24
     static let chartMarkerDot: CGFloat = 10
 
-    // Свечение экрана давления (TopGlow)
-    static let glowPressureHeight: CGFloat = 460
-    /// Свечение заходит выше начала содержимого, чтобы не было видно верхнего края под статус-баром.
-    static let glowBleed: CGFloat = 200
-    static let glowBlob: CGFloat = 260
-    static let glowBlur: CGFloat = 70
-    static let glowFadeStart: Double = 0.3
-    static let glowFadeEnd: Double = 1
+    // Верхний блок со свечением (главный экран и экран давления, Figma 63:25250)
+    /// Высота верхнего блока главного экрана и его компактный вариант (empty, error).
+    static let heroHeight: CGFloat = 540
+    static let heroCompactHeight: CGFloat = 220
+    /// Минимальная высота верхнего блока экрана давления (растёт вместе с текстом).
+    static let pressureHeroHeight: CGFloat = 300
+    /// Вкладки «Самочувствие / Анализы» (верх 114), вывод (центр блока на y 248, верх 202) и ширина вывода 272.
+    static let heroTabsTop: CGFloat = 114
+    static let heroInsightTop: CGFloat = 202
+    static let insightWidth: CGFloat = 272
+    static let tabDot: CGFloat = 5
+    static let tabGap: CGFloat = 24
+    /// Свечение: пятна у нижнего края блока (ширина, высота, размытие, вынос вниз) и боковое пятно.
+    static let domeBlobWidth: CGFloat = 520
+    static let domeBlobHeight: CGFloat = 300
+    static let domeBlobBlur: CGFloat = 70
+    static let domeBlobDrop: CGFloat = 110
+    static let domeSideWidth: CGFloat = 260
+    static let domeSideHeight: CGFloat = 340
+    static let domeSideBlur: CGFloat = 60
+    static let domeSideShift: CGFloat = 200
+    /// Непрозрачность свечения: основное пятно, боковые пятна, общий вертикальный градиент (верх и низ).
+    static let domeOpacity: Double = 0.55
+    static let domeSideOpacity: Double = 0.35
+    static let domeWashTop: Double = 0.04
+    static let domeWashBottom: Double = 0.3
 
-    // Главный экран (эталон Figma 47:2127)
-    /// Верх колонки (кнопка «Давление», «Показатели», бенто) от верха экрана.
-    static let homeColumnTop: CGFloat = 447
-    /// Верх колонки в состояниях empty и error (вывода нет, пустая зона под ним не нужна).
-    static let homeCompactTop: CGFloat = 220
-    /// Верх заголовка-вывода от верха экрана.
-    static let homeInsightTop: CGFloat = 238
-    /// Высота бенто (большая плитка слева и две плитки справа).
-    static let bentoHeight: CGFloat = 270
-    /// Высота свечения-купола: слой в макете сдвинут вверх (top −251 вместо −168), к ~350 свечение гаснет.
-    static let domeHeight: CGFloat = 360
-    static let domeOuterWidth: CGFloat = 560
-    static let domeOuterHeight: CGFloat = 420
-    static let domeOuterCenter: CGFloat = 80
-    static let domeCoreWidth: CGFloat = 440
-    static let domeCoreHeight: CGFloat = 200
-    static let domeCoreCenter: CGFloat = 90
-    static let domeOuterBlur: CGFloat = 60
-    static let domeCoreBlur: CGFloat = 36
-    /// Доли высоты блока (с учётом выноса вверх): до `domeFadeStart` свечение полное, к `domeFadeEnd` его нет.
-    /// Ярко до ~y 120 от верха экрана, к ~y 340 почти погасло (зелень доходит до вывода) (блок выше экрана на `glowBleed`).
-    static let domeFadeStart: Double = 0.57
-    static let domeFadeEnd: Double = 0.97
-    /// Непрозрачность свечения (текст вывода лежит ниже купола, на чёрном).
-    static let domeOpacity: Double = 0.85
-    static let tileHeight: CGFloat = 126
+    // Карточки главного экрана
+    static let pressureCardHeight: CGFloat = 258
+    static let smallCardHeight: CGFloat = 166
+    static let cardIconLarge: CGFloat = 24
+    static let chipHeight: CGFloat = 35
+    static let chipMinWidth: CGFloat = 76
+    /// Декоративные пятна в углу карточек (`CornerGlow`): сдвиг за край.
+    static let cornerGlowShift: CGFloat = 36
+    /// Сердце в правом нижнем углу большой карточки: размер, размытие, непрозрачность (цвет зоны).
+    static let heartSize: CGFloat = 170
+    static let heartBlur: CGFloat = 12
+    static let heartOpacity: Double = 0.55
+    /// Кнопка ГигаЧата: ширина 330 при колонке 358.
+    static let glowButtonWidth: CGFloat = 330
     static let glowButtonHeight: CGFloat = 64
     static let glowButtonIcon: CGFloat = 20
-    /// Кнопка «Давление»: кромка 1,5 pt, радиус и непрозрачность зелёного света снизу, слабые участки кромки.
+    /// Кромка кнопки с зелёным свечением 1,5 pt, радиус и непрозрачность света снизу, слабые участки кромки.
     static let glowButtonRim: CGFloat = 1.5
     static let glowButtonLightRadius: CGFloat = 130
     static let glowButtonLightOpacity: Double = 0.45
     static let glowButtonRimMidOpacity: Double = 0.2
     static let glowButtonRimEndOpacity: Double = 0.6
-    /// Зелёная подсветка кромки кнопки профиля по палитре зоны.
+    /// Кромка малой карточки 0,8 pt.
+    static let flatRim: CGFloat = 0.8
+    /// Отсвет кнопки профиля по палитре зоны.
     static let profileTintOpacity: Double = 0.55
-    static let cardIcon: CGFloat = 20
-    /// Радиус свечения в правом нижнем углу плитки бенто и кнопки профиля.
+    /// Радиус свечения в правом нижнем углу плитки и кнопки профиля.
     static let tileGlowRadius: CGFloat = 170
     static let profileGlowRadius: CGFloat = 40
+
+    // Мини-шкалы малых карточек
+    /// Полосы шкалы веса (сверху вниз): красная, жёлтая, зелёная, жёлтая, красная.
+    static let gaugeBandDanger: CGFloat = 6
+    static let gaugeBandWarning: CGFloat = 8
+    static let gaugeBandGood: CGFloat = 28
+    static let gaugeMarker: CGFloat = 2
+    /// Дуга шкалы глюкозы: диаметр окружности, толщина, доля подсвеченного участка и маркер.
+    static let gaugeArcDiameter: CGFloat = 120
+    static let gaugeArcLine: CGFloat = 8
+    static let gaugeArcLitStart: Double = 0.3
+    static let gaugeArcLitEnd: Double = 0.7
+    static let gaugeDot: CGFloat = 12
+
+    // Совет и колода
+    static let adviceHeight: CGFloat = 239
+    static let adviceAvatar: CGFloat = 41
+    /// Карточки колоды позади: сдвиг вниз и сужение с каждой стороны на шаг.
+    static let adviceStackStep: CGFloat = 10
+    static let adviceStackInset: CGFloat = 14
+    static let adviceGlowSize: CGFloat = 150
+    static let adviceGlowBlur: CGFloat = 50
+    static let adviceGlowOpacity: Double = 0.35
+
+    // Прочее
     static let tabBarWidth: CGFloat = 292
     /// Градиент только подкладывается под навигацию: высота навигации (64) + 16.
     static let homeBottomFadeHeight: CGFloat = 80
-    /// Радиус тени текста на форме Aura (экран давления).
-    static let textShadowRadius: CGFloat = 12
+    /// Подсказка «Скоро» над плавающей навигацией.
+    static let toastBottom: CGFloat = 96
     static let pressedOpacity: Double = 0.8
     static let disabledOpacity: Double = 0.4
 
     // Карточки и графики
     static let metricIcon: CGFloat = 32
-    static let sparklineHeight: CGFloat = 40
-    /// Мини-график в тёмной карточке пульса: 141×44 по макету.
-    static let sparklineSolidWidth: CGFloat = 141
-    static let sparklineSolidHeight: CGFloat = 44
-    static let sparklineLine: CGFloat = 2
-    static let sparklineDot: CGFloat = 8
-    /// Амплитуда мини-графика (доля высоты) и её середина: линия спокойнее, чем на весь размах.
-    static let sparklineAmplitude: CGFloat = 0.6
-    static let sparklineCenter: CGFloat = 0.5
     static let chartHeight: CGFloat = 190
     static let chartLineUpper: CGFloat = 3
     static let chartLineLower: CGFloat = 2.5
@@ -123,6 +137,10 @@ enum Size {
     static let dragHandleWidth: CGFloat = 40
     static let dragHandleHeight: CGFloat = 5
     static let sheetDismissDistance: CGFloat = 120
+
+    // Подложка под статус-бар при прокрутке: запас ниже статус-бара и путь прокрутки, на котором она проявляется.
+    static let statusBarFadeExtra: CGFloat = 16
+    static let statusBarFadeRamp: CGFloat = 40
 }
 
 /// Минимальные коэффициенты сжатия текста (`minimumScaleFactor`).
@@ -133,10 +151,4 @@ enum TextScale {
     static let title: CGFloat = 0.7
     /// Подписи переключателей.
     static let compact: CGFloat = 0.8
-}
-
-extension Size {
-    /// Подложка под статус-бар при прокрутке: запас ниже статус-бара и путь прокрутки, на котором она проявляется.
-    static let statusBarFadeExtra: CGFloat = 16
-    static let statusBarFadeRamp: CGFloat = 40
 }

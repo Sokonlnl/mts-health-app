@@ -12,7 +12,7 @@ struct HealthMonitorApp: App {
         let pressure = PressureViewModel(store: store)
         pressure.opensSheetOnAppear = config.opensSheet
         self.config = config
-        _home = State(initialValue: HomeViewModel(store: store))
+        _home = State(initialValue: HomeViewModel(store: store, playsIntro: !config.disablesIntro))
         _pressure = State(initialValue: pressure)
     }
 

@@ -1,22 +1,20 @@
 import SwiftUI
 
-/// Экран давления: шапка, форма, периоды, график, среднее и диапазон, пояснение, история, шторка.
+/// Экран давления в стиле нового главного: верхний блок со свечением и скруглением снизу (шапка, последнее измерение),
+/// периоды, график, среднее и диапазон, пояснение, история, шторка. Кнопка «Добавить измерение» в стиле `GlowButton`.
 struct PressureView: View {
     @Bindable var viewModel: PressureViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var scrollOffset: CGFloat = 0
+    private static let scrollSpace = "pressureScroll"
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.l) {
-                header
-                stateContent
-            }
-            .padding(.horizontal, Spacing.screenMargin)
-            .padding(.top, Spacing.s)
-            .padding(.bottom, Spacing.tabBarClearance)
-            .auraScreenBackdrop(palette: viewModel.latestState.palette, glowHeight: Size.glowPressureHeight)
+        GeometryReader { proxy in
+            scroll(topInset: proxy.safeAreaInsets.top)
+                .ignoresSafeArea(edges: .top)
         }
-        .background(AppColor.background)
+        .statusBarFade(offset: scrollOffset)
+        .background(AppColor.background.ignoresSafeArea())
         .auraBottomBar { addBar }
         .glassSheet(isPresented: $viewModel.isSheetPresented) {
             NewMeasurementSheet(viewModel: viewModel)
@@ -28,7 +26,37 @@ struct PressureView: View {
         }
     }
 
-    // MARK: - Шапка и нижняя кнопка
+    private func scroll(topInset: CGFloat) -> some View {
+        ScrollView {
+            VStack(spacing: Spacing.l) {
+                hero(topInset: topInset)
+                VStack(alignment: .leading, spacing: Spacing.l) {
+                    cards
+                }
+                .padding(.horizontal, Spacing.screenMargin)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, Spacing.tabBarClearance)
+            .reportsScrollOffset(in: Self.scrollSpace)
+        }
+        .coordinateSpace(name: Self.scrollSpace)
+        .onPreferenceChange(ScrollOffsetKey.self) { scrollOffset = $0 }
+    }
+
+    // MARK: - Верхний блок и нижняя кнопка
+
+    /// Верхний блок со свечением по зоне последнего измерения: шапка и крупное значение.
+    private func hero(topInset: CGFloat) -> some View {
+        VStack(spacing: Spacing.xl) {
+            header
+            heroContent
+        }
+        .padding(.horizontal, Spacing.screenMargin)
+        .padding(.top, topInset + Spacing.s)
+        .padding(.bottom, Spacing.xxl)
+        .frame(maxWidth: .infinity, minHeight: viewModel.heroHeight, alignment: .top)
+        .background { DomeGlow(palette: viewModel.latestState.palette, isAnimated: viewModel.screenState != .loading) }
+    }
 
     private var header: some View {
         HStack {
@@ -49,10 +77,30 @@ struct PressureView: View {
     }
 
     @ViewBuilder
+    private var heroContent: some View {
+        switch viewModel.screenState {
+        case .loading:
+            SkeletonHeadline(identifier: "skeleton-hero")
+        case .error:
+            EmptyView()
+        case .empty, .content:
+            PressureHero(
+                tone: viewModel.latestTone,
+                isPlaceholder: viewModel.latestIsPlaceholder,
+                valueText: viewModel.latestValueText,
+                unitText: viewModel.latestUnitText,
+                statusText: viewModel.latestStatusText,
+                subtitle: viewModel.latestSubtitleText,
+                accessibilityText: viewModel.latestAccessibilityText
+            )
+        }
+    }
+
+    @ViewBuilder
     private var addBar: some View {
         switch viewModel.screenState {
         case .content, .empty:
-            PrimaryButton(title: AppFormat.addMeasurement, style: .glass) {
+            GlowButton(title: AppFormat.addMeasurement, systemImage: "plus") {
                 viewModel.openSheet()
             }
             .accessibilityIdentifier("pressure-add-bottom")
@@ -64,19 +112,14 @@ struct PressureView: View {
     // MARK: - Состояния
 
     @ViewBuilder
-    private var stateContent: some View {
+    private var cards: some View {
         switch viewModel.screenState {
         case .loading:
-            SkeletonOrb(diameter: Size.orbPressure)
             SkeletonList(count: 2)
         case .error(let message):
             ErrorStateView(message: message, retry: { Task { await viewModel.reload() } })
         case .empty:
-            hero
-            EmptyStateView(
-                message: "Добавьте первое измерение, и здесь появятся график и история.",
-                action: { viewModel.openSheet() }
-            )
+            EmptyStateView(message: viewModel.emptyMessage, action: { viewModel.openSheet() })
         case .content:
             content
         }
@@ -84,7 +127,6 @@ struct PressureView: View {
 
     @ViewBuilder
     private var content: some View {
-        hero
         SegmentedPicker(
             options: PressurePeriod.allCases,
             selection: $viewModel.period,
@@ -93,30 +135,14 @@ struct PressureView: View {
         )
         chartCard
         statCards
-        PressureWhyCard(zone: viewModel.latest?.zone, explanation: viewModel.explanationText)
-        PressureHistoryList(rows: viewModel.historyRows)
-    }
-
-    private var hero: some View {
-        PressureHero(
-            state: viewModel.latestState,
-            valueText: viewModel.latestValueText,
-            unitText: viewModel.orbUnitText,
-            statusText: viewModel.latestStatusText,
-            subtitle: viewModel.latestSubtitleText,
-            accessibilityText: viewModel.latestAccessibilityText
-        )
+        PressureWhyCard(plates: viewModel.zonePlates, explanation: viewModel.explanationText)
+        PressureHistoryList(rows: viewModel.historyRows, emptyText: viewModel.emptyPeriodMessage)
     }
 
     private var chartCard: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
             SectionHeader(title: "Динамика", isCompact: true)
-            if viewModel.periodMeasurements.isEmpty {
-                Text("За выбранный период измерений нет.")
-                    .textStyle(.body)
-                    .foregroundStyle(AppColor.textSecondary)
-                    .frame(maxWidth: .infinity, minHeight: Size.chartEmpty)
-            } else {
+            if viewModel.hasPeriodMeasurements {
                 PressureChartView(
                     measurements: viewModel.periodMeasurements,
                     period: viewModel.period,
@@ -126,6 +152,11 @@ struct PressureView: View {
                     accessibilityValue: viewModel.chartAccessibilityValue
                 )
                 .contentSwap(viewModel.period)
+            } else {
+                Text(viewModel.emptyPeriodMessage)
+                    .textStyle(.body)
+                    .foregroundStyle(AppColor.textSecondary)
+                    .frame(maxWidth: .infinity, minHeight: Size.chartEmpty)
             }
             PressureChartLegend()
         }
@@ -138,7 +169,7 @@ struct PressureView: View {
                 title: "Среднее",
                 value: viewModel.averageText,
                 detail: viewModel.averageStatusText,
-                detailTone: viewModel.averageZone?.tone ?? .neutral
+                detailTone: viewModel.averageTone
             )
             .accessibilityIdentifier("pressure-average")
             StatCard(

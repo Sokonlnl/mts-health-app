@@ -21,7 +21,7 @@ struct StatusColor {
 /// Цветовые токены из docs/DESIGN.md (тёмная тема Aura).
 enum AppColor {
     // Интерфейс
-    static let background = Color(hex: 0x06070B)
+    static let background = Color(hex: 0x0D0D0D)
     static let textPrimary = Color(hex: 0xF4F6FA)
     static let textSecondary = Color(hex: 0xAEB6C6)
     static let textTertiary = Color(hex: 0x8A93A6)
@@ -36,40 +36,51 @@ enum AppColor {
     static let glassStroke = Color.white.opacity(0.12)
     static let glassHighlight = Color.white.opacity(0.22)
     static let shadow = Color.black.opacity(0.40)
-    /// Тень текста значения на свечении формы.
-    static let textShadow = Color.black.opacity(0.25)
-    /// Затемнение под текстом в центре формы Aura: контраст текста не ниже 4.5:1 на светлом градиенте.
-    static let orbScrim = Color.black.opacity(0.5)
     /// Тонировка шторки поверх материала.
-    static let sheetTint = Color(hex: 0x06070B, opacity: 0.60)
+    static let sheetTint = Color(hex: 0x0D0D0D, opacity: 0.60)
 
-    // Главный экран (эталон Figma 47:2127)
-    static let homeBackground = Color(hex: 0x000000)
+    // Главный экран и экран давления (эталон Figma 63:25250)
+    /// Подпись карточек и неактивной вкладки: белый 50% (контраст с фоном выше 4.5:1).
+    static let textDim = Color.white.opacity(0.5)
+    /// Текст совета в тёмной карточке.
+    static let adviceText = Color(hex: 0xB8BBB9)
     /// Стеклянная плитка: заливка 3%, свечение в правом нижнем углу и градиентная кромка 1 pt
     /// (ярко сверху-слева, слабо в середине, заметно снизу-справа).
     static let tileFill = Color.white.opacity(0.03)
     static let tileInnerGlow = Color.white.opacity(0.14)
-    static let tileRimTop = Color.white.opacity(0.32)
     static let tileRimMid = Color.white.opacity(0.05)
-    static let tileRimBottom = Color.white.opacity(0.22)
     /// Кнопка профиля: заливка и кромка (ярче плитки).
     static let profileFill = Color.white.opacity(0.03)
     static let profileRimTop = Color.white.opacity(0.7)
     static let profileRimMid = Color.white.opacity(0.15)
     static let profileRimBottom = Color.white.opacity(0.5)
+    /// Малая карточка (вес, глюкоза): заливка белый 6%, кромка белый 5%.
+    static let flatFill = Color.white.opacity(0.06)
+    static let flatStroke = Color.white.opacity(0.05)
+    /// Кромка большой карточки давления: белый 55% (верх-лево и низ-право).
+    static let heroCardRim = Color.white.opacity(0.55)
     /// Кнопка с зелёным свечением (GlowButton).
     static let glowButtonFill = Color(hex: 0x0F0034, opacity: 0.23)
     static let glowButtonEdge = Color(hex: 0x13D694)
     static let glowButtonDeep = Color(hex: 0x002F1F)
-    /// Тёмная карточка показателя (`MetricCard` с `surface: .solid`).
-    static let solidCardFill = Color(hex: 0x202020)
-    static let solidCardStroke = Color(hex: 0x383838)
+    /// Тёмная карточка совета (`GlassStyle.solid`): заливка #1B1B1B, кромка белый 5%.
+    static let solidCardFill = Color(hex: 0x1B1B1B)
+    static let solidCardStroke = Color.white.opacity(0.05)
+    /// Мини-шкала веса: красные и жёлтые полосы почти прозрачные, зелёная с градиентом (50%).
+    static let gaugeDanger = Color(hex: 0xFF6B81, opacity: 0.05)
+    static let gaugeWarning = Color(hex: 0xFFC857, opacity: 0.10)
+    static let gaugeGoodTop = Color(hex: 0x48FFC1, opacity: 0.50)
+    static let gaugeGoodBottom = Color(hex: 0x2B9974, opacity: 0.50)
+    /// Полукруглая шкала глюкозы: дорожка и подсвеченный участок.
+    static let gaugeTrack = Color.white.opacity(0.12)
+    static let gaugeLit = Color(hex: 0x5BF0B8)
+    /// Непрозрачность фона чипа статуса: цвет тона 6%.
+    static let chipTintOpacity: Double = 0.06
 
     // Заливки элементов управления
     static let fill = Color.white.opacity(0.08)
     static let fillSelected = Color.white.opacity(0.14)
     static let segmentActive = Color.white.opacity(0.16)
-    static let orbRing = Color.white.opacity(0.18)
 
     // Статусы (цвет текста; фон плашки белый 8%, контур белый 14%)
     static let success = status(0x5BF0B8)

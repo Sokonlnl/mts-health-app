@@ -13,7 +13,7 @@ final class FlowTests: XCTestCase {
 
     private func launch(_ screen: String) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments += ["-uiScreen", screen]
+        app.launchArguments += ["-uiScreen", screen, LaunchConfig.disableIntroArgument]
         app.launch()
         return app
     }
@@ -103,6 +103,25 @@ final class FlowTests: XCTestCase {
     }
 
     // MARK: - Главный экран
+
+    func testAnalysesTabShowsComingSoon() {
+        let app = launch("home")
+        XCTAssertFalse(element(app, "soon-toast").exists)
+        tap(app, "tab-analyses")
+        XCTAssertTrue(element(app, "soon-toast").waitForExistence(timeout: timeout), "Заглушка «Анализы»: сообщение «Скоро»")
+    }
+
+    func testGigaChatButtonShowsComingSoon() {
+        let app = launch("home")
+        let button = element(app, "gigachat-button")
+        XCTAssertTrue(button.waitForExistence(timeout: timeout))
+        for _ in 0..<6 where !button.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(button.isHittable, "Кнопка ГигаЧата доступна в конце прокрутки, не под навигацией")
+        button.tap()
+        XCTAssertTrue(element(app, "soon-toast").waitForExistence(timeout: timeout))
+    }
 
     func testInsightDetailsExpandAndCollapse() {
         let app = launch("home")

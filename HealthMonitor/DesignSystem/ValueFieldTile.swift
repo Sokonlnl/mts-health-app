@@ -33,10 +33,10 @@ struct ValueFieldTile: View {
             }
             .frame(maxWidth: .infinity, minHeight: Size.fieldTile)
             .padding(.vertical, Spacing.s)
-            .background(AppColor.fill, in: shape)
+            .background(AppColor.flatFill, in: shape)
             .overlay {
                 shape.strokeBorder(
-                    isFocused ? AppColor.textPrimary : AppColor.glassStroke,
+                    isFocused ? AppColor.textPrimary : AppColor.flatStroke,
                     lineWidth: isFocused ? Size.focusRing : Size.hairline
                 )
             }

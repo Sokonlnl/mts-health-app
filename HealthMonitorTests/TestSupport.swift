@@ -39,7 +39,7 @@ enum TestData {
     static func healthData(pressure: [PressureMeasurement]) -> HealthData {
         HealthData(
             pressure: pressure,
-            pulse: MetricReading(latest: 68, series: [66, 68], daysInNorm: 7),
+            pulse: MetricReading(latest: 68),
             weight: .empty,
             glucose: .empty
         )

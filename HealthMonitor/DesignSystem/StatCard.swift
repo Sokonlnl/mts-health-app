@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Малая стеклянная карточка: подпись, значение и пояснение цветом статуса («Среднее», «Диапазон верхнего»).
+/// Малая карточка: подпись, значение и пояснение цветом статуса («Среднее», «Диапазон верхнего»).
+/// Одна связка для VoiceOver; идентификатор задаёт вызывающий на самой карточке (внутри связки он не виден XCUI).
 struct StatCard: View {
     let title: String
     let value: String
@@ -23,7 +24,7 @@ struct StatCard: View {
                 .lineLimit(2)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .glassCard(radius: Radius.cardSmall, insets: CardInsets.compact)
+        .glassCard(insets: CardInsets.compact)
         .accessibilityElement(children: .combine)
     }
 }

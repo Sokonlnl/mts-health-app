@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Заголовок-вывод в зоне свечения, пояснение и «Подробнее / Свернуть».
+/// Заголовок-вывод (34,6 pt) в верхнем блоке, пояснение 14 pt и «Подробнее / Свернуть». Ширина текста 272.
 struct HomeHeadline: View {
     let headline: HeadlineModel
     let isExpanded: Bool
@@ -13,13 +13,15 @@ struct HomeHeadline: View {
                     .textStyle(.insightTitle)
                     .foregroundStyle(AppColor.textPrimary)
                     .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isHeader)
                 Text(headline.summary)
                     .textStyle(.insightSummary)
                     .foregroundStyle(AppColor.textSecondary)
                     .multilineTextAlignment(.center)
-                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: Size.insightWidth)
             .contentSwap(headline.contentKey)
             if let details = headline.details {
                 if isExpanded {
@@ -28,6 +30,7 @@ struct HomeHeadline: View {
                         .foregroundStyle(AppColor.textSecondary)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: Size.insightWidth)
                         .accessibilityIdentifier("insight-details")
                 }
                 toggle
@@ -58,18 +61,22 @@ struct HomeHeadline: View {
 #Preview("HomeHeadline: свёрнуто и развёрнуто") {
     VStack(spacing: Spacing.xl) {
         HomeHeadline(
-            headline: HeadlineModel(title: "Всё спокойно", summary: "Давление в норме 7 из 7 дней.", details: "Подробности"),
+            headline: HeadlineModel(title: "У вас отличные показатели", summary: "Все ваши показатели в норме", details: "Подробности"),
             isExpanded: false,
             onToggle: {}
         )
         HomeHeadline(
-            headline: HeadlineModel(title: "Всё спокойно", summary: "Давление в норме 7 из 7 дней.", details: "Подробности недели."),
+            headline: HeadlineModel(
+                title: "У вас отличные показатели",
+                summary: "Все ваши показатели в норме",
+                details: "Подробности недели."
+            ),
             isExpanded: true,
             onToggle: {}
         )
     }
     .padding(Spacing.screenMargin)
-    .background(AppColor.homeBackground)
+    .background(AppColor.background)
 }
 
 #Preview("HomeHeadline: без подробностей") {
@@ -79,5 +86,5 @@ struct HomeHeadline: View {
         onToggle: {}
     )
     .padding(Spacing.screenMargin)
-    .background(AppColor.homeBackground)
+    .background(AppColor.background)
 }

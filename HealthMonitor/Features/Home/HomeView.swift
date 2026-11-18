@@ -1,72 +1,94 @@
 import SwiftUI
 
-/// Главный экран (эталон Figma 47:2127): короткое свечение-купол, кнопка профиля, вывод по центру,
-/// колонка (кнопка «Давление», «Показатели», бенто), карточки «Пульс» и «Глюкоза», плавающая навигация.
+/// Главный экран (эталон Figma 63:25250): верхний блок со свечением (вкладки, профиль, вывод), большая карточка давления,
+/// малые карточки веса и глюкозы, блок «Советы от ГигаЧата» с кнопкой, плавающая навигация поверх прокрутки.
 struct HomeView: View {
     @Bindable var viewModel: HomeViewModel
     let onOpenPressure: () -> Void
     @State private var tab: AppTab = .home
     @State private var scrollOffset: CGFloat = 0
+    /// Заставка: свечение разгорелось из темноты. Без заставки сразу `true`.
+    @State private var isGlowLit: Bool
+    private let gate = AmbientMotionGate()
     private static let scrollSpace = "homeScroll"
+
+    init(viewModel: HomeViewModel, onOpenPressure: @escaping () -> Void) {
+        _viewModel = Bindable(viewModel)
+        self.onOpenPressure = onOpenPressure
+        _isGlowLit = State(initialValue: !viewModel.isIntroPending)
+    }
+
+    /// Заставка идёт, пока она не сыграна, при включённом движении.
+    private var isIntroActive: Bool { viewModel.isIntroPending && gate.isEnabled }
 
     var body: some View {
         GeometryReader { proxy in
-            ZStack(alignment: .top) {
-                scroll(topInset: proxy.safeAreaInsets.top)
-                    .ignoresSafeArea(edges: .top)
-                StatusBarFade(
-                    height: proxy.safeAreaInsets.top + Size.statusBarFadeExtra,
-                    offset: scrollOffset
-                )
+            scroll(topInset: proxy.safeAreaInsets.top)
                 .ignoresSafeArea(edges: .top)
-            }
         }
-        .background(AppColor.homeBackground.ignoresSafeArea())
-        .auraBottomBar(fadeColor: AppColor.homeBackground, fadeHeight: Size.homeBottomFadeHeight) { bottomBar }
+        .statusBarFade(offset: scrollOffset)
+        .background(AppColor.background.ignoresSafeArea())
+        .auraBottomBar(fadeColor: AppColor.background, fadeHeight: Size.homeBottomFadeHeight) { FloatingTabBar(selection: $tab) }
+        .toast(message: $viewModel.toastMessage)
         .toolbar(.hidden, for: .navigationBar)
-        .task { await viewModel.load() }
+        .task { await run() }
+    }
+
+    /// Загрузка и заставка: свечение разгорается сразу, элементы появляются по очереди после загрузки, затем заставка завершена.
+    private func run() async {
+        if isIntroActive {
+            withAnimation(Motion.introGlow) { isGlowLit = true }
+        }
+        await viewModel.load()
+        await viewModel.runIntro(animationsEnabled: gate.isEnabled)
     }
 
     private func scroll(topInset: CGFloat) -> some View {
         ScrollView {
-            VStack(spacing: 0) {
-                domeArea(topInset: topInset)
+            VStack(spacing: Spacing.columnGap) {
+                hero(topInset: topInset)
                 VStack(spacing: Spacing.columnGap) {
                     stateContent
                 }
                 .padding(.horizontal, Spacing.screenMargin)
-                .padding(.bottom, Spacing.tabBarClearance)
             }
             .frame(maxWidth: .infinity)
-            .background(alignment: .top) {
-                DomeGlow(palette: viewModel.glowState.palette, isAnimated: !viewModel.isLoading)
-            }
+            .padding(.bottom, Spacing.homeBottomClearance)
             .reportsScrollOffset(in: Self.scrollSpace)
         }
         .coordinateSpace(name: Self.scrollSpace)
         .onPreferenceChange(ScrollOffsetKey.self) { scrollOffset = $0 }
     }
 
-    // MARK: - Свечение, профиль и вывод
+    // MARK: - Верхний блок
 
-    /// Верхняя зона до колонки. Вывод стоит по центру от `homeInsightTop` и растёт вниз при развороте.
-    /// В loading на его месте скелетон, в empty и error вывода нет.
-    private func domeArea(topInset: CGFloat) -> some View {
+    /// Верхний блок: свечение по зоне давления, вкладки, профиль и вывод. В loading на месте вывода скелетон,
+    /// в empty и error блок компактный и без вывода.
+    private func hero(topInset: CGFloat) -> some View {
         ZStack(alignment: .top) {
             VStack(spacing: 0) {
                 if viewModel.showsInsight {
                     HomeHeadline(
                         headline: viewModel.headline,
                         isExpanded: viewModel.isInsightExpanded,
-                        onToggle: { withAnimation(Motion.standard) { viewModel.toggleInsight() } }
+                        onToggle: { withAnimation(gate.isEnabled ? Motion.standard : nil) { viewModel.toggleInsight() } }
                     )
-                    .padding(.top, Size.homeInsightTop)
+                    .introReveal(index: 0, isActive: isIntroActive)
+                    .padding(.top, Size.heroInsightTop)
                 } else if viewModel.isLoading {
                     SkeletonHeadline()
-                        .padding(.top, Size.homeInsightTop)
+                        .padding(.top, Size.heroInsightTop)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: viewModel.columnTop, alignment: .top)
+            .frame(maxWidth: .infinity, alignment: .top)
+            SegmentedPicker(
+                options: viewModel.tabs,
+                selection: Binding(get: { viewModel.selectedTab }, set: { viewModel.selectTab($0.id) }),
+                title: { $0.title },
+                style: .tabs,
+                identifier: { "tab-" + $0.id }
+            )
+            .padding(.top, Size.heroTabsTop)
             HStack(spacing: 0) {
                 Spacer(minLength: 0)
                 IconButton(
@@ -78,6 +100,13 @@ struct HomeView: View {
             .padding(.top, topInset)
         }
         .padding(.horizontal, Spacing.screenMargin)
+        .frame(maxWidth: .infinity, minHeight: viewModel.heroHeight, alignment: .top)
+        .background {
+            DomeGlow(
+                palette: viewModel.glowState.palette, isAnimated: !viewModel.isLoading,
+                level: isGlowLit || !gate.isEnabled ? 1 : 0
+            )
+        }
     }
 
     // MARK: - Состояния
@@ -86,71 +115,87 @@ struct HomeView: View {
     private var stateContent: some View {
         switch viewModel.screenState {
         case .loading:
-            SkeletonButton()
-            metricsHeader
-            BentoGrid {
-                SkeletonTile()
-            } side: {
-                SkeletonTile()
-                SkeletonTile()
+            SkeletonCard(identifier: "skeleton-card", minHeight: Size.pressureCardHeight, radius: Radius.heroCard)
+            HStack(spacing: Spacing.tileGap) {
+                SkeletonCard(minHeight: Size.smallCardHeight, radius: Radius.tile)
+                SkeletonCard(minHeight: Size.smallCardHeight, radius: Radius.tile)
             }
-            SkeletonList(count: 2, firstIdentifier: "skeleton-card")
+            SkeletonButton()
         case .error(let message):
             ErrorStateView(message: message, retry: { Task { await viewModel.reload() } })
         case .empty:
-            metricsHeader
-            bento
-            EmptyStateView(
-                message: viewModel.emptyMessage,
-                action: onOpenPressure
-            )
+            pressureCard
+            smallCards
+            EmptyStateView(message: viewModel.emptyMessage, action: onOpenPressure)
         case .content:
-            GlowButton(title: "Давление", systemImage: "play.fill", action: onOpenPressure)
-                .accessibilityIdentifier("pressure-button")
-            metricsHeader
-            bento
-            // Экрана ввода глюкозы нет: кнопка пустой карточки выключена и подписана (без действия).
-            ForEach(viewModel.listCards) { model in
-                metricCard(model, layout: .compact)
-            }
+            pressureCard.introReveal(index: 1, isActive: isIntroActive)
+            smallCards.introReveal(index: 2, isActive: isIntroActive)
+            adviceBlock
+            GlowButton(title: HomeText.gigachatButton, systemImage: "sparkles") { viewModel.showComingSoon() }
+                .introReveal(index: 4, isActive: isIntroActive)
+                .frame(maxWidth: Size.glowButtonWidth)
+                .accessibilityIdentifier("gigachat-button")
+                .accessibilityHint(HomeText.comingSoonHint)
         }
     }
 
     // MARK: - Блоки
 
-    private var metricsHeader: some View {
-        SectionHeader(title: "Показатели")
-            .frame(maxWidth: .infinity, alignment: .leading)
+    private var pressureCard: some View {
+        Button(action: onOpenPressure) { metricCard(viewModel.pressureCard, layout: .large) }
+            .buttonStyle(.plain)
+            .accessibilityHint(HomeText.openPressureHint)
+            .accessibilityIdentifier("pressure-card")
     }
 
-    /// Бенто: большая плитка давления (открывает экран давления) и две плитки справа.
-    private var bento: some View {
-        BentoGrid {
-            Button(action: onOpenPressure) { metricCard(viewModel.pressureTile, layout: .tile) }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("pressure-card")
-        } side: {
-            ForEach(viewModel.sideTiles) { metricCard($0, layout: .tile) }
+    /// Вес и глюкоза в ряд, одинаковой высоты.
+    private var smallCards: some View {
+        HStack(spacing: Spacing.tileGap) {
+            ForEach(viewModel.smallCards) { model in
+                metricCard(model, layout: .small)
+                    .accessibilityIdentifier("metric-card-\(model.kind.rawValue)")
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    @ViewBuilder
+    private var adviceBlock: some View {
+        Text(HomeText.adviceSectionTitle)
+            .textStyle(.sectionTitle)
+            .foregroundStyle(AppColor.textPrimary)
+            .multilineTextAlignment(.center)
+            .minimumScaleFactor(TextScale.title)
+            .frame(maxWidth: .infinity)
+            .introReveal(index: 3, isActive: isIntroActive)
+            .padding(.top, Spacing.xxl)
+            .accessibilityAddTraits(.isHeader)
+        if let advice = viewModel.adviceCard {
+            AdviceCard(
+                title: advice.title, text: advice.text, author: advice.author, role: advice.role,
+                iconName: advice.iconName, disclaimer: advice.disclaimer
+            )
+            .introReveal(index: 3, isActive: isIntroActive)
+            .padding(.horizontal, Spacing.adviceInset)
+            .padding(.bottom, Spacing.xl)
+            .accessibilityIdentifier("advice-card")
         }
     }
 
     private func metricCard(_ model: MetricCardModel, layout: MetricCard.Layout) -> some View {
         MetricCard(
             kind: model.kind,
-            valueText: model.valueText,
-            unit: model.unit,
+            valueText: model.displayValue,
+            isPlaceholder: model.isPlaceholder,
+            unit: model.captionText,
             statusText: model.statusText,
             tone: model.tone,
-            series: model.series,
             layout: layout,
-            surface: model.surface,
-            sparklineStyle: model.sparklineStyle,
-            valueCaption: model.valueCaption
+            gauge: model.gauge,
+            gaugePosition: model.gaugePosition,
+            rhythm: model.rhythm,
+            accessibilityText: model.accessibilityText
         )
-    }
-
-    private var bottomBar: some View {
-        FloatingTabBar(selection: $tab)
     }
 }
 

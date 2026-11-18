@@ -33,5 +33,5 @@ struct IconButton: View {
         IconButton(systemName: "person", label: "Профиль", surface: .profile, action: {})
     }
     .padding(Spacing.screenMargin)
-    .background(AppColor.homeBackground)
+    .background(AppColor.background)
 }

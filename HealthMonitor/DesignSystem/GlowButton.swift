@@ -38,7 +38,8 @@ struct GlowButtonSurface: View {
     }
 }
 
-/// Кнопка с иконкой и текстом, внутреннее зелёное свечение. Высота 64, цель нажатия не меньше 44.
+/// Кнопка с иконкой и текстом, внутреннее зелёное свечение (ГигаЧат на главном, «Добавить измерение» на экране давления).
+/// Высота 64 (растёт с крупным шрифтом), цель нажатия не меньше 44.
 struct GlowButton: View {
     let title: String
     let systemImage: String
@@ -65,7 +66,8 @@ private struct GlowButtonLabel: View {
                 .accessibilityHidden(true)
             Text(title)
                 .textStyle(.glowButtonTitle)
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
                 .minimumScaleFactor(TextScale.compact)
         }
         .foregroundStyle(AppColor.textPrimary)
@@ -84,14 +86,14 @@ private struct GlowButtonStyle: ButtonStyle {
     }
 }
 
-#Preview("GlowButton: норма, нажата, disabled") {
+#Preview("GlowButton: норма, нажата, добавить") {
     VStack(spacing: Spacing.l) {
-        GlowButton(title: "Давление", systemImage: "play.fill", action: {})
-        GlowButtonLabel(title: "Давление (нажата)", systemImage: "play.fill")
+        GlowButton(title: "Задать вопрос ГигаЧату", systemImage: "sparkles", action: {})
+        GlowButtonLabel(title: "Задать вопрос ГигаЧату (нажата)", systemImage: "sparkles")
             .background { GlowButtonSurface(isPressed: true) }
-        GlowButton(title: "Давление (disabled)", systemImage: "play.fill", action: {})
+        GlowButton(title: AppFormat.addMeasurement, systemImage: "plus", action: {})
             .disabled(true)
     }
     .padding(Spacing.screenMargin)
-    .background(AppColor.homeBackground)
+    .background(AppColor.background)
 }

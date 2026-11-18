@@ -1,12 +1,6 @@
 import SwiftUI
 
 extension View {
-    /// Фон экрана Aura: свечение вверху (кладётся фоном внутрь прокрутки, уезжает вместе с содержимым).
-    /// Высота блока: `Size.glowPressureHeight`. Главный экран использует `DomeGlow`.
-    func auraScreenBackdrop(palette: AuraPalette, glowHeight: CGFloat) -> some View {
-        background(alignment: .top) { TopGlow(palette: palette, height: glowHeight) }
-    }
-
     /// Нижняя панель поверх прокрутки: содержимое, под ним градиент к фону высотой `fadeHeight`.
     func auraBottomBar<Bar: View>(
         fadeColor: Color = AppColor.background,
@@ -18,18 +12,19 @@ extension View {
                 .padding(.horizontal, Spacing.screenMargin)
                 .padding(.bottom, Spacing.s)
                 .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .contain)
                 .background(alignment: .bottom) { BottomFade(color: fadeColor, height: fadeHeight).ignoresSafeArea(edges: .bottom) }
         }
     }
 }
 
-#Preview("AuraScreen: фон и нижняя панель") {
+#Preview("AuraScreen: нижняя панель") {
     ScrollView {
         Color.clear.frame(height: 900)
-            .auraScreenBackdrop(palette: .elevated, glowHeight: Size.glowPressureHeight)
+            .background(alignment: .top) { DomeGlow(palette: .elevated).frame(height: Size.pressureHeroHeight) }
     }
     .background(AppColor.background)
     .auraBottomBar {
-        PrimaryButton(title: "Добавить измерение", style: .glass, action: {})
+        GlowButton(title: AppFormat.addMeasurement, systemImage: "plus", action: {})
     }
 }

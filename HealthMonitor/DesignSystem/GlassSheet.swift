@@ -7,6 +7,7 @@ private struct GlassSheetModifier<SheetContent: View>: ViewModifier {
     @Binding var isPresented: Bool
     let sheet: SheetContent
     @State private var dragOffset: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var panelShape: UnevenRoundedRectangle {
         UnevenRoundedRectangle(
@@ -30,10 +31,10 @@ private struct GlassSheetModifier<SheetContent: View>: ViewModifier {
                             .transition(.opacity.animation(Motion.sheetScrim))
                             .accessibilityHidden(true)
                         panel
-                            .transition(.move(edge: .bottom).animation(Motion.sheet))
+                            .transition(reduceMotion ? .opacity.animation(Motion.sheetScrim) : .move(edge: .bottom).animation(Motion.sheet))
                     }
                 }
-                .animation(Motion.sheet, value: isPresented)
+                .animation(reduceMotion ? Motion.sheetScrim : Motion.sheet, value: isPresented)
             }
     }
 
@@ -71,7 +72,7 @@ private struct GlassSheetModifier<SheetContent: View>: ViewModifier {
                     }
                     .onEnded { value in
                         let shouldClose = value.translation.height > Size.sheetDismissDistance
-                        withAnimation(Motion.sheet) {
+                        withAnimation(reduceMotion ? nil : Motion.sheet) {
                             if shouldClose { isPresented = false }
                             dragOffset = 0
                         }

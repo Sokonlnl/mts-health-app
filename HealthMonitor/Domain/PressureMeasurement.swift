@@ -15,6 +15,17 @@ enum MeasurementContext: String, CaseIterable, Identifiable {
         case .afterExercise: return "После нагрузки"
         }
     }
+
+    /// Контекст по часу измерения (по календарю приложения): утро 5–10, вечер 17–22, иначе нет (день и ночь).
+    /// Моки берут контекст отсюда, чтобы подпись не расходилась со временем.
+    static func matching(_ date: Date) -> MeasurementContext? {
+        let hour = AppCalendar.calendar.component(.hour, from: date)
+        switch hour {
+        case 5..<11: return .morning
+        case 17..<23: return .evening
+        default: return nil
+        }
+    }
 }
 
 /// Одно измерение артериального давления.
@@ -67,14 +78,11 @@ enum ScreenState: Equatable {
     case content
 }
 
-/// Показание простого показателя (пульс, вес, глюкоза).
+/// Последнее показание простого показателя (пульс, вес, глюкоза).
 struct MetricReading: Equatable {
     let latest: Double?
-    let series: [Double]
-    /// Сколько дней из 7 показатель был в норме пользователя.
-    let daysInNorm: Int
 
-    static let empty = MetricReading(latest: nil, series: [], daysInNorm: 0)
+    static let empty = MetricReading(latest: nil)
 }
 
 /// Все данные приложения от одного источника.
@@ -84,6 +92,8 @@ struct HealthData: Equatable {
     var pulse: MetricReading
     var weight: MetricReading
     var glucose: MetricReading
+    /// Советы для блока на главном экране (не влияют на «пустое» состояние).
+    var advice: [Advice] = []
 
     static let empty = HealthData(pressure: [], pulse: .empty, weight: .empty, glucose: .empty)
 

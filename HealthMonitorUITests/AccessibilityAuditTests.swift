@@ -55,7 +55,7 @@ final class AccessibilityAuditTests: XCTestCase {
 
     private func audit(screen: String, readyIdentifier: String) throws {
         let app = XCUIApplication()
-        app.launchArguments += ["-uiScreen", screen]
+        app.launchArguments += ["-uiScreen", screen, LaunchConfig.disableIntroArgument]
         app.launch()
         let ready = app.descendants(matching: .any).matching(identifier: readyIdentifier).firstMatch
         XCTAssertTrue(ready.waitForExistence(timeout: timeout), "Экран \(screen) не загрузился")

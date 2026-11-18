@@ -33,10 +33,13 @@ final class HomeViewModelInsightTests: XCTestCase {
     func testCalmWeekInsightContent() async {
         let viewModel = await makeViewModel(pressure: calmWeek)
         let insight = viewModel.insight
-        XCTAssertEqual(insight.title, "Спокойная неделя")
-        XCTAssertTrue(insight.summary.contains("7 из 7"))
+        XCTAssertTrue(insight.details.contains("7 из 7"))
         XCTAssertTrue(insight.details.contains(PressureZone.disclaimer), "Расширенный вывод содержит оговорку")
-        XCTAssertNotEqual(insight.details, insight.summary)
+    }
+
+    func testInsightCountsMeasuredDaysNotSeven() async {
+        let viewModel = await makeViewModel(pressure: Array(calmWeek.prefix(3)))
+        XCTAssertTrue(viewModel.insight.details.contains("3 из 3 измеренных дней"))
     }
 
     func testToggleDoesNotChangeInsightText() async {
@@ -48,6 +51,6 @@ final class HomeViewModelInsightTests: XCTestCase {
 
     func testInsightWithoutMeasurements() async {
         let viewModel = await makeViewModel(pressure: [])
-        XCTAssertEqual(viewModel.insight.title, "Пока нет данных")
+        XCTAssertTrue(viewModel.insight.details.contains("Добавьте первое измерение"))
     }
 }

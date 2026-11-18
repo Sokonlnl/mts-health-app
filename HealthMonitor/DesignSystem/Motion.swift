@@ -1,13 +1,15 @@
 import SwiftUI
 
 /// Анимации из docs/DESIGN.md. Длительности и кривые только отсюда.
-/// При `accessibilityReduceMotion` вращение и «дыхание» формы отключаются (см. `AuraOrb`).
+/// При `accessibilityReduceMotion` смена палитры свечения идёт без анимации.
 enum Motion {
     /// Длительности в секундах.
     static let standardDuration: Double = 0.25
     static let fastDuration: Double = 0.2
     static let paletteDuration: Double = 1.1
     static let contentSwapDuration: Double = 0.7
+    /// Сколько подсказка «Скоро» остаётся на экране (нс).
+    static let toastNanoseconds: UInt64 = 2_000_000_000
 
     /// Разворот и сворачивание блоков.
     static let standard = Animation.easeInOut(duration: standardDuration)
@@ -24,11 +26,30 @@ enum Motion {
     /// Подложка под шторкой.
     static let sheetScrim = Animation.easeInOut(duration: 0.25)
 
-    // Форма Aura
-    static let orbSpinA = Animation.linear(duration: 28).repeatForever(autoreverses: false)
-    static let orbSpinB = Animation.linear(duration: 19).repeatForever(autoreverses: false)
-    static let orbSpinContour = Animation.linear(duration: 40).repeatForever(autoreverses: false)
-    static let orbBreathe = Animation.easeInOut(duration: 7).repeatForever(autoreverses: true)
+    // Дыхание свечения (`DomeGlow`): медленно, в пределах нескольких процентов, у пятен разные фазы (рад).
+    static let breathePeriod: TimeInterval = 5
+    static let breatheScaleAmplitude: Double = 0.04
+    static let breatheOpacityAmplitude: Double = 0.06
+    static let breathePhases: [Double] = [0, 2.1, 4.2]
+
+    /// Сердцебиение в карточке давления: на сколько растёт сердце в пике удара.
+    static let heartbeatAmplitude: Double = 0.12
+
+    // Заставка при первом показе главного: свечение разгорается из темноты, затем элементы по очереди поднимаются снизу.
+    static let introGlow = Animation.easeOut(duration: 0.7)
+    static let introItemDuration: Double = 0.35
+    static let introItemStart: Double = 0.25
+    static let introItemStagger: Double = 0.08
+    /// Общая длительность заставки после загрузки данных (нс): после неё она считается сыгранной.
+    static let introNanoseconds: UInt64 = 1_100_000_000
+    /// Сдвиг вверх при появлении элемента.
+    static let introOffset: CGFloat = 12
+
+    /// Появление элемента заставки с номером `index` (0 первый): кривая как у `contentSwap`, задержка по очереди.
+    static func introItem(index: Int) -> Animation {
+        Animation.timingCurve(0.2, 0.7, 0.2, 1, duration: introItemDuration)
+            .delay(introItemStart + introItemStagger * Double(index))
+    }
 
     /// Появление: прозрачность 0 в 1, сдвиг вниз на 8 pt, масштаб 0,98 в 1.
     static let contentSwapTransition = AnyTransition.opacity
@@ -36,10 +57,19 @@ enum Motion {
         .combined(with: .scale(scale: 0.98))
 }
 
-/// Фоновое движение (вращение и «дыхание» формы Aura). Выключается в snapshot-тестах,
+/// Фоновое движение (анимация смены палитры свечения). Выключается в snapshot-тестах,
 /// чтобы кадр был детерминированным. Системный `accessibilityReduceMotion` проверяется отдельно.
 private struct AmbientMotionKey: EnvironmentKey {
     static let defaultValue = true
+}
+
+/// Можно ли включать фоновое движение (дыхание свечения, сердцебиение, заставка): нет «Уменьшить движение»
+/// и оно не выключено окружением `isAmbientMotionEnabled` (snapshot-тесты).
+struct AmbientMotionGate: DynamicProperty {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.isAmbientMotionEnabled) private var isAmbientMotionEnabled
+
+    var isEnabled: Bool { !reduceMotion && isAmbientMotionEnabled }
 }
 
 extension EnvironmentValues {

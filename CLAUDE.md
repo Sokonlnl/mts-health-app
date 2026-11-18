@@ -6,9 +6,9 @@
 Источники правды (читай перед работой, не переспрашивай то, что там записано):
 - `docs/BRIEF.md`: задача и критерии приёмки.
 - `docs/DESIGN.md`: токены, экраны, состояния, взаимодействия.
-- **Эталон дизайна: Figma**, главный экран `47:2127`:
-  https://www.figma.com/design/wiH1VTFFlY0KXC1M6RQ8Fx/?node-id=47-2127
-  Снимок: `docs/design/home-figma-47-2127.png`. Figma главнее холста; при расхождении правится код, а не Figma.
+- **Эталон дизайна: Figma**, главный экран `63:25250` (с 18.11; прежний `47:2127`):
+  https://www.figma.com/design/wiH1VTFFlY0KXC1M6RQ8Fx/?node-id=63-25250
+  Снимок: `docs/design/home-figma-63-25250.png`. Figma главнее холста; при расхождении правится код, а не Figma.
   Читать через Figma MCP (`get_design_context` по узлу), не по памяти.
 - Дизайн-холст (Claude Design, экран давления и шторка до появления их версии в Figma): https://claude.ai/artifact/HE2nEUW27e5hrek5bLxKE3
 

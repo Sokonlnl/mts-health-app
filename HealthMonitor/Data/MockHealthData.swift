@@ -19,7 +19,7 @@ enum MockHealthData {
                     systolic: systolic[slot],
                     diastolic: diastolic[slot],
                     pulse: 60 + (index * 7) % 15,
-                    context: .morning
+                    context: MeasurementContext.matching(morning)
                 )
             )
             if index < 45 {
@@ -31,7 +31,7 @@ enum MockHealthData {
                         systolic: systolic[slot] - 3,
                         diastolic: diastolic[slot] - 2,
                         pulse: 64 + (index * 5) % 13,
-                        context: .evening
+                        context: MeasurementContext.matching(evening)
                     )
                 )
             }
@@ -39,20 +39,40 @@ enum MockHealthData {
         return result.sorted { $0.date > $1.date }
     }
 
+    /// Справочные советы. Без диагнозов и назначений.
+    static let advice = [
+        Advice(
+            id: "walk",
+            title: "Небольшая прогулка — забота о себе",
+            text: "Начните с 10 минут на свежем воздухе в комфортном темпе.",
+            zones: [.normal]
+        ),
+        Advice(
+            id: "water",
+            title: "Стакан воды в течение дня",
+            text: "Небольшие порции воды помогают не забывать о питьевом режиме."
+        ),
+        Advice(
+            id: "routine",
+            title: "Измеряйте давление в одно время",
+            text: "Так значения легче сравнивать. Перед измерением посидите спокойно пять минут.",
+            zones: [.elevated]
+        ),
+        Advice(
+            id: "rest",
+            title: "Дайте себе немного покоя",
+            text: "Посидите спокойно несколько минут и измерьте давление ещё раз.",
+            zones: [.high]
+        )
+    ]
+
     static func make(now: Date) -> HealthData {
         HealthData(
             pressure: pressure(now: now),
-            pulse: MetricReading(
-                latest: 68,
-                series: [66, 68, 65, 70, 67, 64, 69, 66, 68, 71, 65, 67, 66, 68],
-                daysInNorm: 7
-            ),
-            weight: MetricReading(
-                latest: 72.4,
-                series: [73.2, 73.1, 73.0, 72.9, 72.9, 72.8, 72.7, 72.6, 72.6, 72.5, 72.5, 72.4, 72.4, 72.4],
-                daysInNorm: 5
-            ),
-            glucose: .empty
+            pulse: MetricReading(latest: 68),
+            weight: MetricReading(latest: 72.4),
+            glucose: MetricReading(latest: 5.4),
+            advice: advice
         )
     }
 }
