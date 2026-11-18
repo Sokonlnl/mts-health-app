@@ -32,7 +32,8 @@ struct MetricValueBlock: View {
                 pill
             }
         case .hero:
-            VStack(spacing: Spacing.m) {
+            // Значение, единица и чип с одинаковым зазором 4 pt (Figma 86:123). Значение с единицей читаются одной связкой.
+            VStack(spacing: Spacing.xs) {
                 VStack(spacing: Spacing.xs) {
                     value
                     heroUnit
@@ -65,8 +66,8 @@ struct MetricValueBlock: View {
 
     private var heroUnit: some View {
         Text(unit)
-            .textStyle(.label)
-            .foregroundStyle(AppColor.textPrimary)
+            .textStyle(.unitLabel)
+            .foregroundStyle(AppColor.neutral.text)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
     }

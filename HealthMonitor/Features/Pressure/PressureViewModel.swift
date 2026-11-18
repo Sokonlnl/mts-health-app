@@ -2,15 +2,6 @@ import CoreGraphics
 import Foundation
 import Observation
 
-/// Строка истории измерений, уже отформатированная для показа.
-struct PressureHistoryRow: Identifiable, Equatable {
-    let id: String
-    let title: String
-    let subtitle: String
-    let statusText: String
-    let tone: StatusTone
-}
-
 /// Плашка зоны в карточке «Почему такой статус».
 struct ZonePlate: Identifiable, Equatable {
     let title: String
@@ -29,12 +20,12 @@ struct ZonePlate: Identifiable, Equatable {
 @MainActor
 @Observable
 final class PressureViewModel {
-    private static let historyLimit = 20
-
     let store: HealthStore
     @ObservationIgnored let now: () -> Date
 
     var period: PressurePeriod = .week
+    /// Колода советов ГигаЧата под показателями.
+    private var adviceDeck = AdviceDeck()
 
     init(store: HealthStore, now: @escaping () -> Date = { Date() }) {
         self.store = store
@@ -56,23 +47,32 @@ final class PressureViewModel {
     /// Последнее измерение вообще (не только за период).
     var latest: PressureMeasurement? { store.data.pressure.first }
 
-    var history: [PressureMeasurement] {
-        Array(periodMeasurements.reversed().prefix(Self.historyLimit))
-    }
+    // MARK: - Советы ГигаЧата
 
-    /// Строки истории: значение · пульс, дата и контекст, зона.
-    var historyRows: [PressureHistoryRow] {
-        let current = now()
-        return history.map { item in
-            PressureHistoryRow(
-                id: item.id,
-                title: AppFormat.measurementTitle(item),
-                subtitle: AppFormat.measurementSubtitle(item, now: current),
-                statusText: item.zone.title,
-                tone: item.zone.tone
+    /// Оставшиеся карточки колоды (верхняя первая); порядок по зоне последнего измерения.
+    var adviceCards: [AdviceCardModel] {
+        let zone = latest?.zone
+        let disclaimer = AdviceSelector.disclaimer(for: zone)
+        let ordered = adviceDeck.remaining(AdviceSelector.ordered(store.data.advice, zone: zone))
+        return ordered.map {
+            AdviceCardModel(
+                id: $0.id, title: $0.title, text: $0.text, author: HomeText.gigachatName, role: HomeText.gigachatRole,
+                iconName: HomeText.gigachatMarkAsset, disclaimer: disclaimer
             )
         }
     }
+
+    /// Подпись положения для VoiceOver: «Совет 2 из 4».
+    var advicePositionText: String {
+        let count = store.data.advice.count
+        return HomeText.advicePosition(adviceDeck.position(count: count), of: count)
+    }
+
+    var hasAdvice: Bool { !store.data.advice.isEmpty }
+
+    func dismissAdvice() { adviceDeck.dismissTop(count: store.data.advice.count) }
+
+    func refreshAdvice() { adviceDeck.refresh(count: store.data.advice.count) }
 
     /// Текст крупного значения последнего измерения.
     var latestValueText: String {
@@ -134,10 +134,22 @@ final class PressureViewModel {
         AppFormat.pressureUnit(pulse: latest?.pulse)
     }
 
-    /// Высота верхнего блока: при ошибке компактная (значения нет), иначе полная.
+    /// Высота верхнего блока: при ошибке компактная (значения нет), иначе полная (Figma 86:123).
     var heroHeight: CGFloat {
         if case .error = screenState { return Size.heroCompactHeight }
-        return Size.pressureHeroHeight
+        return Size.metricHeroHeight
+    }
+
+    /// Сердце в верхнем блоке бьётся в ритме пульса последнего измерения; без измерений неподвижно.
+    var heartRhythm: HeartbeatRhythm? {
+        latest.map { HeartbeatRhythm(pulse: $0.pulse) }
+    }
+
+    /// Подпись под верхним блоком: дата, контекст и пульс последнего измерения («Сегодня, 08:31 · Утро · пульс 60»).
+    var latestCaptionText: String {
+        guard let latest else { return "" }
+        let pulse = latest.pulse.map { "пульс \($0)" }
+        return [AppFormat.measurementSubtitle(latest, now: now()), pulse].compactMap { $0 }.joined(separator: " · ")
     }
 
     /// Есть ли измерения в выбранном периоде (иначе под графиком и в истории подпись «За выбранный период измерений нет.»).

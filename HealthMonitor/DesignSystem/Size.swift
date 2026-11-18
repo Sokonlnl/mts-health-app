@@ -33,6 +33,20 @@ enum Size {
     static let heroCompactHeight: CGFloat = 220
     /// Минимальная высота верхнего блока экрана давления (растёт вместе с текстом).
     static let pressureHeroHeight: CGFloat = 300
+    /// Верхний блок страницы показателя (Figma 86:123): высота 419, заголовок с иконкой с y=64, значение с y=103
+    /// (между ними 15), кнопка «назад» на уровне заголовка (верх 54), затемнение низа 64.
+    static let metricHeroHeight: CGFloat = 419
+    static let metricHeroTitleTop: CGFloat = 64
+    static let metricHeroBackTop: CGFloat = 54
+    static let metricHeroValueGap: CGFloat = 15
+    static let metricHeroFadeHeight: CGFloat = 64
+    /// На сколько ступеней Dynamic Type текст на страницах показателей крупнее обычного.
+    static let metricPageTextSteps = 2
+    /// Сердце в верхнем блоке: сердце 350×305 в Figma против 264×230 в карточке (×1,326), верх рамки с полями на y=248,
+    /// сдвиг влево на 4 pt от центра.
+    static let heroHeartScale: CGFloat = 350.087 / 264
+    static let heroHeartOffsetX: CGFloat = -4
+    static let heroHeartOffsetY: CGFloat = 248.2
     /// Вкладки «Самочувствие / Анализы» (верх 114), вывод (центр блока на y 248, верх 202) и ширина вывода 272.
     static let heroTabsTop: CGFloat = 114
     /// Кнопка профиля поднята над отступом статус-бара на столько pt.

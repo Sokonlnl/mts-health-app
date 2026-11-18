@@ -6,8 +6,16 @@ import SwiftUI
 /// Бьётся мягким «дыханием-ударом» с периодом `HeartbeatRhythm`. Без ритма, при «Уменьшить движение» и при выключенном
 /// `isAmbientMotionEnabled` сердце неподвижно. Скрыто от VoiceOver.
 struct HeartGlow: View {
+    /// Где стоит сердце: в углу большой карточки или под значением в верхнем блоке страницы показателя (Figma 86:123,
+    /// сердце крупнее в 1,33 раза, по центру, верхняя часть ниже середины блока).
+    enum Placement {
+        case cardCorner
+        case hero
+    }
+
     let color: Color
     var rhythm: HeartbeatRhythm?
+    var placement: Placement = .cardCorner
 
     private let gate = AmbientMotionGate()
 
@@ -16,11 +24,20 @@ struct HeartGlow: View {
             // Размер определяет `Color.clear` (место, отданное родителем), а рамка сердца 330×296 только рисуется поверх:
             // иначе она раздувает фон карточки выше и ниже самой карточки (карточка наползала на соседние блоки).
             Color.clear
-                .overlay(alignment: .bottomTrailing) {
-                    layers
-                        .scaleEffect(scale(at: context.date), anchor: Size.heartGradientCenter)
-                        .frame(width: Size.heartFrame.width, height: Size.heartFrame.height)
-                        .offset(x: Size.heartOffsetX, y: Size.heartOffsetY)
+                .overlay(alignment: placement == .hero ? .top : .bottomTrailing) {
+                    switch placement {
+                    case .cardCorner:
+                        layers
+                            .scaleEffect(scale(at: context.date), anchor: Size.heartGradientCenter)
+                            .frame(width: Size.heartFrame.width, height: Size.heartFrame.height)
+                            .offset(x: Size.heartOffsetX, y: Size.heartOffsetY)
+                    case .hero:
+                        layers
+                            .scaleEffect(scale(at: context.date), anchor: Size.heartGradientCenter)
+                            .frame(width: Size.heartFrame.width, height: Size.heartFrame.height)
+                            .scaleEffect(Size.heroHeartScale, anchor: .top)
+                            .offset(x: Size.heroHeartOffsetX, y: Size.heroHeartOffsetY)
+                    }
                 }
         }
         .allowsHitTesting(false)

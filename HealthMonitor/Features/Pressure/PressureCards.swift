@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Последнее измерение в верхнем блоке: крупное значение 59,7 pt, единица с пульсом, чип статуса и строка с датой.
+/// Последнее измерение в верхнем блоке: крупное значение 84,4 pt, единица и чип статуса (Figma 86:123).
+/// Дата, контекст и пульс стоят подписью под верхним блоком (`PressureView`).
 /// Значение и единица читаются VoiceOver одной связкой (`pressure-latest-value`), чип статуса отдельно (`pressure-latest-status`).
 struct PressureHero: View {
     let tone: StatusTone
@@ -9,22 +10,14 @@ struct PressureHero: View {
     let valueText: String
     let unitText: String
     let statusText: String
-    let subtitle: String
     let accessibilityText: String
 
     var body: some View {
-        VStack(spacing: Spacing.m) {
-            MetricValueBlock(
-                valueText: valueText, unit: unitText, statusText: statusText, tone: tone, isPlaceholder: isPlaceholder,
-                style: .hero, valueAccessibilityText: accessibilityText,
-                valueIdentifier: "pressure-latest-value", statusIdentifier: "pressure-latest-status"
-            )
-            Text(subtitle)
-                .textStyle(.body)
-                .foregroundStyle(AppColor.textPrimary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
+        MetricValueBlock(
+            valueText: valueText, unit: unitText, statusText: statusText, tone: tone, isPlaceholder: isPlaceholder,
+            style: .hero, valueAccessibilityText: accessibilityText,
+            valueIdentifier: "pressure-latest-value", statusIdentifier: "pressure-latest-status"
+        )
         .frame(maxWidth: .infinity)
     }
 }
@@ -81,69 +74,11 @@ struct PressureWhyCard: View {
     }
 }
 
-/// История измерений: значение, дата и время, справа точка и статус цветом. Строки готовит ViewModel.
-struct PressureHistoryList: View {
-    let rows: [PressureHistoryRow]
-    /// Подпись пустого периода (из ViewModel).
-    let emptyText: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
-            SectionHeader(title: "История", isCompact: true)
-            if rows.isEmpty {
-                Text(emptyText)
-                    .textStyle(.body)
-                    .foregroundStyle(AppColor.textSecondary)
-                    .glassCard()
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
-                        if index > 0 {
-                            Hairline()
-                        }
-                        rowView(row)
-                    }
-                }
-                .glassCard(insets: CardInsets.list)
-                .accessibilityIdentifier("pressure-history")
-            }
-        }
-    }
-
-    private func rowView(_ row: PressureHistoryRow) -> some View {
-        HStack(spacing: Spacing.m) {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(row.title)
-                    .textStyle(.bodyStrong)
-                    .foregroundStyle(AppColor.textPrimary)
-                Text(row.subtitle)
-                    .textStyle(.caption)
-                    .foregroundStyle(AppColor.textSecondary)
-            }
-            Spacer(minLength: Spacing.s)
-            StatusDotLabel(text: row.statusText, tone: row.tone)
-        }
-        .padding(.vertical, Spacing.s)
-        .frame(minHeight: Size.historyRow)
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("history-row-\(row.id)")
-    }
-}
-
-private enum PreviewSamples {
-    static let rows = [
-        PressureHistoryRow(id: "a", title: "132/86 · 70", subtitle: "Сегодня, 08:10 · Утро",
-                           statusText: "Повышенное", tone: .caution),
-        PressureHistoryRow(id: "b", title: "118/76 · 66", subtitle: "Вчера, 21:30",
-                           statusText: "Норма", tone: .positive)
-    ]
-}
-
 private func heroPreview(_ state: HealthState, value: String, status: String) -> some View {
     PressureHero(
         tone: state.tone, isPlaceholder: state == .noData, valueText: value,
-        unitText: AppFormat.pressureUnit(pulse: 68), statusText: status,
-        subtitle: "Сегодня, 08:10 · Утро", accessibilityText: "Последнее измерение \(value), \(status)"
+        unitText: AppUnit.pressure, statusText: status,
+        accessibilityText: "Последнее измерение \(value), \(status)"
     )
     .padding(Spacing.screenMargin)
     .background { DomeGlow(palette: state.palette) }
@@ -170,7 +105,6 @@ private func heroPreview(_ state: HealthState, value: String, status: String) ->
     ScrollView {
         VStack(spacing: Spacing.l) {
             PressureWhyCard(plates: ZonePlate.plates(current: .elevated), explanation: PressureZone.elevated.explanation)
-            PressureHistoryList(rows: PreviewSamples.rows, emptyText: AppFormat.emptyPeriod)
         }
         .padding(Spacing.screenMargin)
     }
@@ -180,7 +114,6 @@ private func heroPreview(_ state: HealthState, value: String, status: String) ->
 #Preview("Pressure cards: пусто") {
     VStack(spacing: Spacing.l) {
         PressureWhyCard(plates: ZonePlate.plates(current: nil), explanation: "Пока нет измерений")
-        PressureHistoryList(rows: [], emptyText: AppFormat.emptyPeriod)
     }
     .padding(Spacing.screenMargin)
     .background(AppColor.background)

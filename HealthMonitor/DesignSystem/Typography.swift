@@ -59,8 +59,8 @@ struct AppTextStyle {
 
 /// Типографика из docs/DESIGN.md. Весь текст SB Sans Display (Regular), фолбэк при отсутствии файла: SF Pro и SF Pro Rounded.
 enum AppTypography {
-    /// Крупное значение давления (карточка главного экрана и верх экрана давления).
-    static let heroValue = AppTextStyle(size: 59.7, weight: .light, tracking: -1.8, textStyle: .largeTitle, maxScale: 1.2)
+    /// Крупное значение показателя в верхнем блоке страницы показателя (Figma 86:123): 84,4 pt.
+    static let heroValue = AppTextStyle(size: 84.4, weight: .regular, tracking: -2.53, textStyle: .largeTitle, maxScale: 1.0)
     static let metricCard = AppTextStyle(
         size: 44, weight: .bold, design: .rounded, tracking: -1.2, textStyle: .largeTitle, maxScale: 1.4
     )
@@ -173,7 +173,7 @@ extension View {
 
 #Preview("Typography") {
     let styles: [(String, AppTextStyle)] = [
-        ("heroValue 59.7/300", .heroValue),
+        ("heroValue 84.4/400", .heroValue),
         ("metricCard 44/700", .metricCard), ("metricCardSmall 38/700", .metricCardSmall),
         ("title 24/700", .title), ("heroHeadline 22/700", .heroHeadline),
         ("headline 18/600", .headline), ("headlineCompact 17/600", .headlineCompact),

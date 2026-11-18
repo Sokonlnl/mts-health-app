@@ -91,12 +91,19 @@ final class PressureViewModelTests: XCTestCase {
 
     // MARK: - Модели для View
 
-    func testHistoryRowCarriesStatusTextAndTone() async {
-        let (viewModel, _) = await makeViewModel(
-            pressure: [TestData.measurement("h", systolic: 148, diastolic: 94, secondsAgo: 60)]
-        )
-        XCTAssertEqual(viewModel.historyRows.first?.statusText, PressureZone.high.title)
-        XCTAssertEqual(viewModel.historyRows.first?.tone, .critical)
+    func testAdviceDeckDismissAndRefresh() async {
+        let store = HealthStore(repository: MockHealthRepository(delayNanoseconds: 0))
+        let viewModel = PressureViewModel(store: store)
+        await viewModel.load()
+        let total = viewModel.adviceCards.count
+        XCTAssertGreaterThan(total, 0)
+        XCTAssertTrue(viewModel.hasAdvice)
+        viewModel.dismissAdvice()
+        XCTAssertEqual(viewModel.adviceCards.count, total - 1)
+        for _ in 0..<total { viewModel.dismissAdvice() }
+        XCTAssertTrue(viewModel.adviceCards.isEmpty)
+        viewModel.refreshAdvice()
+        XCTAssertEqual(viewModel.adviceCards.count, total)
     }
 
     func testZonePlatesMarkCurrentZoneAndPlaceholder() async {

@@ -1,28 +1,31 @@
 import SwiftUI
 
-/// Экран давления в стиле нового главного: верхний блок со свечением и скруглением снизу (шапка, последнее измерение),
-/// периоды, график, среднее и диапазон, пояснение, история. Добавления измерений нет: экран только показывает данные.
+/// Экран давления. Верхний блок по Figma 86:123: название с иконкой, значение 84 pt, единица, чип статуса, под ними
+/// сердце в ритме пульса и затемнение к низу. Ниже подпись (дата, контекст, пульс), периоды, график, среднее и диапазон,
+/// пояснение, колода советов ГигаЧата. Весь текст страницы крупнее на две ступени Dynamic Type. Добавления измерений нет.
 struct PressureView: View {
     @Bindable var viewModel: PressureViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var scrollOffset: CGFloat = 0
+    @State private var isAdviceSwiping = false
     private static let scrollSpace = "pressureScroll"
 
     var body: some View {
-        GeometryReader { proxy in
-            scroll(topInset: proxy.safeAreaInsets.top)
+        GeometryReader { _ in
+            scroll
                 .ignoresSafeArea(edges: .top)
         }
+        .largerText(steps: Size.metricPageTextSteps)
         .statusBarFade(offset: scrollOffset)
         .background(AppColor.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task { await viewModel.load() }
     }
 
-    private func scroll(topInset: CGFloat) -> some View {
+    private var scroll: some View {
         ScrollView {
             VStack(spacing: Spacing.l) {
-                hero(topInset: topInset)
+                hero
                 VStack(alignment: .leading, spacing: Spacing.l) {
                     cards
                 }
@@ -37,34 +40,46 @@ struct PressureView: View {
 
     // MARK: - Верхний блок
 
-    /// Верхний блок со свечением по зоне последнего измерения: шапка и крупное значение.
-    private func hero(topInset: CGFloat) -> some View {
-        VStack(spacing: Spacing.xl) {
-            header
-            heroContent
+    /// Верхний блок (Figma 86:123), положения от верха экрана: название с иконкой с y=64, значение с y=103, сердце ниже,
+    /// затемнение низа. Кнопка «назад» слева на уровне названия.
+    private var hero: some View {
+        ZStack(alignment: .top) {
+            if case .content = viewModel.screenState {
+                HeartGlow(color: viewModel.latestTone.colors.text, rhythm: viewModel.heartRhythm, placement: .hero)
+            }
+            LinearGradient(colors: [AppColor.heroFade, Color.clear], startPoint: .bottom, endPoint: .top)
+                .frame(height: Size.metricHeroFadeHeight)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+                .allowsHitTesting(false)
+            VStack(spacing: Size.metricHeroValueGap) {
+                titleRow
+                heroContent
+            }
+            .padding(.top, Size.metricHeroTitleTop)
+            .padding(.horizontal, Spacing.screenMargin)
         }
-        .padding(.horizontal, Spacing.screenMargin)
-        .padding(.top, topInset + Spacing.s)
-        .padding(.bottom, Spacing.xxl)
-        .frame(maxWidth: .infinity, minHeight: viewModel.heroHeight, alignment: .top)
-        .background { DomeGlow(palette: viewModel.latestState.palette, isAnimated: viewModel.screenState != .loading) }
-    }
-
-    private var header: some View {
-        HStack {
+        .frame(maxWidth: .infinity)
+        .frame(height: viewModel.heroHeight, alignment: .top)
+        .overlay(alignment: .topLeading) {
             IconButton(systemName: "chevron.left", label: "Назад") { dismiss() }
                 .accessibilityIdentifier("back-button")
-            Spacer(minLength: Spacing.s)
+                .padding(.leading, Spacing.screenMargin)
+                .padding(.top, Size.metricHeroBackTop)
+        }
+        .clipped()
+    }
+
+    private var titleRow: some View {
+        HStack(spacing: Spacing.s) {
+            Image(systemName: MetricKind.pressure.iconName)
+                .textStyle(.icon)
+                .foregroundStyle(AppColor.textPrimary)
+                .accessibilityHidden(true)
             Text("Давление")
-                .textStyle(.headlineCompact)
+                .textStyle(.cardLabel)
                 .foregroundStyle(AppColor.textPrimary)
                 .accessibilityIdentifier("pressure-title")
                 .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: Spacing.s)
-            // Пустое место вместо «+»: заголовок остаётся по центру.
-            Color.clear
-                .frame(width: Size.iconButton, height: Size.iconButton)
-                .accessibilityHidden(true)
         }
     }
 
@@ -80,9 +95,8 @@ struct PressureView: View {
                 tone: viewModel.latestTone,
                 isPlaceholder: viewModel.latestIsPlaceholder,
                 valueText: viewModel.latestValueText,
-                unitText: viewModel.latestUnitText,
+                unitText: AppUnit.pressure,
                 statusText: viewModel.latestStatusText,
-                subtitle: viewModel.latestSubtitleText,
                 accessibilityText: viewModel.latestAccessibilityText
             )
         }
@@ -106,6 +120,12 @@ struct PressureView: View {
 
     @ViewBuilder
     private var content: some View {
+        Text(viewModel.latestCaptionText)
+            .textStyle(.body)
+            .foregroundStyle(AppColor.textSecondary)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+            .accessibilityIdentifier("pressure-latest-caption")
         SegmentedPicker(
             options: PressurePeriod.allCases,
             selection: $viewModel.period,
@@ -115,7 +135,17 @@ struct PressureView: View {
         chartCard
         statCards
         PressureWhyCard(plates: viewModel.zonePlates, explanation: viewModel.explanationText)
-        PressureHistoryList(rows: viewModel.historyRows, emptyText: viewModel.emptyPeriodMessage)
+        if viewModel.hasAdvice {
+            AdviceDeckView(
+                cards: viewModel.adviceCards,
+                positionText: viewModel.advicePositionText,
+                onDismiss: { viewModel.dismissAdvice() },
+                onRefresh: { viewModel.refreshAdvice() },
+                isSwiping: $isAdviceSwiping
+            )
+            .padding(.horizontal, Spacing.adviceInset)
+            .accessibilityIdentifier("advice-card")
+        }
     }
 
     private var chartCard: some View {

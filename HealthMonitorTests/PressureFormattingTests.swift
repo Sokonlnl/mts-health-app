@@ -30,6 +30,5 @@ final class PressureFormattingTests: XCTestCase {
         let store = HealthStore(repository: MockHealthRepository(scenario: .empty, delayNanoseconds: 0))
         let viewModel = PressureViewModel(store: store, now: { self.now })
         XCTAssertEqual(viewModel.latestValueText, AppFormat.emptyPressureValue)
-        XCTAssertTrue(viewModel.historyRows.isEmpty)
     }
 }

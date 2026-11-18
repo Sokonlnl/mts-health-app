@@ -28,6 +28,8 @@ enum AppColor {
     static let primaryFill = Color(hex: 0xF4F6FA)
     static let primaryText = Color(hex: 0x06070B)
     static let scrim = Color.black.opacity(0.55)
+    /// Затемнение низа верхнего блока страницы показателя: чёрный к прозрачному вверх (Figma 86:329).
+    static let heroFade = Color.black
     static let hairline = Color.white.opacity(0.08)
 
     // Стекло

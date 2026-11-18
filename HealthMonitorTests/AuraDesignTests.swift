@@ -62,10 +62,20 @@ final class AuraDesignTests: XCTestCase {
 
     func testHeroHeightIsCompactOnlyOnError() async {
         let ok = await makePressure(pressure: [])
-        XCTAssertEqual(ok.heroHeight, Size.pressureHeroHeight)
+        XCTAssertEqual(ok.heroHeight, Size.metricHeroHeight)
         let failing = HealthStore(repository: MockHealthRepository(scenario: .failure, delayNanoseconds: 0))
         let error = PressureViewModel(store: failing, now: { TestClock.now })
         await error.load()
         XCTAssertEqual(error.heroHeight, Size.heroCompactHeight)
+    }
+
+    func testCaptionAndHeartRhythmFollowLatestMeasurement() async {
+        let withData = await makePressure(pressure: TestData.periodSample)
+        XCTAssertTrue(withData.latestCaptionText.contains("пульс"), "В подписи под блоком есть пульс")
+        XCTAssertFalse(withData.latestCaptionText.isEmpty)
+        XCTAssertNotNil(withData.heartRhythm)
+        let empty = await makePressure(pressure: [])
+        XCTAssertEqual(empty.latestCaptionText, "")
+        XCTAssertNil(empty.heartRhythm, "Без измерений сердце неподвижно")
     }
 }
