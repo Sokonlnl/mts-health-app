@@ -9,7 +9,7 @@
 // Выход из тупика: после двух блокировок в сессии коммит с трейлером `Gate-override: <причина>` проходит,
 // причина пишется в журнал. Так агент не застревает, а обход виден в истории Git.
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, appendFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, appendFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { readStdinJson, loadRules, lintFile, formatViolations, projectDir, stampPath, stateDir, swiftContentHash } from './lib.mjs';
 
@@ -39,6 +39,31 @@ const problems = [];
 
 const violations = files.flatMap(f => lintFile(f, loadRules()));
 if (violations.length) problems.push(`Хардкод вне DesignSystem/:\n${formatViolations(violations)}`);
+
+// UI-тесты — отдельный таргет без @testable import: типы приложения там не компилируются (QA-019).
+const appTypes = new Set();
+for (const f of git('ls-files', '-co', '--exclude-standard', '--', 'HealthMonitor/*.swift', 'HealthMonitor/**/*.swift')) {
+  const p = join(projectDir, f);
+  if (!existsSync(p)) continue;
+  for (const m of readFileSync(p, 'utf8').matchAll(/^\s*(?:@\w+\s+)*(?:public\s+|internal\s+|private\s+|fileprivate\s+|final\s+)*(?:struct|enum|class|protocol|actor|typealias)\s+([A-Z]\w*)/gm)) {
+    appTypes.add(m[1]);
+  }
+}
+const uiRefs = [];
+for (const f of files.filter(f => f.startsWith('HealthMonitorUITests/'))) {
+  const p = join(projectDir, f);
+  if (!existsSync(p)) continue;
+  readFileSync(p, 'utf8').split(/\r?\n/).forEach((line, i) => {
+    const code = line.replace(/\/\/.*$/, '').replace(/"(?:[^"\\]|\\.)*"/g, '""');
+    for (const m of code.matchAll(/\b([A-Z]\w*)\b/g)) {
+      if (appTypes.has(m[1])) uiRefs.push(`${f}:${i + 1} ${m[1]}`);
+    }
+  });
+}
+if (uiRefs.length) {
+  problems.push(`UI-тесты ссылаются на типы приложения (в таргете UI-тестов их нет, сборка упадёт):\n${uiRefs.join('\n')}\n` +
+    'Передавай аргументы строками или объяви локальную константу в HealthMonitorUITests.');
+}
 
 const hash = await swiftContentHash();
 let stamp = null;
