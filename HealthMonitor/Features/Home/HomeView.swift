@@ -39,6 +39,7 @@ struct HomeView: View {
         .auraBottomBar(fadeColor: AppColor.background, fadeHeight: Size.homeBottomFadeHeight) { FloatingTabBar(selection: $tab) }
         .toast(message: $viewModel.toastMessage)
         .toolbar(.hidden, for: .navigationBar)
+        .sheet(isPresented: $viewModel.isInsightExpanded) { InsightSheet(headline: viewModel.headline) }
         .task { await run() }
     }
 
@@ -113,8 +114,7 @@ struct HomeView: View {
                 if viewModel.showsInsight {
                     HomeHeadline(
                         headline: viewModel.headline,
-                        isExpanded: viewModel.isInsightExpanded,
-                        onToggle: { withAnimation(gate.isEnabled ? Motion.standard : nil) { viewModel.toggleInsight() } }
+                        onDetails: { viewModel.toggleInsight() }
                     )
                     .introReveal(index: 0, isActive: isIntroActive)
                     .padding(.top, Size.heroInsightTop)

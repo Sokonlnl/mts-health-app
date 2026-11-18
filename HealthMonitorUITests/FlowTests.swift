@@ -78,16 +78,16 @@ final class FlowTests: XCTestCase {
         XCTAssertTrue(element(app, "soon-toast").waitForExistence(timeout: timeout))
     }
 
-    func testInsightDetailsExpandAndCollapse() {
+    func testInsightDetailsOpenInSheet() {
         let app = launch("home")
         let toggle = element(app, "insight-toggle")
         XCTAssertTrue(toggle.waitForExistence(timeout: timeout))
-        XCTAssertFalse(element(app, "insight-details").exists, "Свёрнуто по умолчанию")
+        XCTAssertFalse(element(app, "insight-details").exists, "Шторка закрыта по умолчанию")
 
         toggle.tap()
-        XCTAssertTrue(element(app, "insight-details").waitForExistence(timeout: timeout), "«Подробнее» разворачивает вывод")
+        XCTAssertTrue(element(app, "insight-details").waitForExistence(timeout: timeout), "«Подробнее» открывает шторку")
 
-        toggle.tap()
-        XCTAssertTrue(element(app, "insight-details").waitForNonExistence(timeout: timeout), "«Свернуть» скрывает вывод")
+        app.swipeDown(velocity: .fast)
+        XCTAssertTrue(element(app, "insight-details").waitForNonExistence(timeout: timeout), "Свайп вниз закрывает шторку")
     }
 }

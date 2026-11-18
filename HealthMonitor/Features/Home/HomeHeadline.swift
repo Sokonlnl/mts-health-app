@@ -1,10 +1,9 @@
 import SwiftUI
 
-/// Заголовок-вывод (34,6 pt) в верхнем блоке, пояснение 14 pt и «Подробнее / Свернуть». Ширина текста 272.
+/// Заголовок-вывод (34,6 pt) в верхнем блоке, пояснение 14 pt и кнопка «Подробнее» (открывает шторку). Ширина текста 272.
 struct HomeHeadline: View {
     let headline: HeadlineModel
-    let isExpanded: Bool
-    let onToggle: () -> Void
+    let onDetails: () -> Void
 
     var body: some View {
         VStack(spacing: Spacing.s) {
@@ -24,15 +23,6 @@ struct HomeHeadline: View {
             .frame(maxWidth: Size.insightWidth)
             .contentSwap(headline.contentKey)
             if let details = headline.details {
-                if isExpanded {
-                    Text(details)
-                        .textStyle(.body)
-                        .foregroundStyle(AppColor.textSecondary)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: Size.insightWidth)
-                        .accessibilityIdentifier("insight-details")
-                }
                 toggle
             }
         }
@@ -41,11 +31,11 @@ struct HomeHeadline: View {
     }
 
     private var toggle: some View {
-        Button(action: onToggle) {
+        Button(action: onDetails) {
             HStack(spacing: Spacing.xs) {
-                Text(isExpanded ? "Свернуть" : "Подробнее")
+                Text("Подробнее")
                     .textStyle(.bodyStrong)
-                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                Image(systemName: "chevron.right")
                     .textStyle(.captionStrong.asSymbol)
                     .accessibilityHidden(true)
             }
@@ -62,8 +52,7 @@ struct HomeHeadline: View {
     VStack(spacing: Spacing.xl) {
         HomeHeadline(
             headline: HeadlineModel(title: "У вас отличные показатели", summary: "Все ваши показатели в норме", details: "Подробности"),
-            isExpanded: false,
-            onToggle: {}
+            onDetails: {}
         )
         HomeHeadline(
             headline: HeadlineModel(
@@ -71,8 +60,7 @@ struct HomeHeadline: View {
                 summary: "Все ваши показатели в норме",
                 details: "Подробности недели."
             ),
-            isExpanded: true,
-            onToggle: {}
+            onDetails: {}
         )
     }
     .padding(Spacing.screenMargin)
@@ -82,8 +70,7 @@ struct HomeHeadline: View {
 #Preview("HomeHeadline: без подробностей") {
     HomeHeadline(
         headline: HeadlineModel(title: "Пока нет данных", summary: "Измерений давления пока нет.", details: nil),
-        isExpanded: false,
-        onToggle: {}
+        onDetails: {}
     )
     .padding(Spacing.screenMargin)
     .background(AppColor.background)
