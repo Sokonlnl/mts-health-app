@@ -49,4 +49,11 @@ final class PressureZoneTests: XCTestCase {
         XCTAssertLessThan(PressureZone.normal, .elevated)
         XCTAssertLessThan(PressureZone.elevated, .high)
     }
+
+    func testThresholdTextMatchesZoneRules() {
+        XCTAssertEqual(PressureZone.normal.thresholdText, "<130 и <85")
+        XCTAssertEqual(PressureZone.elevated.thresholdText, "130–139 или 85–89")
+        XCTAssertEqual(PressureZone.high.thresholdText, "≥140 или ≥90")
+        XCTAssertEqual(ZonePlate.plates(current: .elevated).map(\.isCurrent), [false, true, false])
+    }
 }

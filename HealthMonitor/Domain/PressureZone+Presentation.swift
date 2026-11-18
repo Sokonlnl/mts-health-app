@@ -22,6 +22,15 @@ extension PressureZone {
         }
     }
 
+    /// Граница зоны для плашки «Почему такой статус» (по CLAUDE.md, правило 6).
+    var thresholdText: String {
+        switch self {
+        case .normal: return "<130 и <85"
+        case .elevated: return "130–139 или 85–89"
+        case .high: return "≥140 или ≥90"
+        }
+    }
+
     static let disclaimer = "Справочная информация, не заменяет консультацию врача."
 
     /// Диапазон верхнего давления, который зона занимает на графике.
