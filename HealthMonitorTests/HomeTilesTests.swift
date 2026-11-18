@@ -122,11 +122,20 @@ final class HomeTilesTests: XCTestCase {
     func testAdviceFollowsZoneAndAddsDisclaimerOnlyAboveNorm() async {
         var data = TestData.healthData(pressure: [])
         data.advice = MockHealthData.advice
-        let cases: [(Int, Int, PressureZone)] = [(118, 76, .normal), (134, 86, .elevated), (148, 94, .high)]
-        for (top, bottom, zone) in cases {
-            let viewModel = await makeViewModel(
-                pressure: [TestData.measurement("z", systolic: top, diastolic: bottom, secondsAgo: 0)], data: data
-            )
+        struct ZoneCase {
+            let systolic: Int
+            let diastolic: Int
+            let zone: PressureZone
+        }
+        let cases = [
+            ZoneCase(systolic: 118, diastolic: 76, zone: .normal),
+            ZoneCase(systolic: 134, diastolic: 86, zone: .elevated),
+            ZoneCase(systolic: 148, diastolic: 94, zone: .high)
+        ]
+        for item in cases {
+            let zone = item.zone
+            let measurement = TestData.measurement("z", systolic: item.systolic, diastolic: item.diastolic, secondsAgo: 0)
+            let viewModel = await makeViewModel(pressure: [measurement], data: data)
             let expected = AdviceSelector.pick(from: MockHealthData.advice, zone: zone)
             XCTAssertEqual(viewModel.adviceCard?.title, expected?.title)
             XCTAssertEqual(viewModel.adviceCard?.disclaimer, AdviceSelector.disclaimer(for: zone))
