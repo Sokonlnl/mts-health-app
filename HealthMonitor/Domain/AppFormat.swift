@@ -14,7 +14,6 @@ enum AppFormat {
 
     /// Подписи карточек показателей на главном экране и экране давления.
     static let noMeasurementsYet = "Измерений пока нет"
-    static let addMeasurement = "Добавить измерение"
     static let notFilled = "не заполнено"
     static let emptyPeriod = "За выбранный период измерений нет."
 

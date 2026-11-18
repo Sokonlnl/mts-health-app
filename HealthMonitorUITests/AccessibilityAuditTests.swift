@@ -35,10 +35,6 @@ final class AccessibilityAuditTests: XCTestCase {
         try audit(screen: "pressure", readyIdentifier: "pressure-chart")
     }
 
-    func testPressureSheetAudit() throws {
-        try audit(screen: "pressureSheet", readyIdentifier: "save-button")
-    }
-
     func testLoadingAudit() throws {
         try audit(screen: "loading", readyIdentifier: "loading-state")
     }

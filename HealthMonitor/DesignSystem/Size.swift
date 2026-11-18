@@ -4,6 +4,10 @@ import SwiftUI
 enum Size {
     // Кнопки и навигация
     static let iconButton: CGFloat = 44
+    /// Отступ фото от края кольца в кнопке профиля.
+    static let avatarInset: CGFloat = 4
+    /// Кадрирование фото в кнопке профиля: приближение к голове и плечам, как в Figma.
+    static let avatarPhotoZoom: CGFloat = 1.35
     static let stepperButton: CGFloat = 48
     static let primaryButton: CGFloat = 56
     static let navBar: CGFloat = 64
@@ -31,9 +35,14 @@ enum Size {
     static let pressureHeroHeight: CGFloat = 300
     /// Вкладки «Самочувствие / Анализы» (верх 114), вывод (центр блока на y 248, верх 202) и ширина вывода 272.
     static let heroTabsTop: CGFloat = 114
+    /// Кнопка профиля поднята над отступом статус-бара на столько pt.
+    static let profileButtonLift: CGFloat = 12
+    /// Вкладки гаснут за столько pt прокрутки, чтобы не налезать на карточки.
+    static let heroTabsFadeRamp: CGFloat = 60
+    /// Доля ширины экрана, которую жест должен пройти (с учётом инерции), чтобы переключить вкладку.
+    static let pageSwitchFraction: CGFloat = 0.3
     static let heroInsightTop: CGFloat = 202
     static let insightWidth: CGFloat = 272
-    static let tabDot: CGFloat = 5
     static let tabGap: CGFloat = 24
     /// Свечение: пятна у нижнего края блока (ширина, высота, размытие, вынос вниз) и боковое пятно.
     static let domeBlobWidth: CGFloat = 520
@@ -53,7 +62,7 @@ enum Size {
     // Карточки главного экрана
     static let pressureCardHeight: CGFloat = 258
     static let smallCardHeight: CGFloat = 166
-    static let cardIconLarge: CGFloat = 24
+    static let cardIconLarge: CGFloat = 20
     static let chipHeight: CGFloat = 35
     static let chipMinWidth: CGFloat = 76
     /// Декоративные пятна в углу карточек (`CornerGlow`): сдвиг за край.
@@ -66,8 +75,10 @@ enum Size {
     /// Внутренние чёрные слои сердца: наложение (overlay) 67% и жёсткий свет (hard light) 20%.
     static let heartOverlayOpacity: Double = 0.67
     static let heartHardLightOpacity: Double = 0.2
-    static let heartOffsetX: CGFloat = 30
-    static let heartOffsetY: CGFloat = 52
+    /// Вынос рамки за правый нижний угол карточки 358×258: сердце 264×230 стоит в точке (167, 131) карточки (Figma 74:25699),
+    /// рамка с полями 33 заканчивается в (464, 394), то есть на 106 правее и 136 ниже угла.
+    static let heartOffsetX: CGFloat = 106
+    static let heartOffsetY: CGFloat = 136
     /// Радиус радиального градиента сердца (в единицах viewBox) и центр (доли рамки).
     static let heartGradientRadius: CGFloat = 125
     static let heartGradientCenter = UnitPoint(x: 150.58 / 330, y: 182.42 / 296)
@@ -95,12 +106,19 @@ enum Size {
     static let gaugeBandGood: CGFloat = 30
     static let gaugeBandGap: CGFloat = 2
     static let gaugeMarker: CGFloat = 2
-    /// Дуга шкалы глюкозы: диаметр окружности, толщина, доля подсвеченного участка и маркер.
-    static let gaugeArcDiameter: CGFloat = 120
-    static let gaugeArcLine: CGFloat = 8
+    /// Дуга шкалы глюкозы (Figma 63:25250): пологая дуга на всю ширину плитки. Стрела прогиба, толщина линии,
+    /// доли подсвеченного участка по ширине, пунктир над дугой и треугольный указатель под ней.
+    static let gaugeArcSagitta: CGFloat = 19
+    static let gaugeArcLine: CGFloat = 5
     static let gaugeArcLitStart: Double = 0.3
     static let gaugeArcLitEnd: Double = 0.7
-    static let gaugeDot: CGFloat = 12
+    static let gaugeArcDottedGap: CGFloat = 7
+    static let gaugeArcDottedLine: CGFloat = 1
+    static let gaugeArcDottedOpacity: Double = 0.35
+    static let gaugeArcMarkerGap: CGFloat = 6
+    static let gaugeArcMarkerWidth: CGFloat = 10
+    static let gaugeArcMarkerHeight: CGFloat = 8
+    static let gaugeArcHeight: CGFloat = 44
 
     // Совет и колода
     static let adviceHeight: CGFloat = 239

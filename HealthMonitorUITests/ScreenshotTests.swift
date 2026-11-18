@@ -58,13 +58,6 @@ final class ScreenshotTests: XCTestCase {
         attachScreenshot(app, name: "02-pressure-scrolled")
     }
 
-    func testPressureSheetScreenshot() {
-        let app = launch("pressureSheet")
-        XCTAssertTrue(element(app, "sheet-title").waitForExistence(timeout: timeout))
-        XCTAssertTrue(element(app, "save-button").waitForExistence(timeout: timeout))
-        attachScreenshot(app, name: "03-pressure-sheet")
-    }
-
     func testLoadingScreenshot() {
         let app = launch("loading")
         XCTAssertTrue(element(app, "loading-state").waitForExistence(timeout: timeout))
@@ -86,7 +79,7 @@ final class ScreenshotTests: XCTestCase {
 
     // MARK: - Сценарий
 
-    func testNavigationFlowOpensPressureAndSheet() {
+    func testNavigationFlowOpensPressureAndGoesBack() {
         let app = launch("home")
 
         // Нажатие на плитку давления открывает экран давления.
@@ -104,11 +97,5 @@ final class ScreenshotTests: XCTestCase {
         // Повторное нажатие снова открывает экран давления.
         card.tap()
         XCTAssertTrue(element(app, "pressure-title").waitForExistence(timeout: timeout))
-
-        // «+» на экране давления открывает шторку.
-        let sheetButton = element(app, "pressure-add-button")
-        XCTAssertTrue(sheetButton.waitForExistence(timeout: timeout))
-        sheetButton.tap()
-        XCTAssertTrue(element(app, "sheet-title").waitForExistence(timeout: timeout))
     }
 }

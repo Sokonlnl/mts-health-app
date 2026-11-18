@@ -1,12 +1,11 @@
 import Foundation
 
-/// Конфигурация запуска из аргументов: `-uiScreen home|pressure|pressureSheet|loading|empty|error`.
+/// Конфигурация запуска из аргументов: `-uiScreen home|pressure|loading|empty|error`.
 /// Нужна для UI-тестов и демонстрации состояний.
 struct LaunchConfig: Equatable {
     enum Screen: String {
         case home
         case pressure
-        case pressureSheet
         case loading
         case empty
         case error
@@ -39,16 +38,14 @@ struct LaunchConfig: Equatable {
         case .loading: return .neverLoads
         case .empty: return .empty
         case .error: return .failure
-        case .home, .pressure, .pressureSheet: return .normal
+        case .home, .pressure: return .normal
         }
     }
 
     var initialPath: [AppRoute] {
         switch screen {
-        case .pressure, .pressureSheet: return [.pressure]
+        case .pressure: return [.pressure]
         default: return []
         }
     }
-
-    var opensSheet: Bool { screen == .pressureSheet }
 }

@@ -20,6 +20,8 @@ enum Spacing {
     static let tileGap: CGFloat = 9
     /// Зазор между блоками колонки главного экрана.
     static let columnGap: CGFloat = 13
+    /// Добавка к зазору между куполом и карточкой давления: в Figma между ними 17 pt (13 + 4).
+    static let heroCardExtraGap: CGFloat = 4
     /// Зазор между заголовком-выводом и пояснением.
     static let headlineGap: CGFloat = 13
     /// Горизонтальный отступ карточки совета и кнопки ГигаЧата внутри колонки (358 → 332 и 330).

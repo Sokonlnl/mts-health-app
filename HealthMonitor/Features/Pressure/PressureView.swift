@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Экран давления в стиле нового главного: верхний блок со свечением и скруглением снизу (шапка, последнее измерение),
-/// периоды, график, среднее и диапазон, пояснение, история, шторка. Кнопка «Добавить измерение» в стиле `GlowButton`.
+/// периоды, график, среднее и диапазон, пояснение, история. Добавления измерений нет: экран только показывает данные.
 struct PressureView: View {
     @Bindable var viewModel: PressureViewModel
     @Environment(\.dismiss) private var dismiss
@@ -15,15 +15,8 @@ struct PressureView: View {
         }
         .statusBarFade(offset: scrollOffset)
         .background(AppColor.background.ignoresSafeArea())
-        .auraBottomBar { addBar }
-        .glassSheet(isPresented: $viewModel.isSheetPresented) {
-            NewMeasurementSheet(viewModel: viewModel)
-        }
         .toolbar(.hidden, for: .navigationBar)
-        .task {
-            await viewModel.load()
-            await viewModel.presentSheetIfRequested()
-        }
+        .task { await viewModel.load() }
     }
 
     private func scroll(topInset: CGFloat) -> some View {
@@ -37,13 +30,12 @@ struct PressureView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.bottom, Spacing.tabBarClearance)
-            .reportsScrollOffset(in: Self.scrollSpace)
+            .reportsScrollOffset(in: Self.scrollSpace, offset: $scrollOffset, maxOffset: Size.statusBarFadeRamp)
         }
         .coordinateSpace(name: Self.scrollSpace)
-        .onPreferenceChange(ScrollOffsetKey.self) { scrollOffset = $0 }
     }
 
-    // MARK: - Верхний блок и нижняя кнопка
+    // MARK: - Верхний блок
 
     /// Верхний блок со свечением по зоне последнего измерения: шапка и крупное значение.
     private func hero(topInset: CGFloat) -> some View {
@@ -69,10 +61,10 @@ struct PressureView: View {
                 .accessibilityIdentifier("pressure-title")
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: Spacing.s)
-            IconButton(systemName: "plus", label: AppFormat.addMeasurement) {
-                viewModel.openSheet()
-            }
-            .accessibilityIdentifier("pressure-add-button")
+            // Пустое место вместо «+»: заголовок остаётся по центру.
+            Color.clear
+                .frame(width: Size.iconButton, height: Size.iconButton)
+                .accessibilityHidden(true)
         }
     }
 
@@ -96,19 +88,6 @@ struct PressureView: View {
         }
     }
 
-    @ViewBuilder
-    private var addBar: some View {
-        switch viewModel.screenState {
-        case .content, .empty:
-            GlowButton(title: AppFormat.addMeasurement, systemImage: "plus") {
-                viewModel.openSheet()
-            }
-            .accessibilityIdentifier("pressure-add-bottom")
-        case .loading, .error:
-            EmptyView()
-        }
-    }
-
     // MARK: - Состояния
 
     @ViewBuilder
@@ -119,7 +98,7 @@ struct PressureView: View {
         case .error(let message):
             ErrorStateView(message: message, retry: { Task { await viewModel.reload() } })
         case .empty:
-            EmptyStateView(message: viewModel.emptyMessage, action: { viewModel.openSheet() })
+            EmptyStateView(message: viewModel.emptyMessage)
         case .content:
             content
         }

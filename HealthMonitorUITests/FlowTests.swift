@@ -28,19 +28,6 @@ final class FlowTests: XCTestCase {
         target.tap()
     }
 
-    private func type(_ app: XCUIApplication, digits: String) {
-        for digit in digits {
-            tap(app, "key-\(digit)")
-        }
-    }
-
-    private func openSheet() -> XCUIApplication {
-        let app = launch("pressureSheet")
-        XCTAssertTrue(element(app, "sheet-title").waitForExistence(timeout: timeout))
-        XCTAssertTrue(element(app, "save-button").waitForExistence(timeout: timeout))
-        return app
-    }
-
     // MARK: - Период
 
     func testPeriodSwitchOnPressureScreen() {
@@ -62,44 +49,6 @@ final class FlowTests: XCTestCase {
         XCTAssertTrue(week.isSelected)
         XCTAssertFalse(month.isSelected)
         XCTAssertTrue(element(app, "pressure-chart").waitForExistence(timeout: timeout))
-    }
-
-    // MARK: - Шторка
-
-    func testSavingValidMeasurementClosesSheet() {
-        let app = openSheet()
-        let save = element(app, "save-button")
-        XCTAssertFalse(save.isEnabled, "Пустая форма: «Сохранить» неактивна")
-
-        type(app, digits: "130")   // верхнее, фокус уходит на нижнее
-        type(app, digits: "85")
-        XCTAssertTrue(element(app, "sheet-result").waitForExistence(timeout: timeout), "Появилась зона результата")
-
-        tap(app, "chip-Утро")
-        XCTAssertTrue(save.isEnabled, "130/85: «Сохранить» активна")
-
-        save.tap()
-        XCTAssertTrue(element(app, "sheet-title").waitForNonExistence(timeout: timeout), "Шторка закрылась")
-        XCTAssertTrue(element(app, "pressure-latest-value").waitForExistence(timeout: timeout))
-    }
-
-    func testInvalidInputKeepsSaveDisabled() {
-        let app = openSheet()
-        type(app, digits: "300")
-        type(app, digits: "80")
-
-        XCTAssertTrue(element(app, "sheet-hint").waitForExistence(timeout: timeout), "Показана подсказка об ошибке")
-        XCTAssertFalse(element(app, "save-button").isEnabled, "300/80: «Сохранить» неактивна")
-        XCTAssertFalse(element(app, "sheet-result").exists)
-    }
-
-    func testSystolicNotAboveDiastolicKeepsSaveDisabled() {
-        let app = openSheet()
-        type(app, digits: "120")
-        type(app, digits: "130")
-
-        XCTAssertTrue(element(app, "sheet-hint").waitForExistence(timeout: timeout))
-        XCTAssertFalse(element(app, "save-button").isEnabled)
     }
 
     // MARK: - Главный экран

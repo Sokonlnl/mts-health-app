@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Переключатель. `.capsule`: периоды (День, Неделя, Месяц, 6 мес) в стеклянной капсуле, активный сегмент белый 16%.
-/// `.tabs`: вкладки верхнего блока («Самочувствие», «Анализы»): без капсулы, выбранная светлая с точкой 5×5 под названием,
+/// `.tabs`: вкладки верхнего блока («Самочувствие», «Анализы»): без капсулы, выбранная светлая,
 /// остальные приглушены; цель нажатия не меньше 44×44.
 struct SegmentedPicker<Option: Hashable>: View {
     enum Style {
@@ -81,18 +81,13 @@ struct SegmentedPicker<Option: Hashable>: View {
                 selection = option
             }
         } label: {
-            VStack(spacing: Spacing.xs) {
-                Text(title(option))
-                    .textStyle(.cardLabel)
-                    .foregroundStyle(isSelected ? AppColor.textPrimary : AppColor.textDim)
-                    .lineLimit(1)
-                    .minimumScaleFactor(TextScale.compact)
-                Circle()
-                    .fill(isSelected ? AppColor.textPrimary : Color.clear)
-                    .frame(width: Size.tabDot, height: Size.tabDot)
-            }
-            .frame(minWidth: Spacing.minTapTarget, minHeight: Spacing.minTapTarget)
-            .contentShape(Rectangle())
+            Text(title(option))
+                .textStyle(.cardLabel)
+                .foregroundStyle(isSelected ? AppColor.textPrimary : AppColor.textDim)
+                .lineLimit(1)
+                .minimumScaleFactor(TextScale.compact)
+                .frame(minWidth: Spacing.minTapTarget, minHeight: Spacing.minTapTarget)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])

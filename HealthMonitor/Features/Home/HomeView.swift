@@ -7,6 +7,8 @@ struct HomeView: View {
     let onOpenPressure: () -> Void
     @State private var tab: AppTab = .home
     @State private var scrollOffset: CGFloat = 0
+    /// Смещение страниц во время горизонтального жеста между вкладками.
+    @State private var pageDrag: CGFloat = 0
     /// Заставка: свечение разгорелось из темноты. Без заставки сразу `true`.
     @State private var isGlowLit: Bool
     private let gate = AmbientMotionGate()
@@ -24,11 +26,7 @@ struct HomeView: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .top) {
-                TabView(selection: $viewModel.selectedTabID) {
-                    scroll(topInset: proxy.safeAreaInsets.top).tag(HomeViewModel.wellbeingTabID)
-                    analysesPage.tag(HomeViewModel.analysesTabID)
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
+                pages(width: proxy.size.width, topInset: proxy.safeAreaInsets.top)
                 // Заголовки вкладок одним слоем над страницами: один набор элементов для VoiceOver и XCUI.
                 tabsRow
             }
@@ -51,6 +49,37 @@ struct HomeView: View {
         await viewModel.runIntro(animationsEnabled: gate.isEnabled)
     }
 
+    /// Две страницы рядом («Самочувствие» и «Анализы») со сдвигом по выбранной вкладке и свайпом между ними.
+    /// Постраничный `TabView` не используется: вложенная в него вертикальная прокрутка после оттягивания вниз оставалась
+    /// сдвинутой, и верхний блок не доходил до края экрана.
+    private func pages(width: CGFloat, topInset: CGFloat) -> some View {
+        let index = viewModel.selectedTabID == HomeViewModel.analysesTabID ? 1 : 0
+        return HStack(spacing: 0) {
+            scroll(topInset: topInset).frame(width: width)
+            analysesPage.frame(width: width)
+        }
+        .frame(width: width, alignment: .leading)
+        .offset(x: -CGFloat(index) * width + pageDrag)
+        .animation(gate.isEnabled ? Motion.standard : nil, value: index)
+        .clipped()
+        .simultaneousGesture(
+            DragGesture(minimumDistance: Spacing.l)
+                .onChanged { value in
+                    guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                    // С первой страницы тянуть можно только влево, со второй только вправо.
+                    pageDrag = index == 0 ? min(0, value.translation.width) : max(0, value.translation.width)
+                }
+                .onEnded { value in
+                    let isHorizontal = abs(value.translation.width) > abs(value.translation.height)
+                    let travelled = abs(value.predictedEndTranslation.width) > width * Size.pageSwitchFraction
+                    if isHorizontal, travelled {
+                        viewModel.selectTab(index == 0 ? HomeViewModel.analysesTabID : HomeViewModel.wellbeingTabID)
+                    }
+                    withAnimation(gate.isEnabled ? Motion.standard : nil) { pageDrag = 0 }
+                }
+        )
+    }
+
     private func scroll(topInset: CGFloat) -> some View {
         ScrollView {
             VStack(spacing: Spacing.columnGap) {
@@ -59,13 +88,13 @@ struct HomeView: View {
                     stateContent
                 }
                 .padding(.horizontal, Spacing.screenMargin)
+                .padding(.top, Spacing.heroCardExtraGap)
             }
             .frame(maxWidth: .infinity)
             .padding(.bottom, Spacing.homeBottomClearance)
-            .reportsScrollOffset(in: Self.scrollSpace)
+            .reportsScrollOffset(in: Self.scrollSpace, offset: $scrollOffset, maxOffset: Size.heroTabsFadeRamp)
         }
         .coordinateSpace(name: Self.scrollSpace)
-        .onPreferenceChange(ScrollOffsetKey.self) { scrollOffset = $0 }
     }
 
     // MARK: - Верхний блок
@@ -91,13 +120,13 @@ struct HomeView: View {
             .frame(maxWidth: .infinity, alignment: .top)
             HStack(spacing: 0) {
                 Spacer(minLength: 0)
-                IconButton(
-                    systemName: "person", label: "Профиль", surface: .profile, tint: viewModel.glowState.palette.profileTint
+                AvatarButton(
+                    imageName: "ProfileAvatar", label: "Профиль", tint: viewModel.glowState.palette.profileTint
                 ) { tab = .profile }
                     .padding(.trailing, Spacing.s)
                     .accessibilityIdentifier("profile-button")
             }
-            .padding(.top, topInset)
+            .padding(.top, topInset - Size.profileButtonLift)
         }
         .padding(.horizontal, Spacing.screenMargin)
         .frame(maxWidth: .infinity, minHeight: viewModel.heroHeight, alignment: .top)
@@ -120,6 +149,8 @@ struct HomeView: View {
         )
         .padding(.top, Size.heroTabsTop)
         .frame(maxWidth: .infinity, alignment: .top)
+        .opacity(1 - Double(min(1, max(0, scrollOffset / Size.heroTabsFadeRamp))))
+        .allowsHitTesting(scrollOffset < Size.heroTabsFadeRamp / 2)
     }
 
     /// Вкладка «Анализы»: заглушка «Ещё в прогрессе» по центру (заголовки вкладок рисует `tabsRow` поверх страниц).
@@ -152,7 +183,7 @@ struct HomeView: View {
         case .empty:
             pressureCard
             smallCards
-            EmptyStateView(message: viewModel.emptyMessage, action: onOpenPressure)
+            EmptyStateView(message: viewModel.emptyMessage)
         case .content:
             pressureCard.introReveal(index: 1, isActive: isIntroActive)
             smallCards.introReveal(index: 2, isActive: isIntroActive)

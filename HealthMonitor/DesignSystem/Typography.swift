@@ -97,6 +97,8 @@ enum AppTypography {
     static let captionStrong = AppTextStyle(size: 13, weight: .semibold, textStyle: .caption1)
     /// Иконка 24 pt (SF Symbols): размер не растёт с Dynamic Type.
     static let icon = AppTextStyle(size: 24, weight: .regular, textStyle: .title1, maxScale: 1, isSymbol: true)
+    /// Иконка в заголовке карточки 18 pt: размер не растёт с Dynamic Type.
+    static let cardIcon = AppTextStyle(size: 18, weight: .regular, textStyle: .title3, maxScale: 1, isSymbol: true)
 }
 
 extension AppTextStyle {
@@ -124,6 +126,7 @@ extension AppTextStyle {
     static let caption = AppTypography.caption
     static let captionStrong = AppTypography.captionStrong
     static let icon = AppTypography.icon
+    static let cardIcon = AppTypography.cardIcon
 }
 
 /// Применяет стиль с учётом `dynamicTypeSize` из окружения: при смене размера текста

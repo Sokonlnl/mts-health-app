@@ -53,14 +53,6 @@ final class HealthStore {
         await startLoading()
     }
 
-    /// Добавляет измерение в начало истории.
-    func add(_ measurement: PressureMeasurement) {
-        var updated = data.pressure
-        updated.append(measurement)
-        updated.sort { $0.date > $1.date }
-        data.pressure = updated
-    }
-
     // MARK: - Загрузка
 
     /// Загрузка идёт в неструктурированной `Task`: отмена `.task` вызывающего экрана её не отменяет,

@@ -57,6 +57,7 @@ struct StubRepository: HealthRepository {
 final class FlakyRepository: HealthRepository, @unchecked Sendable {
     private let lock = NSLock()
     private var remainingFailures: Int
+    private var calls = 0
     private let data: HealthData
 
     init(failures: Int, data: HealthData) {
@@ -64,8 +65,16 @@ final class FlakyRepository: HealthRepository, @unchecked Sendable {
         self.data = data
     }
 
+    /// Сколько раз вызывали `load()`.
+    var loadCalls: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return calls
+    }
+
     func load() async throws -> HealthData {
         lock.lock()
+        calls += 1
         let shouldFail = remainingFailures > 0
         if shouldFail { remainingFailures -= 1 }
         lock.unlock()

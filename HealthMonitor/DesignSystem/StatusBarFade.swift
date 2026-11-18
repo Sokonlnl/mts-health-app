@@ -1,20 +1,18 @@
 import SwiftUI
 
-/// Смещение прокрутки содержимого от верха (для проявления подложки под статус-баром).
-struct ScrollOffsetKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
 extension View {
-    /// Передаёт вверх смещение прокрутки в системе координат `space` (кладётся фоном содержимого `ScrollView`).
-    func reportsScrollOffset(in space: String) -> some View {
+    /// Передаёт смещение прокрутки (от верха, вниз положительное) в `offset`. Кладётся фоном содержимого `ScrollView`,
+    /// у которого задано `.coordinateSpace(name: space)`. Значение ограничено диапазоном `0...maxOffset`.
+    /// Читает положение через `onGeometryChange`: `frame(in:)` внутри `GeometryReader` не обновлялось при прокрутке,
+    /// и смещение оставалось 0.
+    func reportsScrollOffset(in space: String, offset: Binding<CGFloat>, maxOffset: CGFloat) -> some View {
         background(alignment: .top) {
-            GeometryReader { proxy in
-                Color.clear.preference(key: ScrollOffsetKey.self, value: -proxy.frame(in: .named(space)).minY)
+            Color.clear.onGeometryChange(for: CGFloat.self) { proxy in
+                -proxy.frame(in: .named(space)).minY
+            } action: { value in
+                // Значение зажато в 0...maxOffset: при оттягивании вниз и далеко за порогом состояние не меняется и экран
+                // не перерисовывается на каждый кадр (иначе он оставался сдвинутым после оттягивания).
+                offset.wrappedValue = min(max(value, 0), maxOffset)
             }
         }
     }

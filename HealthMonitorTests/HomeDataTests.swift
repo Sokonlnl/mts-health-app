@@ -101,26 +101,12 @@ final class HomeDataTests: XCTestCase {
 
     func testLaunchConfigParsing() {
         XCTAssertEqual(LaunchConfig.parse([]).screen, .home)
-        XCTAssertEqual(LaunchConfig.parse(["-uiScreen", "pressureSheet"]).screen, .pressureSheet)
         XCTAssertEqual(LaunchConfig.parse(["-uiScreen", "unknown"]).screen, .home)
         XCTAssertEqual(LaunchConfig.parse(["-uiScreen", "error"]).scenario, .failure)
         XCTAssertEqual(LaunchConfig.parse(["-uiScreen", "pressure"]).initialPath, [.pressure])
         XCTAssertFalse(LaunchConfig.parse([]).disablesIntro)
         XCTAssertTrue(LaunchConfig.parse([LaunchConfig.disableIntroArgument]).disablesIntro)
         XCTAssertTrue(LaunchConfig.parse(["-uiScreen", "pressure", LaunchConfig.disableIntroArgument]).disablesIntro)
-    }
-
-    @MainActor
-    func testStoreAddsMeasurementToTheFront() async {
-        let repository = MockHealthRepository(now: now, delayNanoseconds: 0)
-        let store = HealthStore(repository: repository)
-        await store.load()
-        let added = PressureMeasurement(
-            id: "new", date: now.addingTimeInterval(60), systolic: 150, diastolic: 95, pulse: nil, context: nil
-        )
-        store.add(added)
-        XCTAssertEqual(store.data.pressure.first?.id, "new")
-        XCTAssertEqual(store.screenState, .content)
     }
 
     @MainActor

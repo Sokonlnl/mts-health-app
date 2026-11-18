@@ -48,7 +48,7 @@ struct MetricCard: View {
     private func header(iconSize: CGFloat, label: AppTextStyle) -> some View {
         HStack(spacing: Spacing.s) {
             Image(systemName: kind.iconName)
-                .textStyle(.icon)
+                .textStyle(.cardIcon)
                 .frame(width: iconSize, height: iconSize)
                 .foregroundStyle(AppColor.textDim)
             Text(kind.title)
@@ -65,12 +65,12 @@ struct MetricCard: View {
     }
 
     private var largeBody: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
+        VStack(alignment: .leading, spacing: Spacing.s) {
             header(iconSize: Size.cardIconLarge, label: .cardLabel)
-            Spacer(minLength: Spacing.s)
             MetricValueBlock(
                 valueText: valueText, unit: unit, statusText: statusText, tone: tone, isPlaceholder: isPlaceholder
             )
+            Spacer(minLength: 0)
         }
         .padding(Spacing.xxl)
         .frame(maxWidth: .infinity, minHeight: Size.pressureCardHeight, alignment: .topLeading)
@@ -102,11 +102,14 @@ struct MetricCard: View {
             if let gauge {
                 MetricGauge(style: gauge, position: gaugePosition)
                     .frame(maxWidth: .infinity, alignment: .center)
+                    // Дуга идёт на всю ширину плитки (как в Figma), полосы остаются в полях.
+                    .padding(.horizontal, gauge == .arc ? -Spacing.l : 0)
             }
         }
         .padding(Spacing.l)
         .frame(maxWidth: .infinity, minHeight: Size.smallCardHeight, maxHeight: .infinity, alignment: .topLeading)
         .glassBackground(in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous), style: .flat)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
     }
 }
 

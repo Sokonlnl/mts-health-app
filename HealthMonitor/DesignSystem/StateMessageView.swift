@@ -32,6 +32,7 @@ struct StateMessageView: View {
                     .accessibilityIdentifier("\(identifier)-action")
             }
         }
+        .frame(maxWidth: .infinity)
         .glassCard(insets: CardInsets.message)
     }
 }
@@ -40,8 +41,8 @@ struct StateMessageView: View {
     StateMessageView(
         icon: "heart.text.square",
         title: "Пока нет измерений",
-        message: "Добавьте первое измерение давления.",
-        actionTitle: "Добавить измерение",
+        message: "Измерений давления пока нет.",
+        actionTitle: "Повторить",
         action: {}
     )
     .padding(Spacing.screenMargin)

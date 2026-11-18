@@ -64,9 +64,8 @@ final class HealthStoreStateTests: XCTestCase {
         let repository = FlakyRepository(failures: 0, data: sample)
         let store = HealthStore(repository: repository)
         await store.loadIfNeeded()
-        store.add(TestData.measurement("extra", systolic: 110, diastolic: 70, secondsAgo: 10))
         await store.loadIfNeeded()
-        XCTAssertEqual(store.data.pressure.first?.id, "extra", "Повторный loadIfNeeded не должен затирать данные")
+        XCTAssertEqual(repository.loadCalls, 1, "Повторный loadIfNeeded не должен загружать данные заново")
     }
 
     func testRetryViaViewModelsUsesReload() async {

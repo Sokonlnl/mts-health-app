@@ -30,23 +30,15 @@ struct ZonePlate: Identifiable, Equatable {
 @Observable
 final class PressureViewModel {
     private static let historyLimit = 20
-    /// Пауза перед автоматическим открытием шторки (для UI-тестов), чтобы закончилась анимация перехода.
-    static let sheetOpenDelayNanoseconds: UInt64 = 600_000_000
 
     let store: HealthStore
     @ObservationIgnored let now: () -> Date
 
     var period: PressurePeriod = .week
-    var isSheetPresented = false
-    var draft: MeasurementDraft
-    var focusedField: MeasurementField = .systolic
-    /// Для UI-тестов: открыть шторку сразу после появления экрана.
-    var opensSheetOnAppear = false
 
     init(store: HealthStore, now: @escaping () -> Date = { Date() }) {
         self.store = store
         self.now = now
-        self.draft = MeasurementDraft(date: now())
     }
 
     // MARK: - Данные экрана
@@ -154,7 +146,7 @@ final class PressureViewModel {
     var emptyPeriodMessage: String { AppFormat.emptyPeriod }
 
     /// Подсказка пустого экрана (нет ни одного измерения).
-    var emptyMessage: String { "Добавьте первое измерение, и здесь появятся график и история." }
+    var emptyMessage: String { "Измерений пока нет. Здесь появятся график и история." }
 
     /// Дата и контекст под формой: «Сегодня, 08:10 · Утро».
     var latestSubtitleText: String {
@@ -169,7 +161,7 @@ final class PressureViewModel {
 
     /// Пояснение к зоне последнего измерения для карточки «Почему такой статус».
     var explanationText: String {
-        latest?.zone.explanation ?? "Добавьте измерение, чтобы увидеть пояснение по зоне."
+        latest?.zone.explanation ?? "Пока нет измерений, пояснение по зоне недоступно."
     }
 
     /// Зона среднего за период.

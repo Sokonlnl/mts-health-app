@@ -13,11 +13,15 @@ struct HeartGlow: View {
 
     var body: some View {
         TimelineView(.animation(minimumInterval: nil, paused: !(gate.isEnabled && rhythm != nil))) { context in
-            layers
-                .scaleEffect(scale(at: context.date), anchor: Size.heartGradientCenter)
-                .frame(width: Size.heartFrame.width, height: Size.heartFrame.height)
-                .offset(x: Size.heartOffsetX, y: Size.heartOffsetY)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+            // Размер определяет `Color.clear` (место, отданное родителем), а рамка сердца 330×296 только рисуется поверх:
+            // иначе она раздувает фон карточки выше и ниже самой карточки (карточка наползала на соседние блоки).
+            Color.clear
+                .overlay(alignment: .bottomTrailing) {
+                    layers
+                        .scaleEffect(scale(at: context.date), anchor: Size.heartGradientCenter)
+                        .frame(width: Size.heartFrame.width, height: Size.heartFrame.height)
+                        .offset(x: Size.heartOffsetX, y: Size.heartOffsetY)
+                }
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)

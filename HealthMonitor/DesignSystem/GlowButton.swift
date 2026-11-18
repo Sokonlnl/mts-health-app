@@ -91,7 +91,7 @@ private struct GlowButtonStyle: ButtonStyle {
         GlowButton(title: "Задать вопрос ГигаЧату", systemImage: "sparkles", action: {})
         GlowButtonLabel(title: "Задать вопрос ГигаЧату (нажата)", systemImage: "sparkles")
             .background { GlowButtonSurface(isPressed: true) }
-        GlowButton(title: AppFormat.addMeasurement, systemImage: "plus", action: {})
+        GlowButton(title: "Недоступная кнопка", systemImage: "plus", action: {})
             .disabled(true)
     }
     .padding(Spacing.screenMargin)

@@ -41,7 +41,7 @@ struct WeekInsight: Equatable {
     static func make(stats: WeekStats) -> WeekInsight {
         if stats.measuredDays == 0 {
             return WeekInsight(
-                details: "Добавьте первое измерение, и здесь появится вывод по неделе. \(PressureZone.disclaimer)"
+                details: "Измерений за неделю пока нет. \(PressureZone.disclaimer)"
             )
         }
         let days = "Давление в норме \(stats.normalDays) из \(stats.measuredDays) измеренных дней. "

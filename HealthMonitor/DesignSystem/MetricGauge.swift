@@ -4,7 +4,7 @@ import Foundation
 /// Мини-шкала в малой карточке показателя. Чисто декоративная (значение читается текстом карточки), скрыта от VoiceOver.
 /// `.bands`: три слегка скруглённые горизонтальные плашки (жёлтая приглушённая, зелёная с градиентом, жёлтая) и яркая
 /// зелёная линия-маркер поперёк.
-/// `.arc`: полукруглая дуга с подсвеченным участком и маркером-точкой.
+/// `.arc`: пологая дуга на всю ширину с подсвеченным участком и треугольным указателем.
 /// `position`: положение маркера 0...1 (у полос снизу вверх, у дуги слева направо), `nil`: маркера нет.
 struct MetricGauge: View {
     enum Style {
@@ -58,31 +58,71 @@ struct MetricGauge: View {
 
     // MARK: - Дуга
 
+    /// Пологая дуга на всю ширину: окружность большого радиуса, видна верхняя часть. Серая дорожка, яркий участок,
+    /// пунктир над ней и треугольный указатель под дорожкой в положении значения.
     private var arc: some View {
-        let diameter = Size.gaugeArcDiameter
-        let line = Size.gaugeArcLine
-        let radius = (diameter - line) / 2
-        let angle = Double.pi * (1 - clamped(position ?? 0))
-        let style = StrokeStyle(lineWidth: line, lineCap: .round)
-        return ZStack {
-            Circle()
-                .trim(from: 0.5, to: 1)
-                .stroke(AppColor.gaugeTrack, style: style)
-                .padding(line / 2)
-            Circle()
-                .trim(from: 0.5 + 0.5 * Size.gaugeArcLitStart, to: 0.5 + 0.5 * Size.gaugeArcLitEnd)
-                .stroke(AppColor.gaugeLit, style: style)
-                .padding(line / 2)
-            if position != nil {
-                Circle()
-                    .fill(AppColor.textPrimary)
-                    .frame(width: Size.gaugeDot, height: Size.gaugeDot)
-                    .position(x: diameter / 2 + radius * CGFloat(cos(angle)), y: diameter / 2 - radius * CGFloat(sin(angle)))
+        GeometryReader { geo in
+            let width = geo.size.width
+            let sagitta = Size.gaugeArcSagitta
+            let line = Size.gaugeArcLine
+            let radius = (width * width / 4 + sagitta * sagitta) / (2 * sagitta)
+            let center = CGPoint(x: width / 2, y: line / 2 + Size.gaugeArcDottedGap + radius)
+            let trackStyle = StrokeStyle(lineWidth: line, lineCap: .round)
+            ZStack {
+                arcPath(center: center, radius: radius + Size.gaugeArcDottedGap, width: width, from: 0, to: 1)
+                    .stroke(
+                        AppColor.textPrimary.opacity(Size.gaugeArcDottedOpacity),
+                        style: StrokeStyle(lineWidth: Size.gaugeArcDottedLine, lineCap: .butt, dash: [1, 3])
+                    )
+                arcPath(center: center, radius: radius, width: width, from: 0, to: 1)
+                    .stroke(AppColor.gaugeTrack, style: trackStyle)
+                arcPath(center: center, radius: radius, width: width, from: Size.gaugeArcLitStart, to: Size.gaugeArcLitEnd)
+                    .stroke(AppColor.gaugeLit, style: trackStyle)
+                if let position {
+                    let x = width * CGFloat(clamped(position))
+                    let dx = x - center.x
+                    let y = center.y - (radius * radius - dx * dx).squareRoot()
+                    marker
+                        .position(x: x, y: y + line / 2 + Size.gaugeArcMarkerGap + Size.gaugeArcMarkerHeight / 2)
+                }
             }
         }
-        .frame(width: diameter, height: diameter)
-        .frame(width: diameter, height: diameter / 2 + Size.gaugeDot / 2, alignment: .top)
+        .frame(height: Size.gaugeArcHeight)
         .clipped()
+    }
+
+    /// Участок дуги между долями `from` и `to` по ширине.
+    private func arcPath(center: CGPoint, radius: CGFloat, width: CGFloat, from: Double, to: Double) -> Path {
+        func angle(_ fraction: Double) -> Angle {
+            let dx = (CGFloat(fraction) - 0.5) * width
+            return .radians(-Double.pi / 2 + asin(Double(dx / radius)))
+        }
+        return Path { path in
+            path.addArc(center: center, radius: radius, startAngle: angle(from), endAngle: angle(to), clockwise: false)
+        }
+    }
+
+    /// Указатель: небольшой скруглённый треугольник вершиной вверх.
+    private var marker: some View {
+        let width = Size.gaugeArcMarkerWidth
+        let height = Size.gaugeArcMarkerHeight
+        return Path { path in
+            path.move(to: CGPoint(x: width / 2, y: 0))
+            path.addLine(to: CGPoint(x: width, y: height))
+            path.addLine(to: CGPoint(x: 0, y: height))
+            path.closeSubpath()
+        }
+        .fill(AppColor.textPrimary)
+        .overlay {
+            Path { path in
+                path.move(to: CGPoint(x: width / 2, y: 0))
+                path.addLine(to: CGPoint(x: width, y: height))
+                path.addLine(to: CGPoint(x: 0, y: height))
+                path.closeSubpath()
+            }
+            .stroke(AppColor.textPrimary, style: StrokeStyle(lineWidth: 2, lineJoin: .round))
+        }
+        .frame(width: width, height: height)
     }
 
     private func clamped(_ value: Double?) -> Double {

@@ -1,25 +1,22 @@
 import SwiftUI
 
-/// Пустое состояние: нет измерений, кнопка «Добавить измерение».
+/// Пустое состояние: измерений нет.
 struct EmptyStateView: View {
     let message: String
     var identifier = "empty-state"
-    let action: () -> Void
 
     var body: some View {
         StateMessageView(
             icon: "heart.text.square",
             title: "Пока нет измерений",
             message: message,
-            identifier: identifier,
-            actionTitle: AppFormat.addMeasurement,
-            action: action
+            identifier: identifier
         )
     }
 }
 
 #Preview("EmptyStateView") {
-    EmptyStateView(message: "Добавьте первое измерение, и здесь появятся график и история.", action: {})
+    EmptyStateView(message: "Измерений пока нет. Здесь появятся график и история.")
         .padding(Spacing.screenMargin)
         .background(AppColor.background)
 }

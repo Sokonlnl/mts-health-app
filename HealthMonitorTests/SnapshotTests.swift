@@ -112,13 +112,4 @@ final class SnapshotTests: XCTestCase {
         let viewModel = PressureViewModel(store: await loadedStore(.failure), now: { TestClock.now })
         assertScreen(pressure(viewModel), named: "pressure-error")
     }
-
-    func testPressureSheetFilled() async {
-        let viewModel = PressureViewModel(store: await loadedStore(.normal), now: { TestClock.now })
-        viewModel.draft.systolicText = "132"
-        viewModel.draft.diastolicText = "86"
-        viewModel.draft.pulseText = "70"
-        viewModel.isSheetPresented = true
-        assertScreen(pressure(viewModel), named: "pressure-sheet")
-    }
 }

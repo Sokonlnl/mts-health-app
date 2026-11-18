@@ -21,18 +21,6 @@ final class AuraDesignTests: XCTestCase {
 
     // MARK: - Экран давления
 
-    func testStepFocusedFillsClampsAndChangesValue() async {
-        let viewModel = await makePressure(pressure: [])
-        viewModel.openSheet()
-        viewModel.stepFocused(by: 1)
-        XCTAssertEqual(viewModel.draft.systolicText, "120")
-        viewModel.stepFocused(by: 1)
-        XCTAssertEqual(viewModel.draft.systolicText, "121")
-        viewModel.draft.systolicText = "250"
-        viewModel.stepFocused(by: 1)
-        XCTAssertEqual(viewModel.draft.systolicText, "250")
-    }
-
     func testInNormTextAndAverageZone() async {
         let viewModel = await makePressure(pressure: TestData.periodSample)
         XCTAssertEqual(viewModel.inNormText, "В норме 1 из 2")

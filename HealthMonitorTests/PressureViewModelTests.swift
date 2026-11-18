@@ -12,108 +12,6 @@ final class PressureViewModelTests: XCTestCase {
         return (viewModel, store)
     }
 
-    private func enter(_ viewModel: PressureViewModel, _ digits: [Int]) {
-        digits.forEach { viewModel.inputDigit($0) }
-    }
-
-    // MARK: - Сохранение
-
-    func testSaveAddsMeasurementFirstAndUpdatesLatest() async {
-        let (viewModel, store) = await makeViewModel()
-        let countBefore = store.data.pressure.count
-
-        viewModel.openSheet()
-        enter(viewModel, [1, 3, 0])   // верхнее, фокус уходит на нижнее
-        enter(viewModel, [8, 5])      // нижнее, две цифры: фокус остаётся
-        XCTAssertEqual(viewModel.draft.diastolicText, "85")
-        XCTAssertTrue(viewModel.draft.isValid)
-
-        viewModel.save()
-
-        XCTAssertEqual(store.data.pressure.count, countBefore + 1)
-        let first = store.data.pressure.first
-        XCTAssertEqual(first?.systolic, 130)
-        XCTAssertEqual(first?.diastolic, 85)
-        XCTAssertEqual(viewModel.latest?.systolic, 130)
-        XCTAssertEqual(viewModel.latestValueText, AppFormat.pressureValue(130, 85))
-        XCTAssertEqual(viewModel.summary.latest?.systolic, 130)
-        XCTAssertEqual(viewModel.history.first?.id, first?.id)
-        XCTAssertFalse(viewModel.isSheetPresented, "После сохранения шторка закрывается")
-    }
-
-    func testSaveKeepsHistoryOrderedNewestFirst() async {
-        let (viewModel, store) = await makeViewModel()
-        viewModel.openSheet()
-        enter(viewModel, [1, 3, 0, 8, 5])
-        viewModel.save()
-
-        let dates = store.data.pressure.map(\.date)
-        XCTAssertEqual(dates, dates.sorted(by: >))
-    }
-
-    func testSaveIgnoredForInvalidDraft() async {
-        let (viewModel, store) = await makeViewModel()
-        let countBefore = store.data.pressure.count
-
-        viewModel.openSheet()
-        enter(viewModel, [3, 0, 0, 8, 0])   // 300/80
-        XCTAssertFalse(viewModel.draft.isValid)
-        viewModel.save()
-
-        XCTAssertEqual(store.data.pressure.count, countBefore)
-        XCTAssertTrue(viewModel.isSheetPresented, "При невалидном вводе шторка остаётся открытой")
-    }
-
-    func testSaveIncludesContextAndToggleClearsIt() async {
-        let (viewModel, store) = await makeViewModel()
-        viewModel.openSheet()
-        enter(viewModel, [1, 3, 0, 8, 5])
-        viewModel.toggleContext(.evening)
-        XCTAssertEqual(viewModel.draft.context, .evening)
-        viewModel.toggleContext(.evening)
-        XCTAssertNil(viewModel.draft.context)
-        viewModel.toggleContext(.morning)
-        viewModel.save()
-        XCTAssertEqual(store.data.pressure.first?.context, .morning)
-    }
-
-    func testStoreAddWorksOnEmptyHistory() async {
-        let (viewModel, store) = await makeViewModel(pressure: [])
-        store.add(TestData.measurement("n", systolic: 118, diastolic: 76, secondsAgo: 60))
-        XCTAssertEqual(viewModel.latest?.id, "n")
-        XCTAssertEqual(viewModel.summary.count, 1)
-    }
-
-    // MARK: - Ввод и фокус
-
-    func testFocusMovesAfterThirdDigit() async {
-        let (viewModel, _) = await makeViewModel()
-        viewModel.openSheet()
-        XCTAssertEqual(viewModel.focusedField, .systolic)
-        enter(viewModel, [1, 3])
-        XCTAssertEqual(viewModel.focusedField, .systolic, "После двух цифр фокус остаётся")
-        enter(viewModel, [0])
-        XCTAssertEqual(viewModel.focusedField, .diastolic, "После третьей цифры фокус уходит дальше")
-        enter(viewModel, [1, 0, 0])
-        XCTAssertEqual(viewModel.focusedField, .pulse)
-        enter(viewModel, [7, 0, 0])
-        XCTAssertEqual(viewModel.focusedField, .pulse, "У последнего поля фокус не уходит")
-    }
-
-    func testOpenSheetResetsDraftAndFocus() async {
-        let (viewModel, _) = await makeViewModel()
-        viewModel.openSheet()
-        enter(viewModel, [1, 3, 0])
-        viewModel.toggleContext(.morning)
-        viewModel.isSheetPresented = false
-
-        viewModel.openSheet()
-        XCTAssertEqual(viewModel.draft.systolicText, "")
-        XCTAssertNil(viewModel.draft.context)
-        XCTAssertEqual(viewModel.focusedField, .systolic)
-        XCTAssertTrue(viewModel.isSheetPresented)
-    }
-
     // MARK: - Смена периода
 
     private func summary(_ period: PressurePeriod, _ viewModel: PressureViewModel) -> PressureSummary {
@@ -192,16 +90,6 @@ final class PressureViewModelTests: XCTestCase {
     }
 
     // MARK: - Модели для View
-
-    func testDraftResultToneAppearsOnlyWithZone() async {
-        let (viewModel, _) = await makeViewModel()
-        viewModel.openSheet()
-        XCTAssertNil(viewModel.draftResultTone)
-        XCTAssertEqual(viewModel.draftResultText, "Введите значения")
-        enter(viewModel, [1, 3, 0, 8, 5])
-        XCTAssertEqual(viewModel.draftResultTone, .caution)
-        XCTAssertEqual(viewModel.draftResultText, "Будет: \(PressureZone.elevated.title)")
-    }
 
     func testHistoryRowCarriesStatusTextAndTone() async {
         let (viewModel, _) = await makeViewModel(

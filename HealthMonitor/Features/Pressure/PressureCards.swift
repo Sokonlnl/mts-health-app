@@ -179,7 +179,7 @@ private func heroPreview(_ state: HealthState, value: String, status: String) ->
 
 #Preview("Pressure cards: пусто") {
     VStack(spacing: Spacing.l) {
-        PressureWhyCard(plates: ZonePlate.plates(current: nil), explanation: "Добавьте измерение")
+        PressureWhyCard(plates: ZonePlate.plates(current: nil), explanation: "Пока нет измерений")
         PressureHistoryList(rows: [], emptyText: AppFormat.emptyPeriod)
     }
     .padding(Spacing.screenMargin)
